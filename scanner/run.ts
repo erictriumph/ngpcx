@@ -45,9 +45,17 @@ async function main() {
 }
 
 function writeJsonOutput(results: any) {
-  const outputPath = path.join(__dirname, "..", "ui", "data", "scan-results.json");
+  const outputPath = path.join(
+    __dirname,
+    "..",
+    "ui",
+    "ngpcx-dashboard",
+    "data",
+    "scan-results.json"
+  );
 
   try {
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.writeFileSync(outputPath, JSON.stringify(results, null, 2), "utf8");
     console.log(`✔ Scan results written to ${outputPath}`);
   } catch (err) {
