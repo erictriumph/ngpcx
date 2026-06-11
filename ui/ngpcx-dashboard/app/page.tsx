@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 
 export default function Dashboard() {
-  // Load scan-results.json from /data
   const filePath = path.join(process.cwd(), "data", "scan-results.json");
   let results: any = null;
 
@@ -24,15 +23,26 @@ export default function Dashboard() {
     );
   }
 
-  const { readinessScore, apps } = results;
+  // Your JSON structure:
+  // { native: [...], emulated: [...], unsupported: [...] }
+  const native = results.native ?? [];
+  const emulated = results.emulated ?? [];
+  const unsupported = results.unsupported ?? [];
+
+  // Merge into one list with a supportLevel field
+  const apps = [
+    ...native.map((a: any) => ({ ...a, supportLevel: "native" })),
+    ...emulated.map((a: any) => ({ ...a, supportLevel: "emulated" })),
+    ...unsupported.map((a: any) => ({ ...a, supportLevel: "unsupported" })),
+  ];
 
   return (
     <div className="p-8 space-y-6">
       <h1 className="text-3xl font-bold">NGPCX Readiness Dashboard</h1>
 
       <div className="text-xl">
-        <span className="font-semibold">Readiness Score:</span>{" "}
-        <span className="text-blue-600">{readinessScore}/100</span>
+        <span className="font-semibold">Total Apps:</span>{" "}
+        <span className="text-blue-600">{apps.length}</span>
       </div>
 
       <div className="border rounded-lg overflow-hidden">
@@ -46,23 +56,23 @@ export default function Dashboard() {
             </tr>
           </thead>
           <tbody>
-            {apps.map((app: any) => (
-              <tr key={app.exePath} className="border-t">
+            {apps.map((app: any, i: number) => (
+              <tr key={i} className="border-t">
                 <td className="p-3">{app.name}</td>
-                <td className="p-3 text-gray-600">{app.exePath}</td>
+                <td className="p-3 text-gray-600">{app.exePath ?? "N/A"}</td>
                 <td className="p-3">{app.arch}</td>
                 <td className="p-3">
                   <span
                     className={
                       "px-2 py-1 rounded text-white " +
-                      (app.match?.armSupportLevel === "native"
+                      (app.supportLevel === "native"
                         ? "bg-green-600"
-                        : app.match?.armSupportLevel === "emulated"
+                        : app.supportLevel === "emulated"
                         ? "bg-yellow-600"
                         : "bg-red-600")
                     }
                   >
-                    {app.match?.armSupportLevel ?? "unknown"}
+                    {app.supportLevel}
                   </span>
                 </td>
               </tr>
