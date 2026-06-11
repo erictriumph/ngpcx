@@ -15,13 +15,6 @@ async function getDevices() {
   return res.json();
 }
 
-// Simple brand → logo mapping
-const brandLogos: Record<string, string> = {
-  Dell: "https://upload.wikimedia.org/wikipedia/commons/4/48/Dell_Logo.svg",
-  Apple: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
-  ASUS: "https://upload.wikimedia.org/wikipedia/commons/2/2e/ASUS_Logo.svg"
-};
-
 export default function Home() {
   const [devices, setDevices] = useState([]);
   const [dark, setDark] = useState(false);
@@ -57,7 +50,6 @@ export default function Home() {
         }}
       >
         <Logo dark={dark} />
-
 
         <button
           onClick={() => setDark(!dark)}
@@ -105,8 +97,7 @@ export default function Home() {
         >
           NGPCX evaluates whether today’s laptops and desktops are ready for the
           next generation of PC standards — AI‑accelerated workloads, new CPU/GPU
-          architectures, and emerging compatibility requirements. Make confident
-          hardware decisions with clarity, not guesswork.
+          architectures, and emerging compatibility requirements.
         </p>
       </section>
 
@@ -135,17 +126,6 @@ export default function Home() {
               transition: "all 0.3s ease"
             }}
           >
-            {/* LOGO */}
-            <img
-              src={brandLogos[d.brand] || ""}
-              alt={d.brand}
-              style={{
-                height: "32px",
-                marginBottom: "0.75rem",
-                filter: dark ? "invert(1)" : "none"
-              }}
-            />
-
             <h2
               style={{
                 margin: "0 0 0.5rem 0",
@@ -196,19 +176,7 @@ export default function Home() {
           </div>
         ))}
       </section>
-
-      {/* FOOTER */}
-      <footer
-        style={{
-          textAlign: "center",
-          opacity: 0.6,
-          fontSize: "0.9rem",
-          paddingBottom: "2rem"
-        }}
-      >
-        NGPCX — Helping you make smarter hardware decisions in a rapidly
-        evolving PC landscape.
-      </footer>
     </div>
   );
 }
+
