@@ -5,6 +5,7 @@ export const metadata = {
   description: "Next‑Gen PC Compatibility Explorer",
   icons: {
     icon: "/favicon.svg"
+  }
 };
 
 export default function RootLayout({ children }) {
