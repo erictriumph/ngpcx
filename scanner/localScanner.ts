@@ -145,19 +145,48 @@ function loadCompatibilityDB(): ScraperResult[] {
 }
 
 function matchAppToDB(app: InstalledApp, db: ScraperResult[]): ScraperResult | undefined {
-  const lower = app.name.toLowerCase();
+  const lowerName = app.name.toLowerCase();
+  const exeName = app.exePath ? path.basename(app.exePath).toLowerCase() : null;
 
-  return db.find(entry => {
-    const id = entry.id ?? entry.appId ?? "";
-    const name = entry.name ?? "";
+  for (const entry of db) {
+    const entryName = entry.name?.toLowerCase() ?? "";
+    const entryId = entry.id?.toLowerCase() ?? "";
 
-    return (
-      id.toLowerCase().includes(lower) ||
-      name.toLowerCase().includes(lower) ||
-      lower.includes(name.toLowerCase())
-    );
-  });
+    //
+    // 1. EXE name match (highest confidence)
+    //
+    if (exeName && entry.exeNames?.some(e => e.toLowerCase() === exeName)) {
+      return entry;
+    }
+
+    //
+    // 2. matchNames[] fuzzy match
+    //
+    if (entry.matchNames?.some(m => lowerName.includes(m.toLowerCase()))) {
+      return entry;
+    }
+
+    //
+    // 3. Winget / package ID match
+    //
+    if (entryId && (lowerName.includes(entryId) || entryId.includes(lowerName))) {
+      return entry;
+    }
+
+    //
+    // 4. Name similarity fallback
+    //
+    if (
+      entryName &&
+      (lowerName.includes(entryName) || entryName.includes(lowerName))
+    ) {
+      return entry;
+    }
+  }
+
+  return undefined;
 }
+
 
 //
 // ─────────────────────────────────────────────────────────────
