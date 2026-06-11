@@ -1,0 +1,11 @@
+/* Global reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Smooth font rendering */
+html, body {
+  font-family: system-ui, sans-serif;
+}
