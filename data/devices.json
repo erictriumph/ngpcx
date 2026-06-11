@@ -1,0 +1,41 @@
+[
+  {
+    "id": "xps-13-2024",
+    "brand": "Dell",
+    "model": "XPS 13 (2024)",
+    "cpu": "Intel Core Ultra 7 155H",
+    "gpu": "Intel Arc",
+    "ram": "32GB",
+    "storage": "1TB SSD",
+    "compatibility": {
+      "nextGenReady": true,
+      "notes": "Fully compatible with next‑generation PC standards."
+    }
+  },
+  {
+    "id": "macbook-air-m3",
+    "brand": "Apple",
+    "model": "MacBook Air (M3)",
+    "cpu": "Apple M3",
+    "gpu": "Integrated",
+    "ram": "16GB",
+    "storage": "512GB SSD",
+    "compatibility": {
+      "nextGenReady": false,
+      "notes": "Not compatible with next‑generation PC standards due to architecture differences."
+    }
+  },
+  {
+    "id": "rog-zephyrus-2024",
+    "brand": "ASUS",
+    "model": "ROG Zephyrus G16 (2024)",
+    "cpu": "Intel Core Ultra 9 185H",
+    "gpu": "NVIDIA RTX 4070",
+    "ram": "32GB",
+    "storage": "1TB SSD",
+    "compatibility": {
+      "nextGenReady": true,
+      "notes": "High‑end GPU and CPU meet all next‑gen requirements."
+    }
+  }
+]
