@@ -6,6 +6,11 @@ import path from "path";
 import { execSync } from "child_process";
 import { ScraperResult } from "../scrapers/BaseScraper";
 import { renderStage, endStage } from "./progress";
+import {
+  loadExeIndex,
+  buildExeIndex,
+  ExeIndex
+} from "./exeIndexer";
 
 const DB_PATH = path.join(process.cwd(), "data", "compatibility.json");
 const CONCURRENCY = 4;
@@ -19,6 +24,53 @@ export interface InstalledApp {
   drivers?: string[];
   appScore?: number;
 }
+
+//
+// ─────────────────────────────────────────────────────────────
+//   EXE INDEX LOADING
+// ─────────────────────────────────────────────────────────────
+//
+
+let exeIndex: ExeIndex | null = null;
+
+export function ensureExeIndex(force = false) {
+  if (force) {
+    exeIndex = buildExeIndex();
+    return;
+  }
+
+  exeIndex = loadExeIndex();
+  if (!exeIndex) exeIndex = buildExeIndex();
+}
+
+function findExeForApp(appName: string): string | null {
+  if (!exeIndex) return null;
+
+  const lower = appName.toLowerCase();
+
+  // Try exact exe name match
+  for (const exeName of Object.keys(exeIndex)) {
+    if (exeName.includes(lower)) {
+      return exeIndex[exeName][0];
+    }
+  }
+
+  // Try fuzzy match (Chrome → chrome.exe)
+  for (const exeName of Object.keys(exeIndex)) {
+    const base = exeName.replace(".exe", "");
+    if (lower.includes(base)) {
+      return exeIndex[exeName][0];
+    }
+  }
+
+  return null;
+}
+
+//
+// ─────────────────────────────────────────────────────────────
+//   INSTALLED APPS ENUMERATION
+// ─────────────────────────────────────────────────────────────
+//
 
 function getInstalledApps(): InstalledApp[] {
   let output = "";
@@ -50,28 +102,11 @@ function getInstalledApps(): InstalledApp[] {
   return apps;
 }
 
-function findExeForApp(appName: string): string | null {
-  const searchDirs = [
-    process.env["ProgramFiles"],
-    process.env["ProgramFiles(x86)"],
-    process.env["LocalAppData"]
-  ].filter(Boolean) as string[];
-
-  for (const dir of searchDirs) {
-    try {
-      const matches = execSync(
-        `powershell -Command "Get-ChildItem -Recurse -Force -ErrorAction SilentlyContinue -Filter *.exe -Path '${dir}' | Where-Object { $_.Name -like '*${appName}*' } | Select-Object -First 1 -ExpandProperty FullName"`,
-        { encoding: "utf8" }
-      ).trim();
-
-      if (matches) return matches;
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-}
+//
+// ─────────────────────────────────────────────────────────────
+//   ARCHITECTURE DETECTION
+// ─────────────────────────────────────────────────────────────
+//
 
 function detectBinaryArchitecture(filePath: string): "x86" | "x64" | "arm64" | "unknown" {
   try {
@@ -98,6 +133,12 @@ function detectBinaryArchitecture(filePath: string): "x86" | "x64" | "arm64" | "
   }
 }
 
+//
+// ─────────────────────────────────────────────────────────────
+//   COMPATIBILITY DB
+// ─────────────────────────────────────────────────────────────
+//
+
 function loadCompatibilityDB(): ScraperResult[] {
   if (!fs.existsSync(DB_PATH)) return [];
   return JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
@@ -118,6 +159,12 @@ function matchAppToDB(app: InstalledApp, db: ScraperResult[]): ScraperResult | u
   });
 }
 
+//
+// ─────────────────────────────────────────────────────────────
+//   PER‑APP PROCESSING
+// ─────────────────────────────────────────────────────────────
+//
+
 async function processApp(app: InstalledApp, db: ScraperResult[]) {
   const exe = findExeForApp(app.name);
   if (exe) {
@@ -128,6 +175,12 @@ async function processApp(app: InstalledApp, db: ScraperResult[]) {
   app.matchedEntry = matchAppToDB(app, db);
 }
 
+//
+// ─────────────────────────────────────────────────────────────
+//   MAIN SCANNER
+// ─────────────────────────────────────────────────────────────
+//
+
 export async function runLocalScanner() {
   console.log("=== NGPCX Local Scanner (x86-hosted ARM readiness) ===");
 
@@ -136,19 +189,32 @@ export async function runLocalScanner() {
     return [];
   }
 
+  //
+  // Load or build EXE index
+  //
+  ensureExeIndex(process.argv.includes("--force"));
+
+  //
+  // Enumerate installed apps
+  //
   renderStage("Enumerating installed apps", 0, 1);
   const installed = getInstalledApps();
   renderStage("Enumerating installed apps", 1, 1, `${installed.length} apps`);
   endStage();
 
+  //
+  // Load compatibility DB
+  //
   const db = loadCompatibilityDB();
   console.log(`Loaded ${db.length} ARM compatibility entries`);
 
+  //
+  // Parallel scanning
+  //
   const total = installed.length;
   let index = 0;
 
   const queue = [...installed];
-
   const workers: Promise<void>[] = [];
 
   for (let i = 0; i < CONCURRENCY; i++) {

@@ -3,33 +3,41 @@
 import { runLocalScanner } from "./localScanner";
 import { enrichWithStoreArch } from "./storeScanner";
 import { enrichWithDrivers } from "./driverScanner";
-import { generateReadinessReport, printReadinessReport } from "./report";
+import {
+  generateReadinessReport,
+  printReadinessReport
+} from "./report";
+import { ensureExeIndex } from "./localScanner";
 
 async function main() {
+  console.log("=== NGPCX Scanner ===");
+
+  //
+  // Warm or rebuild EXE index
+  //
+  const force = process.argv.includes("--force");
+  ensureExeIndex(force);
+
+  //
+  // Local EXE + architecture scan
+  //
   const apps = await runLocalScanner();
 
+  //
+  // Store MSIX ARM64 detection
+  //
   enrichWithStoreArch(apps);
+
+  //
+  // Driver compatibility detection
+  //
   enrichWithDrivers(apps);
 
+  //
+  // ARM readiness scoring + report
+  //
   const report = generateReadinessReport(apps);
   printReadinessReport(report);
-
-  console.log("\n=== ARM Readiness Report ===");
-
-  console.log("\nNative ARM64 available:");
-  report.native.forEach(a => console.log(" -", a.name));
-
-  console.log("\nRuns under x64 emulation:");
-  report.emulated.forEach(a => console.log(" -", a.name));
-
-  console.log("\nx86-only (slowest):");
-  report.x86only.forEach(a => console.log(" -", a.name));
-
-  console.log("\nKnown incompatible:");
-  report.incompatible.forEach(a => console.log(" -", a.name));
-
-  console.log("\nUnknown / not in database:");
-  report.unknown.forEach(a => console.log(" -", a.name));
 }
 
 main();
