@@ -9,11 +9,12 @@ async function runAllScrapers() {
   ];
 
   for (const scraper of scrapers) {
+    console.log(`\n=== Running ${scraper.name} ===`);
     const results = await scraper.run();
     await mergeIntoDatabase(results);
   }
 
-  console.log("All scrapers completed.");
+  console.log("\nAll scrapers completed.");
 }
 
 runAllScrapers();
