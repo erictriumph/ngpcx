@@ -40,6 +40,8 @@ async function main() {
   //
   const report = generateReadinessReport(apps);
   printReadinessReport(report);
+
+  writeJsonOutput(report);
 }
 
 function writeJsonOutput(results: any) {
