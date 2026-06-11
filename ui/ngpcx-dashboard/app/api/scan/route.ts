@@ -3,7 +3,7 @@ import path from "path";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const filePath = path.join(process.cwd(), "data", "scan-results.json");
+  const filePath = path.join(process.cwd(), "..", "..", "data", "scan-results.json");
 
   try {
     const json = fs.readFileSync(filePath, "utf8");
