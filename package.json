@@ -15,4 +15,7 @@
     "@types/react": "18.2.0",
     "@types/node": "20.11.30"
   }
+  "scripts": {
+    "scrape": "ts-node scrapers/run.ts"
+  }
 }
