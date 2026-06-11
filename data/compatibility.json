@@ -1,1 +1,5551 @@
-[]
+[
+  {
+    "appId": "com.adobe.photoshop",
+    "name": "Adobe Photoshop",
+    "publisher": "Adobe",
+    "categories": [
+      "Creative",
+      "Photo Editing"
+    ],
+    "armSupport": {
+      "native": true,
+      "emulation": true,
+      "rosetta": false,
+      "notes": "Native ARM64 build available as of v25.0"
+    },
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "supported",
+      "issues": [],
+      "workarounds": []
+    },
+    "verification": {
+      "source": "vendor",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:19.240Z"
+    },
+    "id": "com.adobe.photoshop"
+  },
+  {
+    "appId": "com.adobe.premiere",
+    "name": "Adobe Premiere Pro",
+    "publisher": "Adobe",
+    "categories": [
+      "Creative",
+      "Video Editing"
+    ],
+    "armSupport": {
+      "native": false,
+      "emulation": true,
+      "rosetta": false,
+      "notes": "Runs under emulation but slower"
+    },
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "partial",
+      "issues": [
+        "Reduced performance under emulation"
+      ],
+      "workarounds": [
+        "Use proxy media"
+      ]
+    },
+    "verification": {
+      "source": "vendor",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:19.240Z"
+    },
+    "id": "com.adobe.premiere"
+  },
+  {
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "verification": {
+      "source": "winget-pkgs-fallback",
+      "confidence": 0.9,
+      "lastChecked": "2026-06-11T15:22:41.493Z"
+    }
+  },
+  {
+    "id": "0-don.clippy",
+    "name": "0-don.clippy",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.476Z"
+    }
+  },
+  {
+    "id": "0state.scafld",
+    "name": "0state.scafld",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "1357310795.TboxWebdav",
+    "name": "1357310795.TboxWebdav",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "15722UsefulApp.PortForCommandPalette",
+    "name": "15722UsefulApp.PortForCommandPalette",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "2dust.v2rayN",
+    "name": "2dust.v2rayN",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "7zip.7zip",
+    "name": "7zip.7zip",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "99designs.aws-vault",
+    "name": "99designs.aws-vault",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "ACS.CCIDPCSCDriver",
+    "name": "ACS.CCIDPCSCDriver",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AI-Shifu.ChatALL",
+    "name": "AI-Shifu.ChatALL",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AIDotNet.OpenCowork",
+    "name": "AIDotNet.OpenCowork",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AList.AList",
+    "name": "AList.AList",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AList.AListDesktop",
+    "name": "AList.AListDesktop",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AOMEI.PartitionAssistant.ARM64",
+    "name": "AOMEI.PartitionAssistant.ARM64",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AQBot.AQBot",
+    "name": "AQBot.AQBot",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "ART.ART",
+    "name": "ART.ART",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AVRDudes.AVRDUDE",
+    "name": "AVRDudes.AVRDUDE",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AdGuard.AdGuardDNSCLI",
+    "name": "AdGuard.AdGuardDNSCLI",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AdGuard.AdGuardHome",
+    "name": "AdGuard.AdGuardHome",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AdGuard.AdGuardHome.Beta",
+    "name": "AdGuard.AdGuardHome.Beta",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AdGuard.dnsproxy",
+    "name": "AdGuard.dnsproxy",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AdamGell.CMTraceOpen",
+    "name": "AdamGell.CMTraceOpen",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "Adobe.DNGConverter",
+    "name": "Adobe.DNGConverter",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AgentClash.AgentClash",
+    "name": "AgentClash.AgentClash",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AgileBits.1Password",
+    "name": "AgileBits.1Password",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "Ahoy.Ahoy",
+    "name": "Ahoy.Ahoy",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AivarAnnamaa.Thonny",
+    "name": "AivarAnnamaa.Thonny",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "Akaere.whois",
+    "name": "Akaere.whois",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "Aldaviva.AuthenticatorChooser",
+    "name": "Aldaviva.AuthenticatorChooser",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "Aldaviva.AuthenticatorChooser.Prerelease",
+    "name": "Aldaviva.AuthenticatorChooser.Prerelease",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "Alex313031.Thorium",
+    "name": "Alex313031.Thorium",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AlexanderBrandt.AIConsumptionTracker",
+    "name": "AlexanderBrandt.AIConsumptionTracker",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "Alibaba.DingTalkWorkspaceCLI",
+    "name": "Alibaba.DingTalkWorkspaceCLI",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AlperHan.CrossMacro",
+    "name": "AlperHan.CrossMacro",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AlvinAshcraft.HeartIt",
+    "name": "AlvinAshcraft.HeartIt",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AmN.YASBGUI",
+    "name": "AmN.YASBGUI",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "AmN.yasb",
+    "name": "AmN.yasb",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "Amazon.AWSVPNClient",
+    "name": "Amazon.AWSVPNClient",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.477Z"
+    }
+  },
+  {
+    "id": "Amebis.ALicPos",
+    "name": "Amebis.ALicPos",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.478Z"
+    }
+  },
+  {
+    "id": "Amebis.Besana",
+    "name": "Amebis.Besana",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.478Z"
+    }
+  },
+  {
+    "id": "AnInsomniacy.MotrixNext",
+    "name": "AnInsomniacy.MotrixNext",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.478Z"
+    }
+  },
+  {
+    "id": "AnalyseDeCircuit.OxideTerm",
+    "name": "AnalyseDeCircuit.OxideTerm",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.478Z"
+    }
+  },
+  {
+    "id": "Anchore.Syft",
+    "name": "Anchore.Syft",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.478Z"
+    }
+  },
+  {
+    "id": "AndVl1.gw",
+    "name": "AndVl1.gw",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.478Z"
+    }
+  },
+  {
+    "id": "Andromeda.Andromeda",
+    "name": "Andromeda.Andromeda",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.478Z"
+    }
+  },
+  {
+    "id": "Anthropic.Claude",
+    "name": "Anthropic.Claude",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.478Z"
+    }
+  },
+  {
+    "id": "Anthropic.ClaudeCode",
+    "name": "Anthropic.ClaudeCode",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "AntimatterStudios.ext4-win-driver",
+    "name": "AntimatterStudios.ext4-win-driver",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Anysphere.Cursor",
+    "name": "Anysphere.Cursor",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "AppByTroye.KoodoReader",
+    "name": "AppByTroye.KoodoReader",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "AppLocate.AppLocate",
+    "name": "AppLocate.AppLocate",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "AppWork.JDownloader",
+    "name": "AppWork.JDownloader",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "AppiumDevelopers.AppiumInspector",
+    "name": "AppiumDevelopers.AppiumInspector",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Aptivi.BassBoom",
+    "name": "Aptivi.BassBoom",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Aptivi.Nitrocid.0.1.0.x",
+    "name": "Aptivi.Nitrocid.0.1.0.x",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Aptivi.Nitrocid.0.2.0.x",
+    "name": "Aptivi.Nitrocid.0.2.0.x",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Archeb.OpenTrace",
+    "name": "Archeb.OpenTrace",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.DataShredder",
+    "name": "Argente.DataShredder",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.DriveCleaner",
+    "name": "Argente.DriveCleaner",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.DuplicateFinder",
+    "name": "Argente.DuplicateFinder",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.MalwareCleaner",
+    "name": "Argente.MalwareCleaner",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.RegistryCleaner",
+    "name": "Argente.RegistryCleaner",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.SoftwareUpdater",
+    "name": "Argente.SoftwareUpdater",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.StartupManager",
+    "name": "Argente.StartupManager",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.SystemManager",
+    "name": "Argente.SystemManager",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.SystemRepair",
+    "name": "Argente.SystemRepair",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.UninstallManager",
+    "name": "Argente.UninstallManager",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Argente.Utilities",
+    "name": "Argente.Utilities",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "ArkaneSystems.MouseJiggler",
+    "name": "ArkaneSystems.MouseJiggler",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Arm.ArmPerformanceLibraries",
+    "name": "Arm.ArmPerformanceLibraries",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Arm.WindowsPerf",
+    "name": "Arm.WindowsPerf",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Arm.WindowsPerf.Beta",
+    "name": "Arm.WindowsPerf.Beta",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "ArminOsaj.AutoDarkMode",
+    "name": "ArminOsaj.AutoDarkMode",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Arnau478.hevi",
+    "name": "Arnau478.hevi",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "AssetRipper.AssetRipper",
+    "name": "AssetRipper.AssetRipper",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "AstrBot.AstrBotLauncher",
+    "name": "AstrBot.AstrBotLauncher",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Atlassian.AtlassianCLI",
+    "name": "Atlassian.AtlassianCLI",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Audacity.Audacity",
+    "name": "Audacity.Audacity",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "AuthorMore.PenpotDesktop",
+    "name": "AuthorMore.PenpotDesktop",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Avanquestpdfforge.PDFCreator-Free",
+    "name": "Avanquestpdfforge.PDFCreator-Free",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Avanquestpdfforge.PDFCreator-Professional",
+    "name": "Avanquestpdfforge.PDFCreator-Professional",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Avanquestpdfforge.PDFCreator-Server",
+    "name": "Avanquestpdfforge.PDFCreator-Server",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Avanquestpdfforge.PDFCreator-Terminal-Server",
+    "name": "Avanquestpdfforge.PDFCreator-Terminal-Server",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Avatar.avtr",
+    "name": "Avatar.avtr",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "AviSynth.AviSynthPlus",
+    "name": "AviSynth.AviSynthPlus",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Axosoft.GitKraken",
+    "name": "Axosoft.GitKraken",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "AyoubTadlaoui.logx",
+    "name": "AyoubTadlaoui.logx",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Azul.Zulu.16.JDK",
+    "name": "Azul.Zulu.16.JDK",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Azul.Zulu.16.JRE",
+    "name": "Azul.Zulu.16.JRE",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "Azuyamat.Pace",
+    "name": "Azuyamat.Pace",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "a9gent.MindFS",
+    "name": "a9gent.MindFS",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "abbodi1406.vcredist",
+    "name": "abbodi1406.vcredist",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "abhimanyu003.pttr",
+    "name": "abhimanyu003.pttr",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "abhimanyu003.sttr",
+    "name": "abhimanyu003.sttr",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "adryledo.ArcaCLI",
+    "name": "adryledo.ArcaCLI",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "advaith.CurrencyConverterCommandPalette",
+    "name": "advaith.CurrencyConverterCommandPalette",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "advaith.CurrencyConverterPowerToys",
+    "name": "advaith.CurrencyConverterPowerToys",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "agentteamland.atl",
+    "name": "agentteamland.atl",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "ahmetb.kubectx",
+    "name": "ahmetb.kubectx",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "ahmetb.kubens",
+    "name": "ahmetb.kubens",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "aimotrens.impulsar",
+    "name": "aimotrens.impulsar",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "ajeetdsouza.zoxide",
+    "name": "ajeetdsouza.zoxide",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "allentown521.Saladict",
+    "name": "allentown521.Saladict",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "altfins.af",
+    "name": "altfins.af",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "amir1376.ABDownloadManager",
+    "name": "amir1376.ABDownloadManager",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.479Z"
+    }
+  },
+  {
+    "id": "anatawa12.vrc-get",
+    "name": "anatawa12.vrc-get",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "antonmedv.walk",
+    "name": "antonmedv.walk",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "anwather.ncw",
+    "name": "anwather.ncw",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "apernet.Hysteria",
+    "name": "apernet.Hysteria",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "appmakes.Rai",
+    "name": "appmakes.Rai",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "appmakes.Typora",
+    "name": "appmakes.Typora",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "aquaproj.aqua",
+    "name": "aquaproj.aqua",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "archisman-panigrahi.QuickBib",
+    "name": "archisman-panigrahi.QuickBib",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "ares-emulator.ares",
+    "name": "ares-emulator.ares",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "armbian.imager",
+    "name": "armbian.imager",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "astral-sh.ruff",
+    "name": "astral-sh.ruff",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "astral-sh.ty",
+    "name": "astral-sh.ty",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "astral-sh.uv",
+    "name": "astral-sh.uv",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "atani.mysh",
+    "name": "atani.mysh",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.480Z"
+    }
+  },
+  {
+    "id": "awakecoding.mcp-proxy-tool",
+    "name": "awakecoding.mcp-proxy-tool",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "axllent.mailpit",
+    "name": "axllent.mailpit",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "ayangweb.BongoCat",
+    "name": "ayangweb.BongoCat",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "ayoisaiah.focus",
+    "name": "ayoisaiah.focus",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "aziontech.azion",
+    "name": "aziontech.azion",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "B3log.SiYuan",
+    "name": "B3log.SiYuan",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "B4CK.B4CK",
+    "name": "B4CK.B4CK",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "Bahaaio.pomo",
+    "name": "Bahaaio.pomo",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "Baidu.BaiduPinyin",
+    "name": "Baidu.BaiduPinyin",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BaileyBrown.cppcryptfs",
+    "name": "BaileyBrown.cppcryptfs",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BalanceBalls.Nekot",
+    "name": "BalanceBalls.Nekot",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BaldBeardedBuilder.WeatherforCommandPalette",
+    "name": "BaldBeardedBuilder.WeatherforCommandPalette",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "Bandisoft.BandiView",
+    "name": "Bandisoft.BandiView",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "Bandisoft.Bandizip",
+    "name": "Bandisoft.Bandizip",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "Baulk.Baulk",
+    "name": "Baulk.Baulk",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "Bazel.Bazel",
+    "name": "Bazel.Bazel",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "Bazel.Bazelisk",
+    "name": "Bazel.Bazelisk",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.11",
+    "name": "BellSoft.LibericaJDK.11",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.11.Full",
+    "name": "BellSoft.LibericaJDK.11.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.11.Lite",
+    "name": "BellSoft.LibericaJDK.11.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.16.Lite",
+    "name": "BellSoft.LibericaJDK.16.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.17",
+    "name": "BellSoft.LibericaJDK.17",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.17.Full",
+    "name": "BellSoft.LibericaJDK.17.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.17.Lite",
+    "name": "BellSoft.LibericaJDK.17.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.18",
+    "name": "BellSoft.LibericaJDK.18",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.18.Full",
+    "name": "BellSoft.LibericaJDK.18.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.18.Lite",
+    "name": "BellSoft.LibericaJDK.18.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.19",
+    "name": "BellSoft.LibericaJDK.19",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.19.Full",
+    "name": "BellSoft.LibericaJDK.19.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.19.Lite",
+    "name": "BellSoft.LibericaJDK.19.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.20",
+    "name": "BellSoft.LibericaJDK.20",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.20.Full",
+    "name": "BellSoft.LibericaJDK.20.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.20.Lite",
+    "name": "BellSoft.LibericaJDK.20.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.21",
+    "name": "BellSoft.LibericaJDK.21",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.21.Full",
+    "name": "BellSoft.LibericaJDK.21.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.21.Lite",
+    "name": "BellSoft.LibericaJDK.21.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.22",
+    "name": "BellSoft.LibericaJDK.22",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.22.Full",
+    "name": "BellSoft.LibericaJDK.22.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.22.Lite",
+    "name": "BellSoft.LibericaJDK.22.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.23",
+    "name": "BellSoft.LibericaJDK.23",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.23.Full",
+    "name": "BellSoft.LibericaJDK.23.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.23.Lite",
+    "name": "BellSoft.LibericaJDK.23.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.24",
+    "name": "BellSoft.LibericaJDK.24",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.24.Full",
+    "name": "BellSoft.LibericaJDK.24.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.24.Lite",
+    "name": "BellSoft.LibericaJDK.24.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.25",
+    "name": "BellSoft.LibericaJDK.25",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.25.Full",
+    "name": "BellSoft.LibericaJDK.25.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.25.Lite",
+    "name": "BellSoft.LibericaJDK.25.Lite",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.26",
+    "name": "BellSoft.LibericaJDK.26",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJDK.26.Full",
+    "name": "BellSoft.LibericaJDK.26.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.11",
+    "name": "BellSoft.LibericaJRE.11",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.11.Full",
+    "name": "BellSoft.LibericaJRE.11.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.16",
+    "name": "BellSoft.LibericaJRE.16",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.16.Full",
+    "name": "BellSoft.LibericaJRE.16.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.17",
+    "name": "BellSoft.LibericaJRE.17",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.17.Full",
+    "name": "BellSoft.LibericaJRE.17.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.18",
+    "name": "BellSoft.LibericaJRE.18",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.18.Full",
+    "name": "BellSoft.LibericaJRE.18.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.19",
+    "name": "BellSoft.LibericaJRE.19",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.19.Full",
+    "name": "BellSoft.LibericaJRE.19.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.20",
+    "name": "BellSoft.LibericaJRE.20",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.20.Full",
+    "name": "BellSoft.LibericaJRE.20.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.21",
+    "name": "BellSoft.LibericaJRE.21",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.21.Full",
+    "name": "BellSoft.LibericaJRE.21.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.22",
+    "name": "BellSoft.LibericaJRE.22",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.22.Full",
+    "name": "BellSoft.LibericaJRE.22.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.23",
+    "name": "BellSoft.LibericaJRE.23",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.23.Full",
+    "name": "BellSoft.LibericaJRE.23.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.24",
+    "name": "BellSoft.LibericaJRE.24",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.24.Full",
+    "name": "BellSoft.LibericaJRE.24.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.25",
+    "name": "BellSoft.LibericaJRE.25",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BellSoft.LibericaJRE.25.Full",
+    "name": "BellSoft.LibericaJRE.25.Full",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "Belphemur.ObsidianHeadless",
+    "name": "Belphemur.ObsidianHeadless",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BenBoyter.scc",
+    "name": "BenBoyter.scc",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "BepassOrg.OblivionDesktop",
+    "name": "BepassOrg.OblivionDesktop",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "Betterleaks.Betterleaks",
+    "name": "Betterleaks.Betterleaks",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  },
+  {
+    "id": "Bilibili.Bilibili",
+    "name": "Bilibili.Bilibili",
+    "publisher": null,
+    "categories": [],
+    "armSupport": "native",
+    "architectures": [
+      "arm64"
+    ],
+    "performance": {
+      "cpuImpact": "unknown",
+      "gpuImpact": "unknown",
+      "npuRequired": false,
+      "memoryImpact": "unknown"
+    },
+    "compatibility": {
+      "status": "unknown",
+      "issues": [],
+      "workarounds": []
+    },
+    "source": "winget-pkgs",
+    "notes": "ARM64 installer available",
+    "verification": {
+      "source": "winget-pkgs",
+      "confidence": 0.95,
+      "lastChecked": "2026-06-11T16:37:24.481Z"
+    }
+  }
+]

@@ -1,3 +1,5 @@
+// scrapers/merge.ts
+
 import fs from "fs";
 import path from "path";
 import { ScraperResult } from "./BaseScraper";
@@ -14,20 +16,30 @@ export async function mergeIntoDatabase(results: ScraperResult[]) {
   }
 
   for (const entry of results) {
-    const index = db.findIndex(e => e.appId === entry.appId);
+    // Support both schemas:
+    // - Old scrapers: entry.appId
+    // - New scrapers: entry.id
+    const id = entry.appId ?? entry.id;
+
+    if (!id) {
+      console.warn("Skipping entry with missing ID:", entry);
+      continue;
+    }
+
+    const index = db.findIndex(e => (e.appId ?? e.id) === id);
 
     if (index === -1) {
       // New entry
-      db.push(entry);
-      console.log(`Added new entry: ${entry.appId}`);
+      db.push({ ...entry, id });
+      console.log(`Added new entry: ${id}`);
     } else {
-      // Merge fields (simple overwrite for now)
+      // Merge fields (simple overwrite)
       db[index] = {
         ...db[index],
         ...entry,
-        verification: entry.verification
+        id
       };
-      console.log(`Updated entry: ${entry.appId}`);
+      console.log(`Updated entry: ${id}`);
     }
   }
 

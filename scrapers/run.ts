@@ -1,11 +1,13 @@
 import { AdobeScraper } from "./vendors/AdobeScraper";
-import { GitHubArmScraper } from "./community/GitHubArmScraper";
+import { WingetArm64Scraper } from "./community/WingetArm64Scraper";
+// import { WingetArm64FallbackScraper } from "./community/WingetArm64FallbackScraper";
 import { mergeIntoDatabase } from "./merge";
 
 async function runAllScrapers() {
   const scrapers = [
     new AdobeScraper(),
-    new GitHubArmScraper()
+    new WingetArm64Scraper(),
+    // new WingetArm64FallbackScraper()
   ];
 
   for (const scraper of scrapers) {
