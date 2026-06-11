@@ -1,5 +1,5 @@
-import { AdobeScraper } from "./vendors/AdobeScraper.ts";
-import { GitHubArmScraper } from "./community/GitHubArmScraper.ts";
+import { AdobeScraper } from "./vendors/AdobeScraper";
+import { GitHubArmScraper } from "./community/GitHubArmScraper";
 import { mergeIntoDatabase } from "./merge";
 
 async function runAllScrapers() {
