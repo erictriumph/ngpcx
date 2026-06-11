@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/Logo";
 
 async function getDevices() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/devices`, {
@@ -55,9 +56,8 @@ export default function Home() {
           zIndex: 10
         }}
       >
-        <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-          NGPCX
-        </div>
+        <Logo dark={dark} />
+
 
         <button
           onClick={() => setDark(!dark)}
