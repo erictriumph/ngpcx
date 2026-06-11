@@ -1,15 +1,34 @@
-import fs from "fs";
-import path from "path";
 import { NextResponse } from "next/server";
+import { exec } from "child_process";
+import path from "path";
 
-export async function GET() {
-  const filePath = path.join(process.cwd(), "..", "..", "data", "scan-results.json");
+export async function POST() {
+  return new Promise((resolve) => {
+    // Path to the scanner's run.ts file
+    const scannerPath = path.join(
+      process.cwd(),
+      "..",
+      "..",
+      "scanner",
+      "run.ts"
+    );
 
-  try {
-    const json = fs.readFileSync(filePath, "utf8");
-    const data = JSON.parse(json);
-    return NextResponse.json(data);
-  } catch (err) {
-    return NextResponse.json({ error: "Failed to load scan results" }, { status: 500 });
-  }
+    console.log("Running scanner at:", scannerPath);
+
+    // Execute the scanner using Node
+    exec(`node ${scannerPath}`, (error, stdout, stderr) => {
+      console.log(stdout);
+      console.error(stderr);
+
+      if (error) {
+        console.error("Scanner failed:", error);
+        resolve(
+          NextResponse.json({ ok: false, error: "Scanner failed" }, { status: 500 })
+        );
+        return;
+      }
+
+      resolve(NextResponse.json({ ok: true }));
+    });
+  });
 }

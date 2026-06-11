@@ -20,7 +20,7 @@ function DarkModeToggle() {
   return (
     <button
       onClick={() => document.documentElement.classList.toggle("dark")}
-      className="px-3 py-1 rounded-lg border bg-gray-100 dark:bg-gray-800 dark:text-gray-200"
+      className="px-3 py-1 rounded-lg border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 transition"
     >
       Toggle Dark
     </button>
@@ -28,15 +28,31 @@ function DarkModeToggle() {
 }
 
 // ----------------------
-// Readiness Gauge
+// Animated Gauge
 // ----------------------
 function ReadinessGauge({ score }: { score: number }) {
+  const [animatedScore, setAnimatedScore] = useState(0);
+
+  useEffect(() => {
+    let frame = 0;
+    const duration = 600;
+    const start = performance.now();
+
+    function animate(now: number) {
+      const progress = Math.min((now - start) / duration, 1);
+      setAnimatedScore(Math.round(progress * score));
+      if (progress < 1) requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  }, [score]);
+
   const radius = 45;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
+  const offset = circumference - (animatedScore / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center transition-all">
       <svg width="120" height="120">
         <circle
           cx="60"
@@ -57,23 +73,24 @@ function ReadinessGauge({ score }: { score: number }) {
           strokeDashoffset={offset}
           strokeLinecap="round"
           transform="rotate(-90 60 60)"
+          className="transition-all duration-300"
         />
       </svg>
-      <div className="text-3xl font-bold mt-2">{score}</div>
+      <div className="text-3xl font-bold mt-2">{animatedScore}</div>
       <div className="text-gray-500 text-sm">Readiness Score</div>
     </div>
   );
 }
 
 // ----------------------
-// Per-App Detail Drawer
+// Drawer Component
 // ----------------------
 function AppDetails({ app, onClose }: any) {
   if (!app) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-end z-50">
-      <div className="w-96 bg-white dark:bg-gray-900 p-6 shadow-xl h-full overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-end z-50 transition-opacity animate-fadeIn">
+      <div className="w-96 bg-white dark:bg-gray-900 p-6 shadow-xl h-full overflow-y-auto transform transition-transform duration-300 translate-x-0">
         <button
           className="mb-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
           onClick={onClose}
@@ -107,19 +124,31 @@ function AppDetails({ app, onClose }: any) {
 export default function Dashboard() {
   const [results, setResults] = useState<any>(null);
   const [selectedApp, setSelectedApp] = useState(null);
+  const [scanning, setScanning] = useState(false);
 
-  // Fetch scan results from API route
+  // Fetch scan results
+  async function loadResults() {
+    const res = await fetch("/api/scan");
+    const data = await res.json();
+    setResults(data);
+  }
+
   useEffect(() => {
-    fetch("/api/scan")
-      .then((res) => res.json())
-      .then((data) => setResults(data))
-      .catch(() => setResults({ error: true }));
+    loadResults();
   }, []);
+
+  // Run Scan Handler
+  async function runScan() {
+    setScanning(true);
+    await fetch("/api/run-scan", { method: "POST" });
+    await loadResults();
+    setScanning(false);
+  }
 
   // Loading state
   if (!results) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-600 dark:text-gray-300 p-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-600 dark:text-gray-300 p-10 animate-fadeIn">
         <div className="max-w-5xl mx-auto text-lg">Loading scan results…</div>
       </div>
     );
@@ -128,7 +157,7 @@ export default function Dashboard() {
   // Error state
   if (results.error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-red-600 p-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-red-600 p-10 animate-fadeIn">
         <div className="max-w-5xl mx-auto text-lg">
           Failed to load scan results.
         </div>
@@ -155,7 +184,17 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 animate-fadeIn">
+
+      {/* Scan Modal */}
+      {scanning && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+          <div className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-xl flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-lg font-medium">Running scan…</p>
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <header className="flex items-center justify-between px-6 py-4 border-b bg-white/70 dark:bg-gray-900/70 backdrop-blur">
@@ -163,7 +202,16 @@ export default function Dashboard() {
           <Logo />
           <span className="text-xl font-semibold">NGPCX</span>
         </div>
-        <DarkModeToggle />
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={runScan}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+          >
+            Run Scan
+          </button>
+          <DarkModeToggle />
+        </div>
       </header>
 
       {/* Main Content */}
@@ -184,7 +232,7 @@ export default function Dashboard() {
           ].map((card, i) => (
             <div
               key={i}
-              className="rounded-2xl border backdrop-blur bg-white/60 dark:bg-gray-900/60 shadow-sm p-6"
+              className="rounded-2xl border backdrop-blur bg-white/60 dark:bg-gray-900/60 shadow-sm p-6 transition-all hover:scale-[1.02]"
             >
               <h2 className="text-gray-500 dark:text-gray-400 text-sm font-medium">{card.label}</h2>
               <p className="text-4xl font-bold mt-2">{card.value}</p>
@@ -208,11 +256,11 @@ export default function Dashboard() {
                 <tr
                   key={i}
                   onClick={() => setSelectedApp(app)}
-                  className={`cursor-pointer border-b last:border-0 ${
+                  className={`cursor-pointer border-b last:border-0 transition-all hover:scale-[1.01] ${
                     i % 2 === 0
                       ? "bg-white/40 dark:bg-gray-800/40"
                       : "bg-white/20 dark:bg-gray-800/20"
-                  } hover:bg-white/60 dark:hover:bg-gray-700/60 transition`}
+                  } hover:bg-white/60 dark:hover:bg-gray-700/60`}
                 >
                   <td className="p-4 font-medium">{app.name}</td>
                   <td className="p-4 text-gray-500">{app.exePath ?? "N/A"}</td>
