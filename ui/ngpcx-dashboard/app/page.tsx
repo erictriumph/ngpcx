@@ -1,8 +1,6 @@
 "use client";
 
-import fs from "fs";
-import path from "path";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // ----------------------
 // Logo Component
@@ -107,24 +105,32 @@ function AppDetails({ app, onClose }: any) {
 // Main Dashboard Page
 // ----------------------
 export default function Dashboard() {
-  const filePath = path.join(process.cwd(), "data", "scan-results.json");
-  let results: any = null;
+  const [results, setResults] = useState<any>(null);
+  const [selectedApp, setSelectedApp] = useState(null);
 
-  try {
-    const json = fs.readFileSync(filePath, "utf8");
-    results = JSON.parse(json);
-  } catch (err) {
-    console.error("Failed to load scan-results.json:", err);
-  }
+  // Fetch scan results from API route
+  useEffect(() => {
+    fetch("/api/scan")
+      .then((res) => res.json())
+      .then((data) => setResults(data))
+      .catch(() => setResults({ error: true }));
+  }, []);
 
+  // Loading state
   if (!results) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 p-10">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-4xl font-bold tracking-tight">NGPCX Dashboard</h1>
-          <p className="mt-4 text-red-600 text-lg">
-            No scan results found. Run the scanner to generate scan-results.json.
-          </p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-600 dark:text-gray-300 p-10">
+        <div className="max-w-5xl mx-auto text-lg">Loading scan results…</div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (results.error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-red-600 p-10">
+        <div className="max-w-5xl mx-auto text-lg">
+          Failed to load scan results.
         </div>
       </div>
     );
@@ -147,8 +153,6 @@ export default function Dashboard() {
     emulated: "bg-yellow-600",
     unsupported: "bg-red-600",
   };
-
-  const [selectedApp, setSelectedApp] = useState(null);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
