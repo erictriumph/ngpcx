@@ -45,17 +45,19 @@ async function main() {
 }
 
 function writeJsonOutput(results: any) {
-  const outputPath = path.join(
-    __dirname,
-    "..",
-    "ui",
-    "ngpcx-dashboard",
-    "data",
-    "scan-results.json"
-  );
+  //
+  // FIXED: Write to project-root /data/scan-results.json
+  //
+  const outputDir = path.join(process.cwd(), "data");
+  const outputPath = path.join(outputDir, "scan-results.json");
 
   try {
-    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    // Ensure /data exists
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Write JSON
     fs.writeFileSync(outputPath, JSON.stringify(results, null, 2), "utf8");
     console.log(`✔ Scan results written to ${outputPath}`);
   } catch (err) {
