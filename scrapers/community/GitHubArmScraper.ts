@@ -1,5 +1,5 @@
 import { BaseScraper, ScraperResult } from "../BaseScraper";
-import fetch from "node-fetch";
+// no import needed — fetch is global in Node 18+
 
 interface GitHubAppEntry {
   appId: string;
