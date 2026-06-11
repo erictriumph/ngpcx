@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 async function getDevices() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/devices`, {
     cache: "no-store"
@@ -10,35 +14,84 @@ async function getDevices() {
   return res.json();
 }
 
-export default async function Home() {
-  const devices = await getDevices();
+// Simple brand → logo mapping
+const brandLogos: Record<string, string> = {
+  Dell: "https://upload.wikimedia.org/wikipedia/commons/4/48/Dell_Logo.svg",
+  Apple: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+  ASUS: "https://upload.wikimedia.org/wikipedia/commons/2/2e/ASUS_Logo.svg"
+};
+
+export default function Home() {
+  const [devices, setDevices] = useState([]);
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    getDevices().then(setDevices);
+  }, []);
 
   return (
-    <main
+    <div
       style={{
         fontFamily: "system-ui, sans-serif",
-        background: "linear-gradient(to bottom, #f8fafc, #eef2f7)",
+        background: dark
+          ? "linear-gradient(to bottom, #0f172a, #1e293b)"
+          : "linear-gradient(to bottom, #f8fafc, #eef2f7)",
+        color: dark ? "#f1f5f9" : "#111",
         minHeight: "100vh",
-        padding: "3rem 1.5rem"
+        transition: "all 0.3s ease"
       }}
     >
-      {/* HERO SECTION */}
+      {/* NAV BAR */}
+      <nav
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "1rem 2rem",
+          borderBottom: dark ? "1px solid #334155" : "1px solid #e2e8f0",
+          backdropFilter: "blur(8px)",
+          position: "sticky",
+          top: 0,
+          zIndex: 10
+        }}
+      >
+        <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
+          NGPCX
+        </div>
+
+        <button
+          onClick={() => setDark(!dark)}
+          style={{
+            padding: "0.5rem 1rem",
+            borderRadius: "8px",
+            border: "none",
+            cursor: "pointer",
+            background: dark ? "#334155" : "#e2e8f0",
+            color: dark ? "#f1f5f9" : "#111",
+            transition: "all 0.2s ease"
+          }}
+        >
+          {dark ? "☀️ Light Mode" : "🌙 Dark Mode"}
+        </button>
+      </nav>
+
+      {/* HERO */}
       <section
         style={{
           maxWidth: "900px",
-          margin: "0 auto 3rem auto",
-          textAlign: "center"
+          margin: "2.5rem auto 3rem auto",
+          textAlign: "center",
+          padding: "0 1rem"
         }}
       >
         <h1
           style={{
             fontSize: "3rem",
             fontWeight: 800,
-            marginBottom: "1rem",
-            color: "#111"
+            marginBottom: "1rem"
           }}
         >
-          NGPCX — Know Before You Buy
+          Know Before You Buy
         </h1>
 
         <p
@@ -50,10 +103,10 @@ export default async function Home() {
             lineHeight: 1.6
           }}
         >
-          NGPCX helps you understand whether today’s laptops and desktops are
-          ready for the next generation of PC standards — new architectures,
-          AI‑accelerated workloads, and emerging compatibility requirements.
-          Before you spend thousands on new hardware, NGPCX gives you clarity.
+          NGPCX evaluates whether today’s laptops and desktops are ready for the
+          next generation of PC standards — AI‑accelerated workloads, new CPU/GPU
+          architectures, and emerging compatibility requirements. Make confident
+          hardware decisions with clarity, not guesswork.
         </p>
       </section>
 
@@ -62,6 +115,7 @@ export default async function Home() {
         style={{
           maxWidth: "1000px",
           margin: "0 auto",
+          padding: "0 1rem 4rem 1rem",
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           gap: "1.75rem"
@@ -71,19 +125,32 @@ export default async function Home() {
           <div
             key={d.id}
             style={{
-              background: "#fff",
+              background: dark ? "#1e293b" : "#fff",
               borderRadius: "14px",
               padding: "1.5rem",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-              border: "1px solid #e5e7eb"
+              boxShadow: dark
+                ? "0 4px 12px rgba(0,0,0,0.4)"
+                : "0 4px 12px rgba(0,0,0,0.08)",
+              border: dark ? "1px solid #334155" : "1px solid #e5e7eb",
+              transition: "all 0.3s ease"
             }}
           >
+            {/* LOGO */}
+            <img
+              src={brandLogos[d.brand] || ""}
+              alt={d.brand}
+              style={{
+                height: "32px",
+                marginBottom: "0.75rem",
+                filter: dark ? "invert(1)" : "none"
+              }}
+            />
+
             <h2
               style={{
                 margin: "0 0 0.5rem 0",
                 fontSize: "1.35rem",
-                fontWeight: 700,
-                color: "#111"
+                fontWeight: 700
               }}
             >
               {d.brand} {d.model}
@@ -107,7 +174,7 @@ export default async function Home() {
                 background: d.compatibility.nextGenReady
                   ? "rgba(16, 185, 129, 0.15)"
                   : "rgba(239, 68, 68, 0.15)",
-                color: d.compatibility.nextGenReady ? "#059669" : "#dc2626",
+                color: d.compatibility.nextGenReady ? "#10b981" : "#ef4444",
                 fontWeight: 700,
                 display: "inline-block"
               }}
@@ -133,15 +200,15 @@ export default async function Home() {
       {/* FOOTER */}
       <footer
         style={{
-          marginTop: "4rem",
           textAlign: "center",
           opacity: 0.6,
-          fontSize: "0.9rem"
+          fontSize: "0.9rem",
+          paddingBottom: "2rem"
         }}
       >
         NGPCX — Helping you make smarter hardware decisions in a rapidly
-        changing PC landscape.
+        evolving PC landscape.
       </footer>
-    </main>
+    </div>
   );
 }
