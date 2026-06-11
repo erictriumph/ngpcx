@@ -1,10 +1,16 @@
 // /scanner/run.ts
 
 import { runLocalScanner } from "./localScanner";
+import { enrichWithStoreArch } from "./storeScanner";
+import { enrichWithDrivers } from "./driverScanner";
 import { generateReadinessReport, printReadinessReport } from "./report";
 
 async function main() {
   const apps = await runLocalScanner();
+
+  enrichWithStoreArch(apps);
+  enrichWithDrivers(apps);
+
   const report = generateReadinessReport(apps);
   printReadinessReport(report);
 

@@ -8,12 +8,16 @@ import { ScraperResult } from "../scrapers/BaseScraper";
 import { renderStage, endStage } from "./progress";
 
 const DB_PATH = path.join(process.cwd(), "data", "compatibility.json");
+const CONCURRENCY = 4;
 
 export interface InstalledApp {
   name: string;
   exePath: string | null;
   arch: "x86" | "x64" | "arm64" | "unknown";
   matchedEntry?: ScraperResult;
+  storeArch?: "arm64" | "x64" | "x86" | "unknown";
+  drivers?: string[];
+  appScore?: number;
 }
 
 function getInstalledApps(): InstalledApp[] {
@@ -56,7 +60,7 @@ function findExeForApp(appName: string): string | null {
   for (const dir of searchDirs) {
     try {
       const matches = execSync(
-        `powershell -Command "Get-ChildItem -Recurse -Filter *.exe -Path '${dir}' | Where-Object { $_.Name -like '*${appName}*' } | Select-Object -First 1 -ExpandProperty FullName"`,
+        `powershell -Command "Get-ChildItem -Recurse -Force -ErrorAction SilentlyContinue -Filter *.exe -Path '${dir}' | Where-Object { $_.Name -like '*${appName}*' } | Select-Object -First 1 -ExpandProperty FullName"`,
         { encoding: "utf8" }
       ).trim();
 
@@ -114,6 +118,16 @@ function matchAppToDB(app: InstalledApp, db: ScraperResult[]): ScraperResult | u
   });
 }
 
+async function processApp(app: InstalledApp, db: ScraperResult[]) {
+  const exe = findExeForApp(app.name);
+  if (exe) {
+    app.exePath = exe;
+    app.arch = detectBinaryArchitecture(exe);
+  }
+
+  app.matchedEntry = matchAppToDB(app, db);
+}
+
 export async function runLocalScanner() {
   console.log("=== NGPCX Local Scanner (x86-hosted ARM readiness) ===");
 
@@ -133,19 +147,28 @@ export async function runLocalScanner() {
   const total = installed.length;
   let index = 0;
 
-  for (const app of installed) {
-    index++;
-    renderStage("Scanning apps", index, total, app.name);
+  const queue = [...installed];
 
-    const exe = findExeForApp(app.name);
-    if (exe) {
-      app.exePath = exe;
-      app.arch = detectBinaryArchitecture(exe);
-    }
+  const workers: Promise<void>[] = [];
 
-    app.matchedEntry = matchAppToDB(app, db);
+  for (let i = 0; i < CONCURRENCY; i++) {
+    const worker = (async () => {
+      while (queue.length > 0) {
+        const app = queue.shift();
+        if (!app) break;
+
+        index++;
+        renderStage("Scanning apps", index, total, app.name);
+
+        await processApp(app, db);
+      }
+    })();
+
+    workers.push(worker);
   }
 
+  await Promise.all(workers);
   endStage();
+
   return installed;
 }

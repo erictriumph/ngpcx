@@ -11,6 +11,28 @@ export interface ReadinessReport {
   score: number;
 }
 
+function scoreApp(app: InstalledApp): number {
+  let base = 0;
+
+  const level = app.matchedEntry?.armSupportLevel ?? "unknown";
+
+  switch (level) {
+    case "native": base += 80; break;
+    case "x64-emulated": base += 60; break;
+    case "x86-emulated": base += 40; break;
+    case "unsupported": base -= 40; break;
+    default: base += 20;
+  }
+
+  if (app.storeArch === "arm64") base += 20;
+  if (app.arch === "arm64") base += 20;
+  if (app.arch === "x86") base -= 10;
+
+  if (app.drivers && app.drivers.length > 0) base -= 30;
+
+  return Math.max(0, Math.min(100, base));
+}
+
 export function generateReadinessReport(apps: InstalledApp[]): ReadinessReport {
   const native: InstalledApp[] = [];
   const emulated: InstalledApp[] = [];
@@ -19,14 +41,10 @@ export function generateReadinessReport(apps: InstalledApp[]): ReadinessReport {
   const unknown: InstalledApp[] = [];
 
   for (const app of apps) {
+    app.appScore = scoreApp(app);
+
     const entry = app.matchedEntry;
-
-    if (!entry) {
-      unknown.push(app);
-      continue;
-    }
-
-    const level = entry.armSupportLevel ?? "unknown";
+    const level = entry?.armSupportLevel ?? "unknown";
 
     switch (level) {
       case "native":
@@ -81,17 +99,17 @@ export function printReadinessReport(report: ReadinessReport) {
   console.log(`ARM Readiness Score: ${report.score}/100\n`);
 
   console.log("Native ARM64 available:");
-  report.native.forEach(a => console.log(" -", a.name));
+  report.native.forEach(a => console.log(` - ${a.name} (${a.appScore}/100)`));
 
   console.log("\nRuns under x64 emulation:");
-  report.emulated.forEach(a => console.log(" -", a.name));
+  report.emulated.forEach(a => console.log(` - ${a.name} (${a.appScore}/100)`));
 
   console.log("\nx86-only (slowest):");
-  report.x86only.forEach(a => console.log(" -", a.name));
+  report.x86only.forEach(a => console.log(` - ${a.name} (${a.appScore}/100)`));
 
   console.log("\nKnown incompatible:");
-  report.incompatible.forEach(a => console.log(" -", a.name));
+  report.incompatible.forEach(a => console.log(` - ${a.name} (${a.appScore}/100)`));
 
   console.log("\nUnknown / not in database:");
-  report.unknown.forEach(a => console.log(" -", a.name));
+  report.unknown.forEach(a => console.log(` - ${a.name} (${a.appScore}/100)`));
 }
