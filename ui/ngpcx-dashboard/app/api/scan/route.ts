@@ -4,7 +4,8 @@ import path from "path";
 
 export async function POST() {
   return new Promise((resolve) => {
-    // Path to the scanner's run.ts file
+    // Next.js app root = /ui/ngpcx-dashboard
+    // Scanner is at: /scanner/run.ts (two levels up)
     const scannerPath = path.join(
       process.cwd(),
       "..",
@@ -15,7 +16,6 @@ export async function POST() {
 
     console.log("Running scanner at:", scannerPath);
 
-    // Execute the scanner using Node
     exec(`node ${scannerPath}`, (error, stdout, stderr) => {
       console.log(stdout);
       console.error(stderr);
@@ -23,7 +23,10 @@ export async function POST() {
       if (error) {
         console.error("Scanner failed:", error);
         resolve(
-          NextResponse.json({ ok: false, error: "Scanner failed" }, { status: 500 })
+          NextResponse.json(
+            { ok: false, error: "Scanner failed" },
+            { status: 500 }
+          )
         );
         return;
       }
