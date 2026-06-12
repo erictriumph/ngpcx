@@ -16,7 +16,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["*"]
-    }
+    },
+
+    "types": ["node"]   // ⭐ ADD THIS
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]

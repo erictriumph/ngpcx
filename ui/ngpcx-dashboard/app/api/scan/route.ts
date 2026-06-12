@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { exec } from "child_process";
 import path from "path";
 
-export async function POST() {
+export async function GET() {
   return new Promise((resolve) => {
     // Path to compiled JS scanner
     const scannerJsPath = path.join(
