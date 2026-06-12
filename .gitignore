@@ -2,3 +2,4 @@ node_modules
 .next
 dist
 .cache
+data/scan-results.json
