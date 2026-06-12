@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
-import { validatePaths } from "@/utils/pathValidator";
+import { validatePaths } from "utils/pathValidator";
 
 export async function GET() {
   validatePaths("API /scan");
@@ -14,7 +14,7 @@ export async function GET() {
         native: [],
         emulated: [],
         unsupported: [],
-        lastScanned: null,
+        lastScanned: null
       });
     }
 
@@ -25,14 +25,15 @@ export async function GET() {
       native: data.native ?? [],
       emulated: data.emulated ?? [],
       unsupported: data.unsupported ?? [],
-      lastScanned: data.lastScanned ?? null,
+      lastScanned: data.lastScanned ?? null
     });
-  } catch {
+  } catch (err) {
+    console.error("Error reading scan results:", err);
     return NextResponse.json({
       native: [],
       emulated: [],
       unsupported: [],
-      lastScanned: null,
+      lastScanned: null
     });
   }
 }

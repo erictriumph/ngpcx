@@ -2,24 +2,32 @@ import { NextResponse } from "next/server";
 import { exec } from "child_process";
 import path from "path";
 import fs from "fs";
-import { validatePaths } from "@/utils/pathValidator";
+import { validatePaths } from "utils/pathValidator";
 
 export async function POST() {
   validatePaths("API /run-scan");
 
+  // Absolute paths to scanner entry + scanner tsconfig
   const scannerPath = path.join(process.cwd(), "..", "..", "scanner", "run.ts");
+  const scannerTsconfig = path.join(
+    process.cwd(),
+    "..",
+    "..",
+    "scanner",
+    "tsconfig.scanner.json"
+  );
 
   return new Promise((resolve) => {
     exec(
-      `npx ts-node --project tsconfig.scanner.json "${scannerPath}"`,
+      `npx ts-node --project "${scannerTsconfig}" "${scannerPath}"`,
       (error) => {
         if (error) {
+          console.error("Scanner error:", error);
           return resolve(
             NextResponse.json({ error: "Scan failed" }, { status: 500 })
           );
         }
 
-        // Correct shared path
         const filePath = path.join(process.cwd(), "..", "data", "scan-results.json");
 
         if (fs.existsSync(filePath)) {

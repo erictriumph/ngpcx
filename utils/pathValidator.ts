@@ -2,7 +2,6 @@ import path from "path";
 import fs from "fs";
 
 export function validatePaths(context: string) {
-  // Only run in development
   if (process.env.NODE_ENV !== "development") return;
 
   const cwd = process.cwd();

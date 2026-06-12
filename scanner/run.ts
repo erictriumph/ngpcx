@@ -1,5 +1,10 @@
-function writeJsonOutput(results: any) {
-  // Shared output folder at project root
+import path from "path";
+import fs from "fs";
+import { validatePaths } from "utils/pathValidator";
+
+validatePaths("SCANNER");
+
+export function writeJsonOutput(results: any) {
   const outputDir = path.join(process.cwd(), "..", "data");
   const outputPath = path.join(outputDir, "scan-results.json");
 
