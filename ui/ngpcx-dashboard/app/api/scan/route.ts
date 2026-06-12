@@ -4,7 +4,7 @@ import fs from "fs";
 
 export async function GET() {
   try {
-    const filePath = path.join(process.cwd(), "data", "scan-results.json");
+    const filePath = path.join(process.cwd(), "..", "data", "scan-results.json");
 
     if (!fs.existsSync(filePath)) {
       return NextResponse.json({

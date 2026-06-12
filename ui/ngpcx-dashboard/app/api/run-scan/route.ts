@@ -17,7 +17,7 @@ export async function POST() {
         }
 
         // Write timestamp
-        const filePath = path.join(process.cwd(), "data", "scan-results.json");
+        const filePath = path.join(process.cwd(), "..", "data", "scan-results.json");
         if (fs.existsSync(filePath)) {
           const json = JSON.parse(fs.readFileSync(filePath, "utf8"));
           json.lastScanned = new Date().toISOString();
