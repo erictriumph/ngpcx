@@ -4,19 +4,19 @@ import path from "path";
 
 export async function POST() {
   return new Promise((resolve) => {
-    // Path to compiled JS scanner
-    const scannerJsPath = path.join(
+    // Path to the TypeScript scanner entry file
+    const scannerPath = path.join(
       process.cwd(),
       "..",
       "..",
       "scanner",
-      "dist",
-      "run.js"
+      "run.ts"
     );
 
-    console.log("Running scanner:", scannerJsPath);
+    console.log("Running scanner:", scannerPath);
 
-    exec(`node "${scannerJsPath}"`, (error, stdout, stderr) => {
+    // Use ts-node to execute TypeScript directly
+    exec(`npx ts-node "${scannerPath}"`, (error, stdout, stderr) => {
       console.log(stdout);
       console.error(stderr);
 
