@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DarkModeToggle from "./components/DarkModeToggle";
 
 // ----------------------
 // Logo Component
@@ -14,27 +15,12 @@ function Logo() {
 }
 
 // ----------------------
-// Dark Mode Toggle
-// ----------------------
-function DarkModeToggle() {
-  return (
-    <button
-      onClick={() => document.documentElement.classList.toggle("dark")}
-      className="px-3 py-1 rounded-lg border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 transition"
-    >
-      Toggle Dark
-    </button>
-  );
-}
-
-// ----------------------
 // Animated Gauge
 // ----------------------
 function ReadinessGauge({ score }: { score: number }) {
   const [animatedScore, setAnimatedScore] = useState(0);
 
   useEffect(() => {
-    let frame = 0;
     const duration = 600;
     const start = performance.now();
 
@@ -89,8 +75,8 @@ function AppDetails({ app, onClose }: any) {
   if (!app) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-end z-50 transition-opacity animate-fadeIn">
-      <div className="w-96 bg-white dark:bg-gray-900 p-6 shadow-xl h-full overflow-y-auto transform transition-transform duration-300 translate-x-0">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-end z-50 animate-fadeIn">
+      <div className="w-96 bg-white dark:bg-gray-900 p-6 shadow-xl h-full overflow-y-auto">
         <button
           className="mb-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
           onClick={onClose}
@@ -210,6 +196,8 @@ export default function Dashboard() {
           >
             Run Scan
           </button>
+
+          {/* NEW polished toggle */}
           <DarkModeToggle />
         </div>
       </header>
