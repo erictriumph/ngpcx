@@ -1,8 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import DarkModeToggle from "./components/DarkModeToggle";
 import ScanProgress from "./components/ScanProgress";
+import Toast from "./components/Toast";
+
+function timeAgo(iso: string | null) {
+  if (!iso) return "Never";
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+  return `${Math.floor(diff / 86400)} days ago`;
+}
 
 // ----------------------
 // Logo Component
@@ -112,6 +121,7 @@ export default function Dashboard() {
   const [results, setResults] = useState<any>(null);
   const [selectedApp, setSelectedApp] = useState(null);
   const [scanning, setScanning] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   async function loadResults() {
     const res = await fetch("/api/scan");
@@ -128,13 +138,12 @@ export default function Dashboard() {
     await fetch("/api/run-scan", { method: "POST" });
     await loadResults();
     setScanning(false);
+    setToast("Scan complete!");
   }
 
   if (!results) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-600 dark:text-gray-300 p-10 animate-fadeIn">
-        <div className="max-w-5xl mx-auto text-lg">Loading scan results…</div>
-      </div>
+      <div className="p-10 text-gray-600 dark:text-gray-300">Loading scan results…</div>
     );
   }
 
@@ -149,15 +158,21 @@ export default function Dashboard() {
 
   if (noScanYet) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-600 dark:text-gray-300 p-10 animate-fadeIn">
-        <div className="max-w-5xl mx-auto space-y-6">
-          <h1 className="text-3xl font-bold">ARM Readiness Dashboard</h1>
-          <p className="text-lg">
-            No scan results found. Press <strong>Run Scan</strong> to perform your first scan.
-          </p>
-        </div>
+      <div className="p-10 space-y-6">
+        <h1 className="text-3xl font-bold">ARM Readiness Dashboard</h1>
+        <p className="text-lg">
+          No scan results found. Press <strong>Run Scan</strong> to perform your first scan.
+        </p>
+
+        <button
+          onClick={runScan}
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+        >
+          Run Scan
+        </button>
 
         {scanning && <ScanProgress scanning={scanning} />}
+        {toast && <Toast message={toast} onClose={() => setToast(null)} />}
       </div>
     );
   }
@@ -177,92 +192,89 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 animate-fadeIn">
+    <div className="p-10 space-y-10">
 
       {scanning && <ScanProgress scanning={scanning} />}
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
-      {/* Navigation */}
-      <header className="flex items-center justify-between px-6 py-4 border-b bg-white/70 dark:bg-gray-900/70 backdrop-blur">
-        <div className="flex items-center gap-3">
-          <Logo />
-          <span className="text-xl font-semibold">NGPCX</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={runScan}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
-          >
-            Run Scan
-          </button>
-          <DarkModeToggle />
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="p-10 max-w-6xl mx-auto space-y-10">
-
-        <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
           <h1 className="text-4xl font-bold tracking-tight">ARM Readiness Dashboard</h1>
-          <ReadinessGauge score={readinessScore} />
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            Last scanned: {timeAgo(results.lastScanned)}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {[
-            { label: "Native Apps", value: native.length },
-            { label: "Emulated Apps", value: emulated.length },
-            { label: "Unsupported Apps", value: unsupported.length },
-          ].map((card, i) => (
-            <div
-              key={i}
-              className="rounded-2xl border backdrop-blur bg-white/60 dark:bg-gray-900/60 shadow-sm p-6 transition-all hover:scale-[1.02]"
-            >
-              <h2 className="text-gray-500 dark:text-gray-400 text-sm font-medium">{card.label}</h2>
-              <p className="text-4xl font-bold mt-2">{card.value}</p>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={runScan}
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+        >
+          Run Scan
+        </button>
+      </div>
 
-        <div className="rounded-2xl border shadow-sm overflow-hidden bg-white/70 dark:bg-gray-900/70 backdrop-blur">
-          <table className="w-full text-left">
-            <thead className="bg-gray-100 dark:bg-gray-800 border-b">
-              <tr>
-                <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Name</th>
-                <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Executable</th>
-                <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Arch</th>
-                <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">ARM Support</th>
+      {/* Gauge */}
+      <div className="flex justify-end">
+        <ReadinessGauge score={readinessScore} />
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {[
+          { label: "Native Apps", value: native.length },
+          { label: "Emulated Apps", value: emulated.length },
+          { label: "Unsupported Apps", value: unsupported.length },
+        ].map((card, i) => (
+          <div
+            key={i}
+            className="rounded-2xl border backdrop-blur bg-white/60 dark:bg-gray-900/60 shadow-sm p-6 transition-all hover:scale-[1.02]"
+          >
+            <h2 className="text-gray-500 dark:text-gray-400 text-sm font-medium">{card.label}</h2>
+            <p className="text-4xl font-bold mt-2">{card.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="rounded-2xl border shadow-sm overflow-hidden bg-white/70 dark:bg-gray-900/70 backdrop-blur">
+        <table className="w-full text-left">
+          <thead className="bg-gray-100 dark:bg-gray-800 border-b">
+            <tr>
+              <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Name</th>
+              <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Executable</th>
+              <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">Arch</th>
+              <th className="p-4 text-sm font-semibold text-gray-600 dark:text-gray-300">ARM Support</th>
+            </tr>
+          </thead>
+          <tbody>
+            {apps.map((app: any, i: number) => (
+              <tr
+                key={i}
+                onClick={() => setSelectedApp(app)}
+                className={`cursor-pointer border-b last:border-0 transition-all hover:scale-[1.01] ${
+                  i % 2 === 0
+                    ? "bg-white/40 dark:bg-gray-800/40"
+                    : "bg-white/20 dark:bg-gray-800/20"
+                } hover:bg-white/60 dark:hover:bg-gray-700/60`}
+              >
+                <td className="p-4 font-medium">{app.name}</td>
+                <td className="p-4 text-gray-500">{app.exePath ?? "N/A"}</td>
+                <td className="p-4">{app.arch}</td>
+                <td className="p-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-white text-sm font-medium ${supportColors[app.supportLevel]}`}
+                  >
+                    {app.supportLevel}
+                  </span>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {apps.map((app: any, i: number) => (
-                <tr
-                  key={i}
-                  onClick={() => setSelectedApp(app)}
-                  className={`cursor-pointer border-b last:border-0 transition-all hover:scale-[1.01] ${
-                    i % 2 === 0
-                      ? "bg-white/40 dark:bg-gray-800/40"
-                      : "bg-white/20 dark:bg-gray-800/20"
-                  } hover:bg-white/60 dark:hover:bg-gray-700/60`}
-                >
-                  <td className="p-4 font-medium">{app.name}</td>
-                  <td className="p-4 text-gray-500">{app.exePath ?? "N/A"}</td>
-                  <td className="p-4">{app.arch}</td>
-                  <td className="p-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-white text-sm font-medium ${supportColors[app.supportLevel]}`}
-                    >
-                      {app.supportLevel}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-        <AppDetails app={selectedApp} onClose={() => setSelectedApp(null)} />
-
-      </main>
+      <AppDetails app={selectedApp} onClose={() => setSelectedApp(null)} />
     </div>
   );
 }
