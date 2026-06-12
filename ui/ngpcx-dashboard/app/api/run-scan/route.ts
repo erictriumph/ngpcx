@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { exec } from "child_process";
 import path from "path";
 import fs from "fs";
+import { validatePaths } from "@/utils/pathValidator";
 
 export async function POST() {
+  validatePaths("API /run-scan");
+
   const scannerPath = path.join(process.cwd(), "..", "..", "scanner", "run.ts");
 
   return new Promise((resolve) => {
@@ -16,8 +19,9 @@ export async function POST() {
           );
         }
 
-        // Write timestamp
+        // Correct shared path
         const filePath = path.join(process.cwd(), "..", "data", "scan-results.json");
+
         if (fs.existsSync(filePath)) {
           const json = JSON.parse(fs.readFileSync(filePath, "utf8"));
           json.lastScanned = new Date().toISOString();

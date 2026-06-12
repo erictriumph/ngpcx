@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
+import { validatePaths } from "@/utils/pathValidator";
 
 export async function GET() {
+  validatePaths("API /scan");
+
   try {
     const filePath = path.join(process.cwd(), "..", "data", "scan-results.json");
 
