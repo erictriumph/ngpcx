@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DarkModeToggle from "./components/DarkModeToggle";
+import ScanProgress from "./components/ScanProgress";
 
 // ----------------------
 // Logo Component
@@ -112,7 +113,6 @@ export default function Dashboard() {
   const [selectedApp, setSelectedApp] = useState(null);
   const [scanning, setScanning] = useState(false);
 
-  // Fetch scan results
   async function loadResults() {
     const res = await fetch("/api/scan");
     const data = await res.json();
@@ -123,7 +123,6 @@ export default function Dashboard() {
     loadResults();
   }, []);
 
-  // Run Scan Handler
   async function runScan() {
     setScanning(true);
     await fetch("/api/run-scan", { method: "POST" });
@@ -131,7 +130,6 @@ export default function Dashboard() {
     setScanning(false);
   }
 
-  // Loading state
   if (!results) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-600 dark:text-gray-300 p-10 animate-fadeIn">
@@ -140,20 +138,29 @@ export default function Dashboard() {
     );
   }
 
-  // Error state
-  if (results.error) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-red-600 p-10 animate-fadeIn">
-        <div className="max-w-5xl mx-auto text-lg">
-          Failed to load scan results.
-        </div>
-      </div>
-    );
-  }
-
   const native = results.native ?? [];
   const emulated = results.emulated ?? [];
   const unsupported = results.unsupported ?? [];
+
+  const noScanYet =
+    native.length === 0 &&
+    emulated.length === 0 &&
+    unsupported.length === 0;
+
+  if (noScanYet) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-600 dark:text-gray-300 p-10 animate-fadeIn">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <h1 className="text-3xl font-bold">ARM Readiness Dashboard</h1>
+          <p className="text-lg">
+            No scan results found. Press <strong>Run Scan</strong> to perform your first scan.
+          </p>
+        </div>
+
+        {scanning && <ScanProgress scanning={scanning} />}
+      </div>
+    );
+  }
 
   const apps = [
     ...native.map((a: any) => ({ ...a, supportLevel: "native" })),
@@ -172,15 +179,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 animate-fadeIn">
 
-      {/* Scan Modal */}
-      {scanning && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
-          <div className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-xl flex flex-col items-center gap-4">
-            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-lg font-medium">Running scan…</p>
-          </div>
-        </div>
-      )}
+      {scanning && <ScanProgress scanning={scanning} />}
 
       {/* Navigation */}
       <header className="flex items-center justify-between px-6 py-4 border-b bg-white/70 dark:bg-gray-900/70 backdrop-blur">
@@ -196,8 +195,6 @@ export default function Dashboard() {
           >
             Run Scan
           </button>
-
-          {/* NEW polished toggle */}
           <DarkModeToggle />
         </div>
       </header>
@@ -205,13 +202,11 @@ export default function Dashboard() {
       {/* Main Content */}
       <main className="p-10 max-w-6xl mx-auto space-y-10">
 
-        {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold tracking-tight">ARM Readiness Dashboard</h1>
           <ReadinessGauge score={readinessScore} />
         </div>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {[
             { label: "Native Apps", value: native.length },
@@ -228,7 +223,6 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Table */}
         <div className="rounded-2xl border shadow-sm overflow-hidden bg-white/70 dark:bg-gray-900/70 backdrop-blur">
           <table className="w-full text-left">
             <thead className="bg-gray-100 dark:bg-gray-800 border-b">
@@ -266,7 +260,6 @@ export default function Dashboard() {
           </table>
         </div>
 
-        {/* Detail Drawer */}
         <AppDetails app={selectedApp} onClose={() => setSelectedApp(null)} />
 
       </main>
