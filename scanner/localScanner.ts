@@ -11,8 +11,9 @@ import {
   buildExeIndex,
   ExeIndex
 } from "./exeIndexer";
+import { PROJECT_ROOT } from "utils/paths";
 
-const DB_PATH = path.join(process.cwd(), "data", "compatibility.json");
+const DB_PATH = path.join(PROJECT_ROOT, "data", "compatibility.json");
 const CONCURRENCY = 4;
 
 export interface InstalledApp {

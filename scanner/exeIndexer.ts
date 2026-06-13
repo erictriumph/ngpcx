@@ -3,8 +3,9 @@
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import { PROJECT_ROOT } from "utils/paths";
 
-const CACHE_DIR = path.join(process.cwd(), ".cache");
+const CACHE_DIR = path.join(PROJECT_ROOT, ".cache");
 const INDEX_PATH = path.join(CACHE_DIR, "exeIndex.json");
 
 const SKIP_DIRS = [

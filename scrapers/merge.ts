@@ -3,8 +3,9 @@
 import fs from "fs";
 import path from "path";
 import { ScraperResult } from "./BaseScraper";
+import { PROJECT_ROOT } from "utils/paths";
 
-const DB_PATH = path.join(process.cwd(), "data", "compatibility.json");
+const DB_PATH = path.join(PROJECT_ROOT, "data", "compatibility.json");
 
 export async function mergeIntoDatabase(results: ScraperResult[]) {
   let db: ScraperResult[] = [];

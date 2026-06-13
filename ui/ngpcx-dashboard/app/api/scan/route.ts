@@ -20,10 +20,11 @@ export async function GET() {
     const data = JSON.parse(json);
 
     return NextResponse.json({
-      native: data.native ?? [],
-      emulated: data.emulated ?? [],
-      unsupported: data.unsupported ?? [],
-      lastScanned: data.lastScanned ?? null
+      native: data.native ?? data.report?.native ?? [],
+      emulated: data.emulated ?? data.report?.emulated ?? [],
+      unsupported:
+        data.unsupported ?? data.report?.incompatible ?? [],
+      lastScanned: data.lastScanned ?? data.generatedAt ?? null
     });
   } catch (err) {
     console.error("Error reading scan results:", err);
