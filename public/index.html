@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NGPCX — ARM Readiness Scanner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #3b82f6;
+      letter-spacing: -0.5px;
+    }
+
+    .logo span {
+      color: #f1f5f9;
+    }
+
+    hero {
+      display: block;
+      max-width: 800px;
+      margin: 5rem auto;
+      text-align: center;
+      padding: 0 1rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      line-height: 1.1;
+    }
+
+    h1 em {
+      color: #3b82f6;
+      font-style: normal;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: #94a3b8;
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+    }
+
+    .scan-button {
+      display: inline-block;
+      background: #3b82f6;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 1rem 2.5rem;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+
+    .scan-button:hover {
+      background: #2563eb;
+    }
+
+    .how-it-works {
+      max-width: 800px;
+      margin: 0 auto 5rem auto;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .step {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid #334155;
+    }
+
+    .step-number {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #3b82f6;
+      margin-bottom: 0.5rem;
+    }
+
+    .step h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .step p {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="logo">NGPC<span>X</span></div>
+    <div style="color: #64748b; font-size: 0.9rem;">ARM Readiness Scanner</div>
+  </nav>
+
+  <hero>
+    <h1>Know Before You <em>Buy</em></h1>
+    <p class="subtitle">
+      Find out if your current apps are ready for a Snapdragon ARM laptop —
+      before you make the switch.
+    </p>
+    <a href="#" class="scan-button">Download the Scanner</a>
+  </hero>
+
+  <div class="how-it-works">
+    <div class="step">
+      <div class="step-number">1</div>
+      <h3>Download the Scanner</h3>
+      <p>A small Windows tool that reads your installed apps. No installation required.</p>
+    </div>
+    <div class="step">
+      <div class="step-number">2</div>
+      <h3>Run It</h3>
+      <p>It scans your machine in seconds and sends the results to our server.</p>
+    </div>
+    <div class="step">
+      <div class="step-number">3</div>
+      <h3>Get Your Score</h3>
+      <p>See exactly which apps are ARM-ready, which need emulation, and which won't work.</p>
+    </div>
+  </div>
+
+</body>
+</html>
