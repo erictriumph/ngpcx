@@ -52,6 +52,12 @@ try {
   // Column already exists, ignore
 }
 
+try {
+  db.exec(`ALTER TABLE apps ADD COLUMN source_url TEXT`);
+} catch {
+  // Column already exists, ignore
+}
+
 console.log('Database ready at', DB_PATH);
 
 module.exports = db;

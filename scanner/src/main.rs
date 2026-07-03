@@ -281,30 +281,50 @@ fn send_to_server(payload: &ScanPayload, base_url: &str) -> Result<String, Strin
     Ok(body)
 }
 
-fn start_local_server(session_id: &str) {
-    use std::io::Write;
+fn start_local_server() -> Option<String> {
+    use std::io::{BufRead, BufReader, Write};
     use std::net::TcpListener;
+    use std::sync::{Arc, Mutex};
 
-    let session_id = session_id.to_string();
+    let session_id: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+    let session_id_clone = Arc::clone(&session_id);
 
-    std::thread::spawn(move || {
-        let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let listener = TcpListener::bind("127.0.0.1:7878").ok()?;
+    println!("  Listening on localhost:7878 for browser connection...");
 
-        for stream in listener.incoming() {
-            let mut stream = match stream {
-                Ok(s) => s,
-                Err(_) => break,
-            };
+    let handle = std::thread::spawn(move || {
+        if let Ok((mut stream, _)) = listener.accept() {
+            let reader = BufReader::new(stream.try_clone().unwrap());
+            
+            // Read the request line to get the session ID from URL
+            let mut request_line = String::new();
+            reader.lines().next().map(|l| request_line = l.unwrap_or_default());
 
-            let response = format!(
-                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET\r\n\r\n{{\"session_id\":\"{}\",\"status\":\"complete\"}}",
-                session_id
-            );
+            // Extract session from "GET /?session=abc123 HTTP/1.1"
+            let extracted = request_line
+                .split_whitespace()
+                .nth(1)
+                .and_then(|path| {
+                    path.split("session=").nth(1)
+                })
+                .map(|s| s.split('&').next().unwrap_or(s).to_string());
 
+            if let Some(ref id) = extracted {
+                println!("  Browser connected — session ID: {}", id);
+                *session_id_clone.lock().unwrap() = extracted.clone();
+            }
+
+            // Respond to browser
+            let response = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\n\r\n{\"connected\":true}";
             let _ = stream.write_all(response.as_bytes());
-            break; // Only handle one request then exit
         }
     });
+
+    // Wait up to 30 seconds for browser to connect
+    handle.join().ok();
+    
+    let result = session_id.lock().unwrap().clone();
+    result
 }
 
 fn get_server_url() -> String {
@@ -352,33 +372,40 @@ fn main() {
     let apps = get_installed_apps(&mode, &recent);
     println!("  Found {} apps to check", apps.len());
 
-    // Step 3: Send to server
+// Step 3: Send to server
     println!("\n[3/3] Checking compatibility...");
 
-    // Get a session ID from the server
-    let client = reqwest::blocking::Client::new();
-    let session_url = format!("{}/api/session", base_url);
-    let session_id = match client.post(&session_url).send() {
-        Ok(res) => match res.json::<serde_json::Value>() {
-            Ok(v) => {
-                let id = v["session_id"].as_str().unwrap_or("").to_string();
-                println!("  Session ID: {}", id);
-                id
-            }
+    // Wait for browser to connect and provide session ID
+    println!("  Waiting for browser connection on localhost:7878...");
+    println!("  (Make sure you clicked 'Run Scan' on the website first)");
+    
+    let session_id = start_local_server().unwrap_or_default();
+
+    // If no browser connected, create our own session
+    let session_id = if session_id.is_empty() {
+        println!("  No browser connected — creating standalone session...");
+        let client = reqwest::blocking::Client::new();
+        let session_url = format!("{}/api/session", base_url);
+        match client.post(&session_url).send() {
+            Ok(res) => match res.json::<serde_json::Value>() {
+                Ok(v) => {
+                    let id = v["session_id"].as_str().unwrap_or("").to_string();
+                    println!("  Session ID: {}", id);
+                    id
+                }
+                Err(e) => {
+                    eprintln!("  Failed to parse session response: {}", e);
+                    String::new()
+                }
+            },
             Err(e) => {
-                eprintln!("  Failed to parse session response: {}", e);
+                eprintln!("  Failed to create session: {}", e);
                 String::new()
             }
-        },
-        Err(e) => {
-            eprintln!("  Failed to create session: {}", e);
-            String::new()
         }
+    } else {
+        session_id
     };
-
-    if !session_id.is_empty() {
-        start_local_server(&session_id);
-    }
 
     let payload = ScanPayload {
         scan_mode: mode,
@@ -401,7 +428,6 @@ fn main() {
             eprintln!("  Error: {}", e);
         }
     }
-
     println!("\nScan complete. Press Enter to exit.");
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).ok();

@@ -1,8 +1,11 @@
 const express = require('express');
 const path = require('path');
 const db = require('./db');
+const { seedFromCache } = require('./seed');
 
 const app = express();
+// Seed database from cache if empty
+seedFromCache();
 const PORT = process.env.PORT || 3000;
 
 // Parse JSON request bodies
@@ -25,7 +28,7 @@ app.get('/api/stats', (req, res) => {
   const appCount = db.prepare(`SELECT COUNT(*) as count FROM apps WHERE type = 'app'`).get();
   const driverCount = db.prepare(`SELECT COUNT(*) as count FROM apps WHERE type = 'driver'`).get();
   const nativeCount = db.prepare(`SELECT COUNT(*) as count FROM apps WHERE arm_support = 'native'`).get();
-  
+
   res.json({
     apps: appCount.count,
     drivers: driverCount.count,
@@ -36,9 +39,9 @@ app.get('/api/stats', (req, res) => {
 
 // Create a new scan session
 app.post('/api/session', (req, res) => {
-  const id = Math.random().toString(36).substring(2, 15) + 
-              Math.random().toString(36).substring(2, 15);
-  
+  const id = Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15);
+
   db.prepare(`
     INSERT INTO sessions (id, status, created_at, expires_at)
     VALUES (?, 'waiting', datetime('now'), datetime('now', '+24 hours'))
@@ -65,6 +68,13 @@ app.get('/api/session/:id', (req, res) => {
     status: 'complete',
     results: JSON.parse(session.results)
   });
+});
+
+// Serve scanner exe with correct headers to prevent browser blocking
+app.get('/ngpcx-scanner.exe', (req, res) => {
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.setHeader('Content-Disposition', 'attachment; filename="ngpcx-scanner.exe"');
+  res.sendFile(path.join(__dirname, '..', 'public', 'ngpcx-scanner.exe'));
 });
 
 // Start the server

@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
+"scripts": {
     "start": "node server/server.js",
-    "postinstall": "npm rebuild better-sqlite3",
+    "scrape": "node server/scrapers/index.js",
     "scrape:winget": "node server/scrapers/winget.js",
+    "scrape:winget:letters": "node server/scrapers/winget.js --letters=",
+    "scrape:woa": "node server/scrapers/community/worksonwoa.js",
+    "postinstall": "npm rebuild better-sqlite3",
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
+},
   "keywords": [],
   "author": "",
   "license": "ISC",

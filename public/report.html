@@ -1,391 +1,431 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NGPCX — Your ARM Readiness Report</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGPCX — Your ARM Readiness Report</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0f172a;
-      color: #f1f5f9;
-      min-height: 100vh;
-    }
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
 
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 2rem;
-      border-bottom: 1px solid #1e293b;
-    }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #1e293b;
+        }
 
-    .logo {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: #3b82f6;
-      letter-spacing: -0.5px;
-    }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            letter-spacing: -0.5px;
+        }
 
-    .logo span { color: #f1f5f9; }
+        .logo span {
+            color: #f1f5f9;
+        }
 
-    .back-link {
-      color: #64748b;
-      text-decoration: none;
-      font-size: 0.9rem;
-    }
+        .back-link {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
 
-    .back-link:hover { color: #f1f5f9; }
+        .back-link:hover {
+            color: #f1f5f9;
+        }
 
-    /* LOADING */
-    .loading {
-      max-width: 600px;
-      margin: 8rem auto;
-      text-align: center;
-      padding: 0 1rem;
-    }
+        /* LOADING */
+        .loading {
+            max-width: 600px;
+            margin: 8rem auto;
+            text-align: center;
+            padding: 0 1rem;
+        }
 
-    .spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid #1e293b;
-      border-top-color: #3b82f6;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 1.5rem auto;
-    }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #1e293b;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1.5rem auto;
+        }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
-    .loading h2 {
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
-    }
+        .loading h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
 
-    .loading p {
-      color: #64748b;
-      font-size: 0.95rem;
-    }
+        .loading p {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
 
-    /* REPORT */
-    .report {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 3rem 1rem 5rem 1rem;
-      display: none;
-    }
+        /* REPORT */
+        .report {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 1rem 5rem 1rem;
+            display: none;
+        }
 
-    .report-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 2.5rem;
-      flex-wrap: wrap;
-      gap: 1.5rem;
-    }
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
 
-    .report-header h1 {
-      font-size: 2rem;
-      font-weight: 800;
-    }
+        .report-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+        }
 
-    .report-header p {
-      color: #64748b;
-      margin-top: 0.25rem;
-      font-size: 0.9rem;
-    }
+        .report-header p {
+            color: #64748b;
+            margin-top: 0.25rem;
+            font-size: 0.9rem;
+        }
 
-    /* GAUGE */
-    .gauge-wrap {
-      text-align: center;
-    }
+        /* GAUGE */
+        .gauge-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
 
-    .gauge-wrap svg {
-      display: block;
-      margin: 0 auto;
-    }
+        .gauge-wrap svg {
+            display: block;
+            margin: 0 auto;
+            margin-top: 0;
+        }
 
-    .gauge-score {
-      font-size: 2.5rem;
-      font-weight: 800;
-      margin-top: 0.5rem;
-    }
+        /* SYSTEM INFO */
+        .system-info {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
 
-    .gauge-label {
-      font-size: 0.85rem;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
+        .sys-item label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            display: block;
+            margin-bottom: 0.2rem;
+        }
 
-    /* SYSTEM INFO */
-    .system-info {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 1.25rem 1.5rem;
-      margin-bottom: 2rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-    }
+        .sys-item span {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
 
-    .sys-item label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #64748b;
-      display: block;
-      margin-bottom: 0.2rem;
-    }
+        /* SUMMARY CARDS */
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
 
-    .sys-item span {
-      font-size: 0.95rem;
-      font-weight: 600;
-    }
+        .summary-card {
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid;
+            text-align: center;
+        }
 
-    /* SUMMARY CARDS */
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
+        .summary-card.native {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
 
-    .summary-card {
-      border-radius: 12px;
-      padding: 1.25rem;
-      border: 1px solid;
-      text-align: center;
-    }
+        .summary-card.emulated {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
 
-    .summary-card.native {
-      background: rgba(16,185,129,0.1);
-      border-color: rgba(16,185,129,0.3);
-    }
+        .summary-card.unsupported {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
 
-    .summary-card.emulated {
-      background: rgba(245,158,11,0.1);
-      border-color: rgba(245,158,11,0.3);
-    }
+        .summary-card.unknown {
+            background: rgba(100, 116, 139, 0.1);
+            border-color: rgba(100, 116, 139, 0.3);
+        }
 
-    .summary-card.unsupported {
-      background: rgba(239,68,68,0.1);
-      border-color: rgba(239,68,68,0.3);
-    }
+        .summary-count {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.4rem;
+        }
 
-    .summary-card.unknown {
-      background: rgba(100,116,139,0.1);
-      border-color: rgba(100,116,139,0.3);
-    }
+        .native .summary-count {
+            color: #10b981;
+        }
 
-    .summary-count {
-      font-size: 2.5rem;
-      font-weight: 800;
-      line-height: 1;
-      margin-bottom: 0.4rem;
-    }
+        .emulated .summary-count {
+            color: #f59e0b;
+        }
 
-    .native .summary-count { color: #10b981; }
-    .emulated .summary-count { color: #f59e0b; }
-    .unsupported .summary-count { color: #ef4444; }
-    .unknown .summary-count { color: #64748b; }
+        .unsupported .summary-count {
+            color: #ef4444;
+        }
 
-    .summary-label {
-      font-size: 0.85rem;
-      color: #94a3b8;
-    }
+        .unknown .summary-count {
+            color: #64748b;
+        }
 
-    /* APP TABLE */
-    .section-title {
-      font-size: 1rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #64748b;
-      margin: 2rem 0 0.75rem 0;
-    }
+        .summary-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
 
-    .app-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #1e293b;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid #334155;
-      margin-bottom: 0.5rem;
-    }
+        /* APP TABLE */
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin: 2rem 0 0.75rem 0;
+        }
 
-    .app-table th {
-      background: #0f172a;
-      padding: 0.75rem 1rem;
-      text-align: left;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #64748b;
-    }
+        .app-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #334155;
+            margin-bottom: 0.5rem;
+        }
 
-    .app-table td {
-      padding: 0.75rem 1rem;
-      border-top: 1px solid #334155;
-      font-size: 0.9rem;
-    }
+        .app-table th {
+            background: #0f172a;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+        }
 
-    .app-table tr:hover td {
-      background: #263548;
-    }
+        .app-table td {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid #334155;
+            font-size: 0.9rem;
+        }
 
-    .badge {
-      display: inline-block;
-      padding: 0.2rem 0.6rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
+        .app-table tr:hover td {
+            background: #263548;
+        }
 
-    .badge.native { background: rgba(16,185,129,0.2); color: #10b981; }
-    .badge.emulated { background: rgba(245,158,11,0.2); color: #f59e0b; }
-    .badge.unsupported { background: rgba(239,68,68,0.2); color: #ef4444; }
-    .badge.unknown { background: rgba(100,116,139,0.2); color: #94a3b8; }
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
 
-    .arm-warning {
-      background: rgba(59,130,246,0.1);
-      border: 1px solid rgba(59,130,246,0.3);
-      border-radius: 12px;
-      padding: 1rem 1.5rem;
-      margin-bottom: 2rem;
-      color: #93c5fd;
-      font-size: 0.95rem;
-    }
+        .badge.native {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
 
-    footer {
-      border-top: 1px solid #1e293b;
-      padding: 2rem;
-      text-align: center;
-      color: #475569;
-      font-size: 0.85rem;
-    }
-  </style>
+        .badge.emulated {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .badge.unsupported {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .badge.unknown {
+            background: rgba(100, 116, 139, 0.2);
+            color: #94a3b8;
+        }
+
+        .arm-warning {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            color: #93c5fd;
+            font-size: 0.95rem;
+        }
+
+        footer {
+            border-top: 1px solid #1e293b;
+            padding: 2rem;
+            text-align: center;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+    </style>
 </head>
+
 <body>
 
-  <nav>
-    <div class="logo">NGPC<span>X</span></div>
-    <a href="/" class="back-link">← Run another scan</a>
-  </nav>
+    <nav>
+        <div class="logo">NGPC<span>X</span></div>
+        <a href="/" class="back-link">← Run another scan</a>
+    </nav>
 
-  <!-- LOADING STATE -->
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <h2>Waiting for scanner...</h2>
-    <p>Run the downloaded <code>ngpcx-scanner.exe</code> to see your results here.</p>
-  </div>
-
-  <!-- REPORT -->
-  <div class="report" id="report">
-
-    <div class="report-header">
-      <div>
-        <h1>Your ARM Readiness Report</h1>
-        <p id="scan-time"></p>
-      </div>
-      <div class="gauge-wrap">
-        <svg width="120" height="120" id="gauge-svg">
-          <circle cx="60" cy="60" r="45" stroke="#1e293b" stroke-width="10" fill="none"/>
-          <circle cx="60" cy="60" r="45" stroke="#3b82f6" stroke-width="10" fill="none"
-            stroke-dasharray="282.7"
-            stroke-dashoffset="282.7"
-            stroke-linecap="round"
-            transform="rotate(-90 60 60)"
-            id="gauge-circle"/>
-        </svg>
-        <div class="gauge-score" id="gauge-score">0</div>
-        <div class="gauge-label">Readiness Score</div>
-      </div>
+    <!-- LOADING STATE -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <h2>Waiting for scanner...</h2>
+        <p>Run the downloaded <code>ngpcx-scanner.exe</code> to see your results here.</p>
     </div>
 
-    <!-- ARM WARNING -->
-    <div class="arm-warning" id="arm-warning" style="display:none">
-      ⚡ This machine is already running ARM Windows — you're ahead of the curve!
+    <!-- REPORT -->
+    <div class="report" id="report">
+
+        <div class="report-header">
+            <div>
+                <h1>Your ARM Readiness Report</h1>
+                <p id="scan-time"></p>
+            </div>
+            <div class="gauge-wrap">
+                <svg width="120" height="120" viewBox="0 0 120 120" id="gauge-svg">
+                    <circle cx="60" cy="60" r="45" stroke="#1e293b" stroke-width="10" fill="none" />
+                    <circle cx="60" cy="60" r="45" stroke="#3b82f6" stroke-width="10" fill="none"
+                        stroke-dasharray="282.7" stroke-dashoffset="282.7" stroke-linecap="round"
+                        transform="rotate(-90 60 60)" id="gauge-circle" />
+                    <text x="60" y="55" text-anchor="middle" fill="#f1f5f9" font-size="22" font-weight="800"
+                        id="gauge-score-svg">0</text>
+                    <text x="60" y="70" text-anchor="middle" fill="#64748b" font-size="8"
+                        letter-spacing="1">READINESS</text>
+                    <text x="60" y="80" text-anchor="middle" fill="#64748b" font-size="8"
+                        letter-spacing="1">SCORE</text>
+                </svg>
+                <div style="font-size:0.7rem; color:#475569; text-transform:uppercase; letter-spacing:0.05em; margin-top:0.5rem;">Data Confidence</div>
+                <div id="confidence-bar-wrap"
+                    style="width:120px; height:6px; background:#1e293b; border-radius:3px; margin:0.5rem auto 0.3rem auto; overflow:hidden;">
+                    <div id="confidence-bar"
+                        style="height:100%; background:#3b82f6; border-radius:3px; width:0%; transition:width 0.8s ease;">
+                    </div>
+                </div>
+                <div id="confidence-label"
+                    style="font-size:0.75rem; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;"></div>
+            </div>
+        </div>
+
+        <!-- ARM WARNING -->
+        <div class="arm-warning" id="arm-warning" style="display:none">
+            ⚡ This machine is already running ARM Windows — you're ahead of the curve!
+        </div>
+
+        <!-- SYSTEM INFO -->
+        <div class="system-info" id="system-info"></div>
+
+        <!-- SUMMARY -->
+        <div class="summary">
+            <div class="summary-card native">
+                <div class="summary-count" id="count-native">0</div>
+                <div class="summary-label">Native ARM64</div>
+            </div>
+            <div class="summary-card emulated">
+                <div class="summary-count" id="count-emulated">0</div>
+                <div class="summary-label">Emulated</div>
+            </div>
+            <div class="summary-card unsupported">
+                <div class="summary-count" id="count-unsupported">0</div>
+                <div class="summary-label">Unsupported</div>
+            </div>
+            <div class="summary-card unknown">
+                <div class="summary-count" id="count-unknown">0</div>
+                <div class="summary-label">Unknown</div>
+            </div>
+        </div>
+
+        <!-- APP TABLES -->
+        <div id="native-section"></div>
+        <div id="emulated-section"></div>
+        <div id="unsupported-section"></div>
+        <div id="unknown-section"></div>
+
     </div>
 
-    <!-- SYSTEM INFO -->
-    <div class="system-info" id="system-info"></div>
+    <footer>
+        NGPCX — ARM Readiness Scanner. Data sourced from Winget, vendor sites, and community reports.
+    </footer>
 
-    <!-- SUMMARY -->
-    <div class="summary">
-      <div class="summary-card native">
-        <div class="summary-count" id="count-native">0</div>
-        <div class="summary-label">Native ARM64</div>
-      </div>
-      <div class="summary-card emulated">
-        <div class="summary-count" id="count-emulated">0</div>
-        <div class="summary-label">Emulated</div>
-      </div>
-      <div class="summary-card unsupported">
-        <div class="summary-count" id="count-unsupported">0</div>
-        <div class="summary-label">Unsupported</div>
-      </div>
-      <div class="summary-card unknown">
-        <div class="summary-count" id="count-unknown">0</div>
-        <div class="summary-label">Unknown</div>
-      </div>
-    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get('session');
 
-    <!-- APP TABLES -->
-    <div id="native-section"></div>
-    <div id="emulated-section"></div>
-    <div id="unsupported-section"></div>
-    <div id="unknown-section"></div>
+        function animateScore(target) {
+            const circle = document.getElementById('gauge-circle');
+            const scoreEl = document.getElementById('gauge-score-svg');
+            const circumference = 282.7;
+            let current = 0;
+            const duration = 800;
+            const start = performance.now();
 
-  </div>
+            function tick(now) {
+                const progress = Math.min((now - start) / duration, 1);
+                current = Math.round(progress * target);
+                if (scoreEl) scoreEl.textContent = current;
+                circle.style.strokeDashoffset = circumference - (current / 100) * circumference;
 
-  <footer>
-    NGPCX — ARM Readiness Scanner. Data sourced from Winget, vendor sites, and community reports.
-  </footer>
+                if (target >= 80) circle.style.stroke = '#10b981';
+                else if (target >= 50) circle.style.stroke = '#f59e0b';
+                else circle.style.stroke = '#ef4444';
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session');
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
 
-    function animateScore(target) {
-      const circle = document.getElementById('gauge-circle');
-      const scoreEl = document.getElementById('gauge-score');
-      const circumference = 282.7;
-      let current = 0;
-      const duration = 800;
-      const start = performance.now();
+        function buildTable(apps, type) {
+            if (!apps || apps.length === 0) return '';
 
-      function tick(now) {
-        const progress = Math.min((now - start) / duration, 1);
-        current = Math.round(progress * target);
-        scoreEl.textContent = current;
-        circle.style.strokeDashoffset = circumference - (current / 100) * circumference;
+            const labels = {
+                native: '✓ Native ARM64',
+                emulated: '⚡ Emulated',
+                unsupported: '✗ Unsupported',
+                unknown: '? Unknown'
+            };
 
-        // Color based on score
-        if (target >= 80) circle.style.stroke = '#10b981';
-        else if (target >= 50) circle.style.stroke = '#f59e0b';
-        else circle.style.stroke = '#ef4444';
-
-        if (progress < 1) requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
-    }
-
-    function buildTable(apps, type) {
-      if (!apps || apps.length === 0) return '';
-
-      const labels = {
-        native: '✓ Native ARM64',
-        emulated: '⚡ Emulated',
-        unsupported: '✗ Unsupported',
-        unknown: '? Unknown'
-      };
-
-      const rows = apps.map(app => `
+            const rows = apps.map(app => `
         <tr>
           <td>${app.name || app.id}</td>
           <td style="color:#64748b;font-size:0.8rem">${app.id || ''}</td>
@@ -394,7 +434,7 @@
         </tr>
       `).join('');
 
-      return `
+            return `
         <div class="section-title">${labels[type]} (${apps.length})</div>
         <table class="app-table">
           <thead>
@@ -408,73 +448,108 @@
           <tbody>${rows}</tbody>
         </table>
       `;
-    }
+        }
 
-    function renderReport(data) {
-      const results = data.results;
+        function renderReport(data) {
+            const results = data.results;
 
-      // System info
-      if (results.system) {
-        const s = results.system;
-        document.getElementById('system-info').innerHTML = `
+            // System info
+            if (results.system) {
+                const s = results.system;
+                document.getElementById('system-info').innerHTML = `
           <div class="sys-item"><label>OS</label><span>${s.os_version}</span></div>
           <div class="sys-item"><label>CPU</label><span>${s.cpu}</span></div>
           <div class="sys-item"><label>RAM</label><span>${s.ram_gb} GB</span></div>
           <div class="sys-item"><label>Architecture</label><span>${s.architecture}</span></div>
         `;
-        if (s.is_arm) {
-          document.getElementById('arm-warning').style.display = 'block';
+                if (s.is_arm) {
+                    document.getElementById('arm-warning').style.display = 'block';
+                }
+            }
+
+            // Score
+            animateScore(results.score || 0);
+
+            // Confidence indicator
+            const total = (results.native?.length || 0) +
+                (results.emulated?.length || 0) +
+                (results.unsupported?.length || 0) +
+                (results.unknown?.length || 0);
+            const known = (results.native?.length || 0) +
+                (results.emulated?.length || 0) +
+                (results.unsupported?.length || 0);
+            const confidencePct = total === 0 ? 0 : Math.round((known / total) * 100);
+
+            const confidenceLabel =
+                confidencePct >= 80 ? 'High Confidence' :
+                    confidencePct >= 50 ? 'Moderate Confidence' :
+                        confidencePct >= 25 ? 'Limited Data' :
+                            'Very Limited Data';
+
+            const confidenceColor =
+                confidencePct >= 80 ? '#10b981' :
+                    confidencePct >= 50 ? '#f59e0b' :
+                        '#ef4444';
+
+            setTimeout(() => {
+                const bar = document.getElementById('confidence-bar');
+                const label = document.getElementById('confidence-label');
+                if (bar) {
+                    bar.style.width = confidencePct + '%';
+                    bar.style.background = confidenceColor;
+                }
+                if (label) {
+                    label.textContent = `${confidenceLabel} — ${known} of ${total} apps matched`;
+                    label.style.color = confidenceColor;
+                }
+            }, 400);
+
+            // Scan time
+            if (results.lastScanned) {
+                const d = new Date(results.lastScanned);
+                document.getElementById('scan-time').textContent =
+                    'Scanned ' + d.toLocaleString();
+            }
+
+            // Counts
+            document.getElementById('count-native').textContent = results.native?.length || 0;
+            document.getElementById('count-emulated').textContent = results.emulated?.length || 0;
+            document.getElementById('count-unsupported').textContent = results.unsupported?.length || 0;
+            document.getElementById('count-unknown').textContent = results.unknown?.length || 0;
+
+            // Tables
+            document.getElementById('native-section').innerHTML = buildTable(results.native, 'native');
+            document.getElementById('emulated-section').innerHTML = buildTable(results.emulated, 'emulated');
+            document.getElementById('unsupported-section').innerHTML = buildTable(results.unsupported, 'unsupported');
+            document.getElementById('unknown-section').innerHTML = buildTable(results.unknown, 'unknown');
+
+            // Show report
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('report').style.display = 'block';
         }
-      }
 
-      // Score
-      animateScore(results.score || 0);
+        // If we have a session ID, poll for results
+        if (sessionId) {
+            const poll = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/session/' + sessionId);
+                    const data = await res.json();
 
-      // Scan time
-      if (results.lastScanned) {
-        const d = new Date(results.lastScanned);
-        document.getElementById('scan-time').textContent = 
-          'Scanned ' + d.toLocaleString();
-      }
-
-      // Counts
-      document.getElementById('count-native').textContent = results.native?.length || 0;
-      document.getElementById('count-emulated').textContent = results.emulated?.length || 0;
-      document.getElementById('count-unsupported').textContent = results.unsupported?.length || 0;
-      document.getElementById('count-unknown').textContent = results.unknown?.length || 0;
-
-      // Tables
-      document.getElementById('native-section').innerHTML = buildTable(results.native, 'native');
-      document.getElementById('emulated-section').innerHTML = buildTable(results.emulated, 'emulated');
-      document.getElementById('unsupported-section').innerHTML = buildTable(results.unsupported, 'unsupported');
-      document.getElementById('unknown-section').innerHTML = buildTable(results.unknown, 'unknown');
-
-      // Show report
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('report').style.display = 'block';
-    }
-
-    // If we have a session ID, poll for results
-    if (sessionId) {
-      const poll = setInterval(async () => {
-        try {
-          const res = await fetch('/api/session/' + sessionId);
-          const data = await res.json();
-
-          if (data.status === 'complete') {
-            clearInterval(poll);
-            renderReport(data);
-          }
-        } catch (err) {
-          console.error('Poll error:', err);
+                    if (data.status === 'complete') {
+                        clearInterval(poll);
+                        renderReport(data);
+                    }
+                } catch (err) {
+                    console.error('Poll error:', err);
+                }
+            }, 1500);
+        } else {
+            // No session - show generic waiting message
+            document.querySelector('.loading p').textContent =
+                'No session found. Return to the home page and click Run Scan.';
         }
-      }, 1500);
-    } else {
-      // No session - show generic waiting message
-      document.querySelector('.loading p').textContent = 
-        'No session found. Return to the home page and click Run Scan.';
-    }
-  </script>
+    </script>
 
 </body>
+
 </html>

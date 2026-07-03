@@ -457,16 +457,13 @@
       // Step 4: Poll localhost for scanner completion
       pollInterval = setInterval(async () => {
         try {
-          const local = await fetch('http://localhost:7878', {
+          await fetch('http://localhost:7878?session=' + sessionId, {
             signal: AbortSignal.timeout(500)
           });
-          const data = await local.json();
-
-          if (data.session_id) {
-            clearInterval(pollInterval);
-            // Step 5: Fetch results and redirect to report
-            window.location.href = '/report.html?session=' + data.session_id;
-          }
+          // Any response from localhost means scanner connected and submitted
+          clearInterval(pollInterval);
+          window.location.href = '/report.html?session=' + sessionId;
+          return;
         } catch {
           // Scanner not done yet, keep polling
         }

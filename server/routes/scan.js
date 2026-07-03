@@ -5,7 +5,7 @@ const db = require('../db');
 // POST /api/scan
 // Receives a list of apps from the scanner, returns a readiness report
 router.post('/scan', (req, res) => {
-  const { apps } = req.body;
+  const { apps, system, scan_mode } = req.body;
 
   if (!apps || !Array.isArray(apps)) {
     return res.status(400).json({ error: 'Invalid request - expected an apps array' });
@@ -18,12 +18,32 @@ router.post('/scan', (req, res) => {
 
   for (const app of apps) {
     // Look up this app in the database
-    const entry = db.prepare(`
-      SELECT * FROM apps 
-      WHERE LOWER(id) = LOWER(?)
-      OR LOWER(name) = LOWER(?)
-      OR LOWER(id) = LOWER(?)
-    `).get(app.id || app.name, app.name, app.name);
+    // Look up by Winget ID first (exact match, fastest)
+    let entry = db.prepare(`
+      SELECT * FROM apps WHERE LOWER(id) = LOWER(?)
+    `).get(app.id || '');
+
+    // Fall back to normalized name match
+    if (!entry && app.name) {
+      const normalized = app.name.toLowerCase().replace(/[\s\-_.]/g, '');
+      entry = db.prepare(`
+        SELECT * FROM apps 
+        WHERE REPLACE(REPLACE(REPLACE(REPLACE(LOWER(name), ' ', ''), '-', ''), '_', ''), '.', '') = ?
+        ORDER BY confidence DESC
+        LIMIT 1
+      `).get(normalized);
+    }
+
+    // Final fallback - partial name match
+    if (!entry && app.name) {
+      const nameLower = app.name.toLowerCase();
+      entry = db.prepare(`
+        SELECT * FROM apps 
+        WHERE LOWER(name) LIKE ?
+        ORDER BY confidence DESC
+        LIMIT 1
+      `).get(`%${nameLower}%`);
+    }
 
     if (!entry) {
       unknown.push({ ...app, arm_support: 'unknown' });
@@ -55,6 +75,8 @@ router.post('/scan', (req, res) => {
 
   const report = {
     score,
+    scan_mode: scan_mode || 'unknown',
+    system: system || null,
     native,
     emulated,
     unsupported,
