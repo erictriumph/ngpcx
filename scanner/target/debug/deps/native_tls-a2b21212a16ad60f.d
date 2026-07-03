@@ -1,0 +1,8 @@
+D:\projects\ngpcx\scanner\target\debug\deps\native_tls-a2b21212a16ad60f.d: C:\Users\eande\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\native-tls-0.2.18\src\lib.rs C:\Users\eande\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\native-tls-0.2.18\src\imp\schannel.rs
+
+D:\projects\ngpcx\scanner\target\debug\deps\libnative_tls-a2b21212a16ad60f.rlib: C:\Users\eande\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\native-tls-0.2.18\src\lib.rs C:\Users\eande\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\native-tls-0.2.18\src\imp\schannel.rs
+
+D:\projects\ngpcx\scanner\target\debug\deps\libnative_tls-a2b21212a16ad60f.rmeta: C:\Users\eande\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\native-tls-0.2.18\src\lib.rs C:\Users\eande\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\native-tls-0.2.18\src\imp\schannel.rs
+
+C:\Users\eande\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\native-tls-0.2.18\src\lib.rs:
+C:\Users\eande\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\native-tls-0.2.18\src\imp\schannel.rs:

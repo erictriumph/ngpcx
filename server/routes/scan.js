@@ -20,9 +20,10 @@ router.post('/scan', (req, res) => {
     // Look up this app in the database
     const entry = db.prepare(`
       SELECT * FROM apps 
-      WHERE LOWER(name) = LOWER(?) 
+      WHERE LOWER(id) = LOWER(?)
+      OR LOWER(name) = LOWER(?)
       OR LOWER(id) = LOWER(?)
-    `).get(app.name, app.name);
+    `).get(app.id || app.name, app.name, app.name);
 
     if (!entry) {
       unknown.push({ ...app, arm_support: 'unknown' });
@@ -31,17 +32,17 @@ router.post('/scan', (req, res) => {
 
     switch (entry.arm_support) {
       case 'native':
-        native.push({ ...app, ...entry });
+        native.push({ ...entry, ...app });
         break;
       case 'x64-emulated':
       case 'x86-emulated':
-        emulated.push({ ...app, ...entry });
+        emulated.push({ ...entry, ...app });
         break;
       case 'unsupported':
-        unsupported.push({ ...app, ...entry });
+        unsupported.push({ ...entry, ...app });
         break;
       default:
-        unknown.push({ ...app, ...entry });
+        unknown.push({ ...entry, ...app });
     }
   }
 

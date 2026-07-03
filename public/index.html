@@ -29,14 +29,17 @@
       letter-spacing: -0.5px;
     }
 
-    .logo span {
-      color: #f1f5f9;
+    .logo span { color: #f1f5f9; }
+
+    .nav-tag {
+      color: #64748b;
+      font-size: 0.9rem;
     }
 
-    hero {
-      display: block;
+    /* HERO */
+    .hero {
       max-width: 800px;
-      margin: 5rem auto;
+      margin: 5rem auto 3rem auto;
       text-align: center;
       padding: 0 1rem;
     }
@@ -74,14 +77,66 @@
       text-decoration: none;
     }
 
-    .scan-button:hover {
-      background: #2563eb;
+    .scan-button:hover { background: #2563eb; }
+
+    /* STATS BAR */
+    .stats-bar {
+      max-width: 800px;
+      margin: 0 auto 4rem auto;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #3b82f6;
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-loading {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #334155;
+    }
+
+    /* HOW IT WORKS */
+    .section-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.85rem;
     }
 
     .how-it-works {
       max-width: 800px;
       margin: 0 auto 5rem auto;
       padding: 0 1rem;
+    }
+
+    .steps {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 1.5rem;
@@ -112,41 +167,253 @@
       color: #94a3b8;
       line-height: 1.5;
     }
+
+    /* WHAT WE CHECK */
+    .what-we-check {
+      max-width: 800px;
+      margin: 0 auto 5rem auto;
+      padding: 0 1rem;
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .check-card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 1px solid #334155;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .check-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .check-card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .check-card p {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    /* SCORE LEGEND */
+    .score-legend {
+      max-width: 800px;
+      margin: 0 auto 5rem auto;
+      padding: 0 1rem;
+    }
+
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .legend-card {
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 1px solid;
+    }
+
+    .legend-card.native {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .legend-card.emulated {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .legend-card.unsupported {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .legend-card.unknown {
+      background: rgba(100, 116, 139, 0.1);
+      border-color: rgba(100, 116, 139, 0.3);
+    }
+
+    .legend-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+
+    .native .legend-label { color: #10b981; }
+    .emulated .legend-label { color: #f59e0b; }
+    .unsupported .legend-label { color: #ef4444; }
+    .unknown .legend-label { color: #64748b; }
+
+    .legend-card p {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid #1e293b;
+      padding: 2rem;
+      text-align: center;
+      color: #475569;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
 
   <nav>
     <div class="logo">NGPC<span>X</span></div>
-    <div style="color: #64748b; font-size: 0.9rem;">ARM Readiness Scanner</div>
+    <div class="nav-tag">ARM Readiness Scanner</div>
   </nav>
 
-  <hero>
+  <!-- HERO -->
+  <div class="hero">
     <h1>Know Before You <em>Buy</em></h1>
     <p class="subtitle">
-      Find out if your current apps are ready for a Snapdragon ARM laptop —
+      Find out if your current apps and drivers are ready for a Snapdragon ARM laptop —
       before you make the switch.
     </p>
     <a href="#" class="scan-button">Download the Scanner</a>
-  </hero>
+  </div>
 
-  <div class="how-it-works">
-    <div class="step">
-      <div class="step-number">1</div>
-      <h3>Download the Scanner</h3>
-      <p>A small Windows tool that reads your installed apps. No installation required.</p>
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-number" id="stat-apps">—</div>
+      <div class="stat-label">Apps Catalogued</div>
     </div>
-    <div class="step">
-      <div class="step-number">2</div>
-      <h3>Run It</h3>
-      <p>It scans your machine in seconds and sends the results to our server.</p>
+    <div class="stat-card">
+      <div class="stat-number" id="stat-drivers">—</div>
+      <div class="stat-label">Drivers Catalogued</div>
     </div>
-    <div class="step">
-      <div class="step-number">3</div>
-      <h3>Get Your Score</h3>
-      <p>See exactly which apps are ARM-ready, which need emulation, and which won't work.</p>
+    <div class="stat-card">
+      <div class="stat-number" id="stat-native">—</div>
+      <div class="stat-label">Native ARM64</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="stat-total">—</div>
+      <div class="stat-label">Total Entries</div>
     </div>
   </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="how-it-works">
+    <div class="section-title">How it works</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Download the Scanner</h3>
+        <p>A small Windows tool that reads your installed apps and drivers. No installation required — just run it.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Run the Scan</h3>
+        <p>It scans your machine in seconds and sends the results to our server for analysis.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Get Your Score</h3>
+        <p>See your ARM Readiness Score and a full breakdown of which apps are ready, which need emulation, and which won't work.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT WE CHECK -->
+  <div class="what-we-check">
+    <div class="section-title">What we check</div>
+    <div class="check-grid">
+      <div class="check-card">
+        <div class="check-icon">📦</div>
+        <div>
+          <h3>Installed Apps</h3>
+          <p>Every application on your machine, checked against our ARM compatibility database.</p>
+        </div>
+      </div>
+      <div class="check-card">
+        <div class="check-icon">🔧</div>
+        <div>
+          <h3>Drivers</h3>
+          <p>Hardware drivers are often the hardest part of ARM migration — we flag the risky ones.</p>
+        </div>
+      </div>
+      <div class="check-card">
+        <div class="check-icon">🏗️</div>
+        <div>
+          <h3>Binary Architecture</h3>
+          <p>We inspect the actual executable to confirm whether it's x86, x64, or already ARM64.</p>
+        </div>
+      </div>
+      <div class="check-card">
+        <div class="check-icon">⚡</div>
+        <div>
+          <h3>Emulation Impact</h3>
+          <p>Apps running under emulation work but reduce battery life — we tell you which ones and by how much.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCORE LEGEND -->
+  <div class="score-legend">
+    <div class="section-title">Understanding your score</div>
+    <div class="legend-grid">
+      <div class="legend-card native">
+        <div class="legend-label">✓ Native ARM64</div>
+        <p>Runs natively on Snapdragon. Full performance, full battery life.</p>
+      </div>
+      <div class="legend-card emulated">
+        <div class="legend-label">⚡ Emulated</div>
+        <p>Works under x64 emulation. Slight performance and battery penalty.</p>
+      </div>
+      <div class="legend-card unsupported">
+        <div class="legend-label">✗ Unsupported</div>
+        <p>Will not run on ARM Windows. Needs a replacement or workaround.</p>
+      </div>
+      <div class="legend-card unknown">
+        <div class="legend-label">? Unknown</div>
+        <p>Not yet in our database. Help us improve by submitting compatibility info.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    NGPCX is a community-driven ARM compatibility tool. Data sourced from Winget, vendor sites, and community reports.
+  </footer>
+
+  <script>
+    // Load live stats from the server
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('stat-apps').textContent = data.apps.toLocaleString();
+        document.getElementById('stat-drivers').textContent = data.drivers.toLocaleString();
+        document.getElementById('stat-native').textContent = data.native.toLocaleString();
+        document.getElementById('stat-total').textContent = data.total.toLocaleString();
+      })
+      .catch(() => {
+        // If stats fail, show dashes
+        ['stat-apps', 'stat-drivers', 'stat-native', 'stat-total'].forEach(id => {
+          document.getElementById(id).textContent = '—';
+        });
+      });
+  </script>
 
 </body>
 </html>
