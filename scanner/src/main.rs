@@ -262,14 +262,14 @@ fn get_installed_apps(mode: &str, recent: &HashMap<String, bool>) -> Vec<AppEntr
 //  Send to Server
 // ─────────────────────────────────────────
 
-fn send_to_server(payload: &ScanPayload) -> Result<String, String> {
-    let server_url = "http://localhost:3000/api/scan";
+fn send_to_server(payload: &ScanPayload, base_url: &str) -> Result<String, String> {
+    let url = format!("{}/api/scan", base_url);
 
     println!("\n  Sending results to server...");
 
     let client = reqwest::blocking::Client::new();
     let res = client
-        .post(server_url)
+        .post(&url)
         .json(payload)
         .send()
         .map_err(|e| format!("Network error: {}", e))?;
@@ -307,6 +307,15 @@ fn start_local_server(session_id: &str) {
     });
 }
 
+fn get_server_url() -> String {
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == "--local") {
+        "http://localhost:3000".to_string()
+    } else {
+        "https://ngpcx.com".to_string()
+    }
+}
+
 // ─────────────────────────────────────────
 //  Main
 // ─────────────────────────────────────────
@@ -317,7 +326,9 @@ fn main() {
     println!("╚══════════════════════════════════════╝");
 
     let mode = get_scan_mode();
-    println!("\nScan mode: {}\n", mode.to_uppercase());
+    let base_url = get_server_url();
+    println!("\nScan mode: {}", mode.to_uppercase());
+    println!("Server:    {}\n", base_url);
 
     // Step 1: System info
     println!("[1/3] Collecting system information...");
@@ -346,7 +357,8 @@ fn main() {
 
     // Get a session ID from the server
     let client = reqwest::blocking::Client::new();
-    let session_id = match client.post("http://localhost:3000/api/session").send() {
+    let session_url = format!("{}/api/session", base_url);
+    let session_id = match client.post(&session_url).send() {
         Ok(res) => match res.json::<serde_json::Value>() {
             Ok(v) => {
                 let id = v["session_id"].as_str().unwrap_or("").to_string();
@@ -365,7 +377,6 @@ fn main() {
     };
 
     if !session_id.is_empty() {
-        println!("  Session ID: {}", session_id);
         start_local_server(&session_id);
     }
 
@@ -381,7 +392,7 @@ fn main() {
         apps,
     };
 
-    match send_to_server(&payload) {
+    match send_to_server(&payload, &base_url) {
         Ok(_) => {
             println!("  Results submitted successfully!");
             println!("\n  Your report is ready. Check your browser.");
