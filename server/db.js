@@ -24,6 +24,21 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS schema_version (version INTEGER);
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    status TEXT NOT NULL DEFAULT 'waiting',
+    results TEXT,
+    created_at TEXT,
+    expires_at TEXT
+  )
+`);
+
+// Clean up sessions older than 24 hours
+db.prepare(`
+  DELETE FROM sessions WHERE created_at < datetime('now', '-24 hours')
+`).run();
+
 // Add type column if it doesn't exist (for existing databases)
 try {
   db.exec(`ALTER TABLE apps ADD COLUMN type TEXT NOT NULL DEFAULT 'app'`);

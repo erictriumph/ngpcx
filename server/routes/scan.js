@@ -49,18 +49,29 @@ router.post('/scan', (req, res) => {
   // Calculate readiness score
   const total = native.length + emulated.length + unsupported.length;
   const score = total === 0 ? 0 : Math.round(
-    (native.length * 100 + emulated.length * 60 - unsupported.length * 20) / 
+    (native.length * 100 + emulated.length * 60 - unsupported.length * 20) /
     (total * 100) * 100
   );
 
-  res.json({
+  const report = {
     score,
     native,
     emulated,
     unsupported,
     unknown,
     lastScanned: new Date().toISOString()
-  });
+  };
+
+  // If a session ID was provided, store results
+  const sessionId = req.body.session_id;
+  if (sessionId) {
+    db.prepare(`
+      UPDATE sessions SET status = 'complete', results = ?
+      WHERE id = ?
+    `).run(JSON.stringify(report), sessionId);
+  }
+
+  res.json(report);
 });
 
 module.exports = router;

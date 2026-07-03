@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NGPCX — ARM Readiness Scanner</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       font-family: system-ui, sans-serif;
@@ -29,7 +34,9 @@
       letter-spacing: -0.5px;
     }
 
-    .logo span { color: #f1f5f9; }
+    .logo span {
+      color: #f1f5f9;
+    }
 
     .nav-tag {
       color: #64748b;
@@ -77,7 +84,9 @@
       text-decoration: none;
     }
 
-    .scan-button:hover { background: #2563eb; }
+    .scan-button:hover {
+      background: #2563eb;
+    }
 
     /* STATS BAR */
     .stats-bar {
@@ -255,10 +264,21 @@
       margin-bottom: 0.4rem;
     }
 
-    .native .legend-label { color: #10b981; }
-    .emulated .legend-label { color: #f59e0b; }
-    .unsupported .legend-label { color: #ef4444; }
-    .unknown .legend-label { color: #64748b; }
+    .native .legend-label {
+      color: #10b981;
+    }
+
+    .emulated .legend-label {
+      color: #f59e0b;
+    }
+
+    .unsupported .legend-label {
+      color: #ef4444;
+    }
+
+    .unknown .legend-label {
+      color: #64748b;
+    }
 
     .legend-card p {
       font-size: 0.85rem;
@@ -276,6 +296,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <nav>
@@ -290,7 +311,7 @@
       Find out if your current apps and drivers are ready for a Snapdragon ARM laptop —
       before you make the switch.
     </p>
-    <a href="#" class="scan-button">Download the Scanner</a>
+    <a href="#" class="scan-button" id="run-scan-btn">Run Scan</a>
   </div>
 
   <!-- STATS BAR -->
@@ -330,7 +351,8 @@
       <div class="step">
         <div class="step-number">3</div>
         <h3>Get Your Score</h3>
-        <p>See your ARM Readiness Score and a full breakdown of which apps are ready, which need emulation, and which won't work.</p>
+        <p>See your ARM Readiness Score and a full breakdown of which apps are ready, which need emulation, and which
+          won't work.</p>
       </div>
     </div>
   </div>
@@ -398,7 +420,82 @@
   </footer>
 
   <script>
-    // Load live stats from the server
+    const btn = document.getElementById('run-scan-btn');
+    let pollInterval = null;
+
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+
+      // Step 1: Create a session
+      btn.textContent = 'Starting...';
+      btn.style.background = '#475569';
+      btn.style.cursor = 'default';
+      btn.style.pointerEvents = 'none';
+
+      let sessionId;
+      try {
+        const res = await fetch('/api/session', { method: 'POST' });
+        const data = await res.json();
+        sessionId = data.session_id;
+      } catch (err) {
+        btn.textContent = 'Error — try again';
+        btn.style.background = '#ef4444';
+        return;
+      }
+
+      // Step 2: Trigger download
+      const link = document.createElement('a');
+      link.href = '/ngpcx-scanner.exe';
+      link.download = 'ngpcx-scanner.exe';
+      link.click();
+
+      // Step 3: Show waiting UI
+      btn.textContent = '⏳ Waiting for scanner...';
+
+      showWaitingMessage();
+
+      // Step 4: Poll localhost for scanner completion
+      pollInterval = setInterval(async () => {
+        try {
+          const local = await fetch('http://localhost:7878', {
+            signal: AbortSignal.timeout(500)
+          });
+          const data = await local.json();
+
+          if (data.session_id) {
+            clearInterval(pollInterval);
+            // Step 5: Fetch results and redirect to report
+            window.location.href = '/report.html?session=' + data.session_id;
+          }
+        } catch {
+          // Scanner not done yet, keep polling
+        }
+      }, 1000);
+    });
+
+    function showWaitingMessage() {
+      const hero = document.querySelector('.hero');
+      const msg = document.createElement('div');
+      msg.id = 'waiting-msg';
+      msg.style.cssText = `
+      margin-top: 1.5rem;
+      padding: 1rem 1.5rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    `;
+      msg.innerHTML = `
+      <strong style="color:#f1f5f9">Scanner downloaded!</strong><br>
+      Run <code style="color:#3b82f6">ngpcx-scanner.exe</code> to scan your machine.<br>
+      This page will update automatically when the scan is complete.
+    `;
+      hero.appendChild(msg);
+    }
+
+    // Load live stats
     fetch('/api/stats')
       .then(res => res.json())
       .then(data => {
@@ -408,7 +505,6 @@
         document.getElementById('stat-total').textContent = data.total.toLocaleString();
       })
       .catch(() => {
-        // If stats fail, show dashes
         ['stat-apps', 'stat-drivers', 'stat-native', 'stat-total'].forEach(id => {
           document.getElementById(id).textContent = '—';
         });
@@ -416,4 +512,5 @@
   </script>
 
 </body>
+
 </html>

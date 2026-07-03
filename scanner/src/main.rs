@@ -30,6 +30,7 @@ struct AppEntry {
 struct ScanPayload {
     scan_mode: String,
     scanned_at: String,
+    session_id: Option<String>,
     system: SystemInfo,
     apps: Vec<AppEntry>,
 }
@@ -280,6 +281,32 @@ fn send_to_server(payload: &ScanPayload) -> Result<String, String> {
     Ok(body)
 }
 
+fn start_local_server(session_id: &str) {
+    use std::io::Write;
+    use std::net::TcpListener;
+
+    let session_id = session_id.to_string();
+
+    std::thread::spawn(move || {
+        let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+
+        for stream in listener.incoming() {
+            let mut stream = match stream {
+                Ok(s) => s,
+                Err(_) => break,
+            };
+
+            let response = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET\r\n\r\n{{\"session_id\":\"{}\",\"status\":\"complete\"}}",
+                session_id
+            );
+
+            let _ = stream.write_all(response.as_bytes());
+            break; // Only handle one request then exit
+        }
+    });
+}
+
 // ─────────────────────────────────────────
 //  Main
 // ─────────────────────────────────────────
@@ -317,21 +344,50 @@ fn main() {
     // Step 3: Send to server
     println!("\n[3/3] Checking compatibility...");
 
+    // Get a session ID from the server
+    let client = reqwest::blocking::Client::new();
+    let session_id = match client.post("http://localhost:3000/api/session").send() {
+        Ok(res) => match res.json::<serde_json::Value>() {
+            Ok(v) => {
+                let id = v["session_id"].as_str().unwrap_or("").to_string();
+                println!("  Session ID: {}", id);
+                id
+            }
+            Err(e) => {
+                eprintln!("  Failed to parse session response: {}", e);
+                String::new()
+            }
+        },
+        Err(e) => {
+            eprintln!("  Failed to create session: {}", e);
+            String::new()
+        }
+    };
+
+    if !session_id.is_empty() {
+        println!("  Session ID: {}", session_id);
+        start_local_server(&session_id);
+    }
+
     let payload = ScanPayload {
         scan_mode: mode,
         scanned_at: Utc::now().to_rfc3339(),
+        session_id: if session_id.is_empty() {
+            None
+        } else {
+            Some(session_id)
+        },
         system,
         apps,
     };
 
     match send_to_server(&payload) {
-        Ok(response) => {
-            println!("  Response received!");
-            println!("\n{}", response);
+        Ok(_) => {
+            println!("  Results submitted successfully!");
+            println!("\n  Your report is ready. Check your browser.");
         }
         Err(e) => {
             eprintln!("  Error: {}", e);
-            eprintln!("  Make sure the NGPCX server is running locally.");
         }
     }
 
