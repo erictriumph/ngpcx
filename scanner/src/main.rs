@@ -264,7 +264,6 @@ fn get_installed_apps(mode: &str, recent: &HashMap<String, bool>) -> Vec<AppEntr
 
 fn send_to_server(payload: &ScanPayload, base_url: &str) -> Result<String, String> {
     let url = format!("{}/api/scan", base_url);
-    println!("  Submitting to: {}", url);
 
     println!("\n  Sending results to server...");
 
@@ -327,8 +326,6 @@ fn start_local_server() -> Option<String> {
                     .nth(1)
                     .and_then(|path| path.split("session=").nth(1))
                     .map(|s| s.split('&').next().unwrap_or(s).to_string());
-                    println!("  Raw request line: {}", request_line);
-                    println!("  Extracted session: {:?}", extracted);
 
                 if let Some(ref id) = extracted {
                     println!("  Browser connected — session ID: {}", id);
@@ -397,7 +394,14 @@ fn main() {
         recent.len()
     );
 
-    let apps = get_installed_apps(&mode, &recent);
+    let mut apps = get_installed_apps(&mode, &recent);
+    
+    // If quick mode found nothing (Prefetch unavailable), fall back to standard
+    if apps.is_empty() && mode == "quick" {
+        println!("  Quick mode found no apps (Prefetch unavailable) — falling back to standard...");
+        apps = get_installed_apps("standard", &recent);
+    }
+    
     println!("  Found {} apps to check", apps.len());
 
 // Step 3: Send to server
