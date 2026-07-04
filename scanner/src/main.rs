@@ -264,6 +264,7 @@ fn get_installed_apps(mode: &str, recent: &HashMap<String, bool>) -> Vec<AppEntr
 
 fn send_to_server(payload: &ScanPayload, base_url: &str) -> Result<String, String> {
     let url = format!("{}/api/scan", base_url);
+    println!("  Submitting to: {}", url);
 
     println!("\n  Sending results to server...");
 
@@ -285,46 +286,73 @@ fn start_local_server() -> Option<String> {
     use std::io::{BufRead, BufReader, Write};
     use std::net::TcpListener;
     use std::sync::{Arc, Mutex};
+    use std::time::Duration;
 
-    let session_id: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
-    let session_id_clone = Arc::clone(&session_id);
+    let result: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+    let result_clone = Arc::clone(&result);
 
-    let listener = TcpListener::bind("127.0.0.1:7878").ok()?;
+    let listener = match TcpListener::bind("127.0.0.1:7878") {
+        Ok(l) => l,
+        Err(e) => {
+            eprintln!("  Could not bind to port 7878: {}", e);
+            return None;
+        }
+    };
+
     println!("  Listening on localhost:7878 for browser connection...");
 
-    let handle = std::thread::spawn(move || {
-        if let Ok((mut stream, _)) = listener.accept() {
-            let reader = BufReader::new(stream.try_clone().unwrap());
-            
-            // Read the request line to get the session ID from URL
-            let mut request_line = String::new();
-            reader.lines().next().map(|l| request_line = l.unwrap_or_default());
+    // Set a 20 second timeout on accept
+    listener.set_nonblocking(true).ok()?;
 
-            // Extract session from "GET /?session=abc123 HTTP/1.1"
-            let extracted = request_line
-                .split_whitespace()
-                .nth(1)
-                .and_then(|path| {
-                    path.split("session=").nth(1)
-                })
-                .map(|s| s.split('&').next().unwrap_or(s).to_string());
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_secs(20);
 
-            if let Some(ref id) = extracted {
-                println!("  Browser connected — session ID: {}", id);
-                *session_id_clone.lock().unwrap() = extracted.clone();
-            }
-
-            // Respond to browser
-            let response = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\n\r\n{\"connected\":true}";
-            let _ = stream.write_all(response.as_bytes());
+    loop {
+        if start.elapsed() > timeout {
+            println!("  Browser connection timed out — proceeding without session handshake");
+            break;
         }
-    });
 
-    // Wait up to 30 seconds for browser to connect
-    handle.join().ok();
-    
-    let result = session_id.lock().unwrap().clone();
-    result
+        match listener.accept() {
+            Ok((mut stream, _)) => {
+                stream.set_nonblocking(false).ok();
+                let reader = BufReader::new(stream.try_clone().unwrap());
+                let mut request_line = String::new();
+                if let Some(Ok(line)) = reader.lines().next() {
+                    request_line = line;
+                }
+
+                let extracted = request_line
+                    .split_whitespace()
+                    .nth(1)
+                    .and_then(|path| path.split("session=").nth(1))
+                    .map(|s| s.split('&').next().unwrap_or(s).to_string());
+                    println!("  Raw request line: {}", request_line);
+                    println!("  Extracted session: {:?}", extracted);
+
+                if let Some(ref id) = extracted {
+                    println!("  Browser connected — session ID: {}", id);
+                    *result_clone.lock().unwrap() = extracted;
+                }
+
+                let response = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\n\r\n{\"connected\":true}";
+                let _ = stream.write_all(response.as_bytes());
+                break;
+            }
+            Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                // No connection yet, wait a bit
+                std::thread::sleep(Duration::from_millis(100));
+                continue;
+            }
+            Err(e) => {
+                eprintln!("  Accept error: {}", e);
+                break;
+            }
+        }
+    }
+
+    let id = result.lock().unwrap().clone();
+    id
 }
 
 fn get_server_url() -> String {

@@ -454,18 +454,31 @@
 
       showWaitingMessage();
 
-      // Step 4: Poll localhost for scanner completion
       pollInterval = setInterval(async () => {
+        // Try localhost first
         try {
           await fetch('http://localhost:7878?session=' + sessionId, {
             signal: AbortSignal.timeout(500)
           });
-          // Any response from localhost means scanner connected and submitted
+          console.log('localhost connected!');
           clearInterval(pollInterval);
           window.location.href = '/report.html?session=' + sessionId;
           return;
-        } catch {
-          // Scanner not done yet, keep polling
+        } catch (e) {
+          console.log('localhost failed:', e.message);
+        }
+
+        // Fallback: poll server session directly
+        try {
+          const res = await fetch('/api/session/' + sessionId);
+          const data = await res.json();
+          console.log('session status:', data.status);
+          if (data.status === 'complete') {
+            clearInterval(pollInterval);
+            window.location.href = '/report.html?session=' + sessionId;
+          }
+        } catch (e) {
+          console.log('session poll failed:', e.message);
         }
       }, 1000);
     });

@@ -86,11 +86,13 @@ router.post('/scan', (req, res) => {
 
   // If a session ID was provided, store results
   const sessionId = req.body.session_id;
+  console.log('Session ID received:', sessionId);
   if (sessionId) {
-    db.prepare(`
+    const result = db.prepare(`
       UPDATE sessions SET status = 'complete', results = ?
       WHERE id = ?
     `).run(JSON.stringify(report), sessionId);
+    console.log('Session update result:', result);
   }
 
   res.json(report);
