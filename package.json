@@ -9,6 +9,7 @@
     "scrape:winget": "node server/scrapers/winget.js",
     "scrape:winget:letters": "node server/scrapers/winget.js --letters=",
     "scrape:woa": "node server/scrapers/community/worksonwoa.js",
+    "scrape:wuc": "node server/scrapers/index.js --only=windowsupdatecatalog",
     "postinstall": "npm rebuild better-sqlite3",
     "test": "echo \"Error: no test specified\" && exit 1"
 },

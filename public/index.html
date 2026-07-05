@@ -311,7 +311,28 @@
       Find out if your current apps and drivers are ready for a Snapdragon ARM laptop —
       before you make the switch.
     </p>
-    <a href="#" class="scan-button" id="run-scan-btn">Run Scan</a>
+
+    <div
+      style="display:flex; align-items:center; justify-content:center; gap:2rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+
+      <div class="scan-level" style="text-align:left;">
+        <label style="display:block; margin-bottom:0.6rem; cursor:pointer;">
+          <input type="radio" name="scan-level" value="quick" checked> Quick
+          <span style="color:#64748b; font-size:0.85rem;"> — recently used apps</span>
+        </label>
+        <label style="display:block; margin-bottom:0.6rem; cursor:pointer;">
+          <input type="radio" name="scan-level" value="standard"> Standard
+          <span style="color:#64748b; font-size:0.85rem;"> — all installed apps</span>
+        </label>
+        <label style="display:block; cursor:pointer;">
+          <input type="radio" name="scan-level" value="full"> Full
+          <span style="color:#64748b; font-size:0.85rem;"> — everything, incl. system items</span>
+        </label>
+      </div>
+
+      <a href="#" class="scan-button" id="run-scan-btn">Run Scan</a>
+
+    </div>
   </div>
 
   <!-- STATS BAR -->
@@ -426,6 +447,8 @@
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
 
+      const scanLevel = document.querySelector('input[name="scan-level"]:checked').value;
+
       // Step 1: Create a session
       btn.textContent = 'Starting...';
       btn.style.background = '#475569';
@@ -457,7 +480,7 @@
       pollInterval = setInterval(async () => {
         // Try localhost first
         try {
-          await fetch('http://localhost:7878?session=' + sessionId, {
+          await fetch('http://localhost:7878?session=' + sessionId + '&level=' + scanLevel, {
             signal: AbortSignal.timeout(500)
           });
           console.log('localhost connected!');

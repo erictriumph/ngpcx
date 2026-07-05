@@ -1,36 +1,30 @@
 const db = require('../db');
 
-/**
- * Find existing app entry by name, regardless of source
- * Returns the existing ID if found, null if not
- */
-function findExistingId(name) {
-  if (!name) return null;
-  
-  const normalized = name.toLowerCase().replace(/[\s\-_.]/g, '');
-  
-  const existing = db.prepare(`
+function findExistingId(name, type = 'app') {
+    if (!name) return null;
+
+    const normalized = name.toLowerCase().replace(/[\s\-_.]/g, '');
+
+    const existing = db.prepare(`
     SELECT id, name, confidence FROM apps 
     WHERE REPLACE(REPLACE(REPLACE(REPLACE(LOWER(name), ' ', ''), '-', ''), '_', ''), '.', '') = ?
+    AND type = ?
     ORDER BY confidence DESC
     LIMIT 1
-  `).get(normalized);
+  `).get(normalized, type);
 
-  return existing ? existing.id : null;
+    return existing ? existing.id : null;
 }
 
-/**
- * Upsert an app entry, merging with existing data if found
- * Higher confidence always wins on conflicting fields
- */
 function mergeApp(entry) {
-  const existingId = findExistingId(entry.name);
-  const id = existingId || entry.id;
+    const type = entry.type || 'app';
+    const existingId = findExistingId(entry.name, type);
+    const id = existingId || entry.id;
 
-  try {
-    db.prepare(`
-      INSERT INTO apps (id, name, publisher, arm_support, architectures, source, source_url, notes, confidence, last_updated)
-      VALUES (?, ?, ?, ?, 'arm64', ?, ?, ?, ?, ?)
+    try {
+        db.prepare(`
+      INSERT INTO apps (id, name, publisher, type, arm_support, architectures, source, source_url, notes, confidence, last_updated)
+      VALUES (?, ?, ?, ?, ?, 'arm64', ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         arm_support = CASE 
           WHEN excluded.arm_support != 'unknown' AND excluded.confidence >= confidence 
@@ -49,22 +43,23 @@ function mergeApp(entry) {
         source_url = COALESCE(source_url, excluded.source_url),
         last_updated = excluded.last_updated
     `).run(
-      id,
-      entry.name,
-      entry.publisher || null,
-      entry.arm_support,
-      entry.source,
-      entry.source_url || null,
-      entry.notes || null,
-      entry.confidence,
-      new Date().toISOString()
-    );
+            id,
+            entry.name,
+            entry.publisher || null,
+            type,
+            entry.arm_support,
+            entry.source,
+            entry.source_url || null,
+            entry.notes || null,
+            entry.confidence,
+            new Date().toISOString()
+        );
 
-    return id;
-  } catch (err) {
-    console.error('  Merge failed for:', entry.name, '-', err.message);
-    return null;
-  }
+        return id;
+    } catch (err) {
+        console.error('  Merge failed for:', entry.name, '-', err.message);
+        return null;
+    }
 }
 
 module.exports = { findExistingId, mergeApp };

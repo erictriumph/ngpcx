@@ -77,6 +77,7 @@ router.post('/scan', (req, res) => {
     score,
     scan_mode: scan_mode || 'unknown',
     system: system || null,
+    devices: req.body.devices || [],
     native,
     emulated,
     unsupported,

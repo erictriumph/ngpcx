@@ -27,29 +27,42 @@ struct AppEntry {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+struct DeviceEntry {
+    name: String,
+    class: String,
+    hardware_id: Option<String>,
+    days_ago: Option<f64>,
+    is_network: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 struct ScanPayload {
     scan_mode: String,
     scanned_at: String,
     session_id: Option<String>,
     system: SystemInfo,
     apps: Vec<AppEntry>,
+    devices: Vec<DeviceEntry>, // ADD THIS LINE
 }
 
 // ─────────────────────────────────────────
 //  Scan Mode
 // ─────────────────────────────────────────
 
-fn get_scan_mode() -> String {
+fn get_cli_scan_mode() -> Option<String> {
     let args: Vec<String> = std::env::args().collect();
     for arg in &args {
+        if arg == "--quick" {
+            return Some("quick".to_string());
+        }
         if arg == "--standard" {
-            return "standard".to_string();
+            return Some("standard".to_string());
         }
         if arg == "--full" {
-            return "full".to_string();
+            return Some("full".to_string());
         }
     }
-    "quick".to_string()
+    None
 }
 
 // ─────────────────────────────────────────
@@ -128,6 +141,236 @@ fn get_recent_app_names() -> HashMap<String, bool> {
     }
 
     recent
+}
+
+// ─────────────────────────────────────────
+//  Connected/Recent Devices
+// ─────────────────────────────────────────
+
+fn get_devices(mode: &str) -> Vec<DeviceEntry> {
+    println!("  Scanning connected/recent devices...");
+
+    let ps_script = r#"
+$classes = @('Printer','Image','MEDIA','Biometric','SmartCardReader','Camera','HIDClass')
+$present = (Get-PnpDevice -PresentOnly:$true).InstanceId
+
+Get-PnpDevice | Where-Object {
+    $_.Class -in $classes -and
+    $_.InstanceId -notmatch '^SW\\' -and
+    $_.InstanceId -match 'VID_[0-9A-F]{4}&PID_[0-9A-F]{4}'
+} | ForEach-Object {
+    $vidPid = [regex]::Match($_.InstanceId, 'VID_[0-9A-F]{4}&PID_[0-9A-F]{4}').Value
+    $isPresent = $present -contains $_.InstanceId
+    $arrival = (Get-PnpDeviceProperty -InstanceId $_.InstanceId -KeyName 'DEVPKEY_Device_LastArrivalDate' -ErrorAction SilentlyContinue).Data
+    $removal = (Get-PnpDeviceProperty -InstanceId $_.InstanceId -KeyName 'DEVPKEY_Device_LastRemovalDate' -ErrorAction SilentlyContinue).Data
+
+    $arrivalDaysAgo = if ($arrival) { [math]::Round(((Get-Date) - $arrival).TotalDays, 1) } else { $null }
+    $removalDaysAgo = if ($removal) { [math]::Round(((Get-Date) - $removal).TotalDays, 1) } else { $null }
+    $recency = if ($removalDaysAgo -ne $null) { $removalDaysAgo } else { $arrivalDaysAgo }
+
+    [PSCustomObject]@{
+        Name = $_.FriendlyName
+        Class = $_.Class
+        VidPid = $vidPid
+        IsPresent = $isPresent
+        DaysAgo = $recency
+    }
+} | ConvertTo-Json
+"#;
+
+    let output = Command::new("powershell")
+        .args(["-NoProfile", "-Command", ps_script])
+        .output();
+
+    let output = match output {
+        Ok(o) => o,
+        Err(e) => {
+            eprintln!("  Failed to run device scan: {}", e);
+            return vec![];
+        }
+    };
+
+    let json_text = String::from_utf8_lossy(&output.stdout);
+    if json_text.trim().is_empty() {
+        return vec![];
+    }
+
+    let json: serde_json::Value = match serde_json::from_str(&json_text) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("  Failed to parse device JSON: {}", e);
+            return vec![];
+        }
+    };
+
+    let items: Vec<&serde_json::Value> = if json.is_array() {
+        json.as_array().unwrap().iter().collect()
+    } else {
+        vec![&json]
+    };
+
+    // Group raw rows by VID/PID first, so we can pick the best
+    // representative name per physical device before filtering by tier.
+    let mut grouped: HashMap<String, Vec<(String, String, bool, Option<f64>)>> = HashMap::new();
+
+    for item in items {
+        let name = item["Name"]
+            .as_str()
+            .unwrap_or("Unknown Device")
+            .to_string();
+        let class = item["Class"].as_str().unwrap_or("Unknown").to_string();
+        let vid_pid = item["VidPid"].as_str().unwrap_or("").to_string();
+        let is_present = item["IsPresent"].as_bool().unwrap_or(false);
+        let days_ago = item["DaysAgo"].as_f64();
+
+        if vid_pid.is_empty() {
+            continue;
+        }
+
+        grouped
+            .entry(vid_pid)
+            .or_insert_with(Vec::new)
+            .push((name, class, is_present, days_ago));
+    }
+
+    fn is_generic_name(name: &str) -> bool {
+        let lower = name.to_lowercase();
+        if lower.contains("fido") {
+            return false; // "fido" is a meaningful signal, not generic noise
+        }
+        lower.starts_with("hid-compliant")
+            || lower.starts_with("usb input device")
+            || lower.starts_with("usb composite device")
+            || lower == "unknown device"
+            || lower == "keyboard generic"
+    }
+
+    let mut devices = Vec::new();
+
+    let review_classes = ["Biometric", "SmartCardReader"];
+
+    for (vid_pid, rows) in grouped {
+        // Prefer a row with a non-generic name for display/search purposes.
+        let best = rows
+            .iter()
+            .find(|(name, _, _, _)| !is_generic_name(name))
+            .unwrap_or(&rows[0]);
+
+        let name = best.0.clone();
+
+        // For classification, use the most conservative class seen across
+        // ALL interfaces of this device — a composite device that includes
+        // any sensitive interface (biometric/smart-card) should stay
+        // flagged for review even if it also exposes a generic HID/media
+        // interface elsewhere.
+        let class = rows
+            .iter()
+            .map(|(_, c, _, _)| c.clone())
+            .find(|c| review_classes.contains(&c.as_str()))
+            .unwrap_or_else(|| best.1.clone());
+
+        let is_present = rows.iter().any(|(_, _, present, _)| *present);
+        let days_ago =
+            rows.iter()
+                .filter_map(|(_, _, _, d)| *d)
+                .fold(None, |acc: Option<f64>, d| match acc {
+                    None => Some(d),
+                    Some(a) => Some(a.min(d)),
+                });
+
+        let include = match mode {
+            "quick" => is_present || days_ago.map_or(false, |d| d <= 8.0),
+            "standard" => is_present || days_ago.map_or(true, |d| d <= 60.0),
+            _ => true,
+        };
+
+        if include {
+            devices.push(DeviceEntry {
+                name,
+                class,
+                hardware_id: Some(vid_pid),
+                days_ago,
+                is_network: false,
+            });
+        }
+    }
+
+    devices
+}
+
+fn extract_hardware_id(instance_id: &str) -> Option<String> {
+    let vid_pos = instance_id.find("VID_")?;
+    let pid_pos = instance_id.find("PID_")?;
+    let vid = &instance_id[vid_pos..vid_pos + 8];
+    let pid = &instance_id[pid_pos..pid_pos + 8];
+    Some(format!("{}&{}", vid, pid))
+}
+
+fn get_printers() -> Vec<DeviceEntry> {
+    println!("  Scanning installed printers...");
+
+    let ps_script = r#"
+Get-Printer | Where-Object {
+    $_.DriverName -notmatch 'PDF|OneNote|Fax|XPS|Virtual' -and
+    $_.PortName -notmatch 'PDF|OneNote|Fax|XPS|nul:|PORTPROMPT'
+} | Group-Object DriverName | ForEach-Object {
+    [PSCustomObject]@{
+        Name = $_.Group[0].DriverName
+        IsNetwork = [bool]($_.Group.PortName -match 'IP_|WSD-')
+    }
+} | ConvertTo-Json
+"#;
+
+    let output = Command::new("powershell")
+        .args(["-NoProfile", "-Command", ps_script])
+        .output();
+
+    let output = match output {
+        Ok(o) => o,
+        Err(e) => {
+            eprintln!("  Failed to run printer scan: {}", e);
+            return vec![];
+        }
+    };
+
+    let json_text = String::from_utf8_lossy(&output.stdout);
+    if json_text.trim().is_empty() {
+        return vec![];
+    }
+
+    let json: serde_json::Value = match serde_json::from_str(&json_text) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("  Failed to parse printer JSON: {}", e);
+            return vec![];
+        }
+    };
+
+    let items: Vec<&serde_json::Value> = if json.is_array() {
+        json.as_array().unwrap().iter().collect()
+    } else {
+        vec![&json]
+    };
+
+    let mut printers = Vec::new();
+
+    for item in items {
+        let name = item["Name"]
+            .as_str()
+            .unwrap_or("Unknown Printer")
+            .to_string();
+        let is_network = item["IsNetwork"].as_bool().unwrap_or(false);
+
+        printers.push(DeviceEntry {
+            name,
+            class: "Printer".to_string(),
+            hardware_id: None,
+            days_ago: None,
+            is_network,
+        });
+    }
+
+    printers
 }
 
 // ─────────────────────────────────────────
@@ -281,27 +524,25 @@ fn send_to_server(payload: &ScanPayload, base_url: &str) -> Result<String, Strin
     Ok(body)
 }
 
-fn start_local_server() -> Option<String> {
+fn start_local_server() -> (Option<String>, Option<String>) {
     use std::io::{BufRead, BufReader, Write};
     use std::net::TcpListener;
     use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
-    let result: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+    let result: Arc<Mutex<(Option<String>, Option<String>)>> = Arc::new(Mutex::new((None, None)));
     let result_clone = Arc::clone(&result);
 
     let listener = match TcpListener::bind("127.0.0.1:7878") {
         Ok(l) => l,
         Err(e) => {
             eprintln!("  Could not bind to port 7878: {}", e);
-            return None;
+            return (None, None);
         }
     };
 
     println!("  Listening on localhost:7878 for browser connection...");
-
-    // Set a 20 second timeout on accept
-    listener.set_nonblocking(true).ok()?;
+    listener.set_nonblocking(true).ok();
 
     let start = std::time::Instant::now();
     let timeout = Duration::from_secs(20);
@@ -321,23 +562,31 @@ fn start_local_server() -> Option<String> {
                     request_line = line;
                 }
 
-                let extracted = request_line
-                    .split_whitespace()
+                let path = request_line.split_whitespace().nth(1).unwrap_or("");
+
+                let session = path
+                    .split("session=")
                     .nth(1)
-                    .and_then(|path| path.split("session=").nth(1))
+                    .map(|s| s.split('&').next().unwrap_or(s).to_string());
+                let level = path
+                    .split("level=")
+                    .nth(1)
                     .map(|s| s.split('&').next().unwrap_or(s).to_string());
 
-                if let Some(ref id) = extracted {
+                if let Some(ref id) = session {
                     println!("  Browser connected — session ID: {}", id);
-                    *result_clone.lock().unwrap() = extracted;
                 }
+                if let Some(ref lvl) = level {
+                    println!("  Requested scan level: {}", lvl);
+                }
+
+                *result_clone.lock().unwrap() = (session, level);
 
                 let response = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\n\r\n{\"connected\":true}";
                 let _ = stream.write_all(response.as_bytes());
                 break;
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                // No connection yet, wait a bit
                 std::thread::sleep(Duration::from_millis(100));
                 continue;
             }
@@ -348,8 +597,8 @@ fn start_local_server() -> Option<String> {
         }
     }
 
-    let id = result.lock().unwrap().clone();
-    id
+    let final_result = result.lock().unwrap().clone();
+    final_result
 }
 
 fn get_server_url() -> String {
@@ -370,13 +619,11 @@ fn main() {
     println!("║     NGPCX ARM Readiness Scanner      ║");
     println!("╚══════════════════════════════════════╝");
 
-    let mode = get_scan_mode();
+    let cli_mode = get_cli_scan_mode();
     let base_url = get_server_url();
-    println!("\nScan mode: {}", mode.to_uppercase());
-    println!("Server:    {}\n", base_url);
 
     // Step 1: System info
-    println!("[1/3] Collecting system information...");
+    println!("\n[1/4] Collecting system information...");
     let system = get_system_info();
     println!("  OS:   {}", system.os_version);
     println!("  CPU:  {}", system.cpu);
@@ -386,35 +633,13 @@ fn main() {
         println!("  ⚡ This machine is already running ARM Windows!");
     }
 
-    // Step 2: Scan apps
-    println!("\n[2/3] Scanning installed applications...");
-    let recent = get_recent_app_names();
-    println!(
-        "  Found {} recently used app signatures in Prefetch",
-        recent.len()
-    );
-
-    let mut apps = get_installed_apps(&mode, &recent);
-    
-    // If quick mode found nothing (Prefetch unavailable), fall back to standard
-    if apps.is_empty() && mode == "quick" {
-        println!("  Quick mode found no apps (Prefetch unavailable) — falling back to standard...");
-        apps = get_installed_apps("standard", &recent);
-    }
-    
-    println!("  Found {} apps to check", apps.len());
-
-// Step 3: Send to server
-    println!("\n[3/3] Checking compatibility...");
-
-    // Wait for browser to connect and provide session ID
-    println!("  Waiting for browser connection on localhost:7878...");
+    // Step 2: Wait for browser handshake (now happens BEFORE scanning)
+    println!("\n[2/4] Waiting for browser connection...");
     println!("  (Make sure you clicked 'Run Scan' on the website first)");
-    
-    let session_id = start_local_server().unwrap_or_default();
 
-    // If no browser connected, create our own session
-    let session_id = if session_id.is_empty() {
+    let (session_id, browser_level) = start_local_server();
+
+    let session_id = if session_id.is_none() {
         println!("  No browser connected — creating standalone session...");
         let client = reqwest::blocking::Client::new();
         let session_url = format!("{}/api/session", base_url);
@@ -423,32 +648,64 @@ fn main() {
                 Ok(v) => {
                     let id = v["session_id"].as_str().unwrap_or("").to_string();
                     println!("  Session ID: {}", id);
-                    id
+                    if id.is_empty() {
+                        None
+                    } else {
+                        Some(id)
+                    }
                 }
                 Err(e) => {
                     eprintln!("  Failed to parse session response: {}", e);
-                    String::new()
+                    None
                 }
             },
             Err(e) => {
                 eprintln!("  Failed to create session: {}", e);
-                String::new()
+                None
             }
         }
     } else {
         session_id
     };
 
+    // CLI flag wins (dev convenience) > browser-selected level > default "quick"
+    let mode = cli_mode
+        .or(browser_level)
+        .unwrap_or_else(|| "quick".to_string());
+    println!("\nScan mode: {}", mode.to_uppercase());
+    println!("Server:    {}", base_url);
+
+    // Step 3: Scan apps
+    println!("\n[3/4] Scanning installed applications...");
+    let recent = get_recent_app_names();
+    println!(
+        "  Found {} recently used app signatures in Prefetch",
+        recent.len()
+    );
+
+    let mut apps = get_installed_apps(&mode, &recent);
+    if apps.is_empty() && mode == "quick" {
+        println!("  Quick mode found no apps (Prefetch unavailable) — falling back to standard...");
+        apps = get_installed_apps("standard", &recent);
+    }
+    println!("  Found {} apps to check", apps.len());
+
+    println!("\nScanning connected devices...");
+    let mut devices = get_devices(&mode);
+    println!("  Found {} relevant device(s)", devices.len());
+    let printers = get_printers();
+    println!("  Found {} printer(s)", printers.len());
+    devices.extend(printers);
+
+    // Step 4: Send to server
+    println!("\n[4/4] Checking compatibility...");
     let payload = ScanPayload {
         scan_mode: mode,
         scanned_at: Utc::now().to_rfc3339(),
-        session_id: if session_id.is_empty() {
-            None
-        } else {
-            Some(session_id)
-        },
+        session_id,
         system,
         apps,
+        devices,
     };
 
     match send_to_server(&payload, &base_url) {
@@ -456,10 +713,9 @@ fn main() {
             println!("  Results submitted successfully!");
             println!("\n  Your report is ready. Check your browser.");
         }
-        Err(e) => {
-            eprintln!("  Error: {}", e);
-        }
+        Err(e) => eprintln!("  Error: {}", e),
     }
+
     println!("\nScan complete. Press Enter to exit.");
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).ok();

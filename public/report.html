@@ -322,6 +322,8 @@
             <div>
                 <h1>Your ARM Readiness Report</h1>
                 <p id="scan-time"></p>
+                <p id="scan-level-display"
+                    style="color:#94a3b8; font-size:0.95rem; font-weight:600; margin-top:0.6rem;"></p>
             </div>
             <div class="gauge-wrap">
                 <svg width="120" height="120" viewBox="0 0 120 120" id="gauge-svg">
@@ -336,7 +338,9 @@
                     <text x="60" y="80" text-anchor="middle" fill="#64748b" font-size="8"
                         letter-spacing="1">SCORE</text>
                 </svg>
-                <div style="font-size:0.7rem; color:#475569; text-transform:uppercase; letter-spacing:0.05em; margin-top:0.5rem;">Data Confidence</div>
+                <div
+                    style="font-size:0.7rem; color:#475569; text-transform:uppercase; letter-spacing:0.05em; margin-top:0.5rem;">
+                    Data Confidence</div>
                 <div id="confidence-bar-wrap"
                     style="width:120px; height:6px; background:#1e293b; border-radius:3px; margin:0.5rem auto 0.3rem auto; overflow:hidden;">
                     <div id="confidence-bar"
@@ -376,11 +380,31 @@
             </div>
         </div>
 
+        <!-- DEVICES SUMMARY -->
+        <a href="#devices-section"
+            style="text-decoration:none; display:flex; align-items:center; justify-content:space-between; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:1rem 1.5rem; margin-bottom:2rem; color:#f1f5f9; flex-wrap:wrap; gap:0.75rem;">
+            <div style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
+                <span style="font-size:0.95rem; font-weight:600;">
+                    <span id="count-devices">0</span> device<span id="devices-plural">s</span> detected
+                </span>
+                <span style="font-size:0.85rem; color:#10b981;">
+                    ✓ <span id="count-devices-native">0</span> likely native
+                </span>
+                <span style="font-size:0.85rem; color:#f59e0b;">
+                    <span id="count-devices-review">0</span> worth a check
+                </span>
+            </div>
+            <span style="color:#64748b; font-size:0.85rem;">View details ↓</span>
+        </a>
+
         <!-- APP TABLES -->
         <div id="native-section"></div>
         <div id="emulated-section"></div>
         <div id="unsupported-section"></div>
         <div id="unknown-section"></div>
+
+        <!-- DEVICES -->
+        <div id="devices-section"></div>
 
     </div>
 
@@ -391,6 +415,9 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get('session');
+        const GENERIC_DRIVER_CLASSES = ['Camera', 'HIDClass', 'MEDIA'];
+        const GENERIC_DRIVER_NAME_PATTERNS = /ipp|mopria|universal print|pcl6 class driver|postscript class driver|microsoft.*class driver/i;
+
 
         function animateScore(target) {
             const circle = document.getElementById('gauge-circle');
@@ -449,6 +476,68 @@
         </table>
       `;
         }
+
+        // Presentation style for the device driver-check column.
+        // 'badge' = pill button in its own column (current choice)
+        // 'inline' = plain text link appended next to the device name
+        const DEVICE_LINK_STYLE = 'badge';
+
+        function isLikelyNative(device) {
+            if (GENERIC_DRIVER_CLASSES.includes(device.class)) return true;
+            return GENERIC_DRIVER_NAME_PATTERNS.test(device.name);
+        }
+
+        function buildDriverSearchUrl(device) {
+            const query = `${device.name} ARM64 driver`;
+            return 'https://www.google.com/search?q=' + encodeURIComponent(query);
+        }
+
+        function buildDeviceTable(devices) {
+            if (!devices || devices.length === 0) return '';
+
+            const rows = devices.map(device => {
+                const isGeneric = isLikelyNative(device);
+                const recency = device.days_ago === null || device.days_ago === undefined
+                    ? '—'
+                    : device.days_ago === 0 ? 'Currently connected' : `${device.days_ago}d ago`;
+
+                let checkCell;
+                if (isGeneric) {
+                    checkCell = `<span class="badge native">✓ Likely native</span>`;
+                } else {
+                    const url = buildDriverSearchUrl(device);
+                    checkCell = `<a href="${url}" target="_blank" rel="noopener" class="badge unknown" style="text-decoration:none;">Check →</a>`;
+                }
+
+                return `
+        <tr>
+          <td>${device.name}</td>
+          <td style="color:#64748b;font-size:0.8rem">${device.class}${device.is_network ? ' (network)' : ''}</td>
+          <td style="color:#64748b;font-size:0.85rem">${recency}</td>
+          <td>${checkCell}</td>
+        </tr>
+      `;
+            }).join('');
+
+            return `
+        <div class="section-title">Detected devices (${devices.length})</div>
+        <table class="app-table">
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Category</th>
+              <th>Last seen</th>
+              <th>Driver check</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <p style="font-size:0.8rem; color:#475569; margin-top:0.5rem;">
+          Covers common peripheral classes (printers, cameras, media, card readers, biometric readers). "Likely native" reflects standard USB device classes with built-in Windows drivers — vendor companion apps for extra features, and biometric/smart-card readers, may still need a closer look. Some devices, including generic storage and virtual system devices, aren't evaluated.
+        </p>
+      `;
+        }
+
 
         function renderReport(data) {
             const results = data.results;
@@ -511,17 +600,40 @@
                     'Scanned ' + d.toLocaleString();
             }
 
+            // Scan level
+            const levelLabels = {
+                quick: { title: 'Quick scan', detail: 'recently used apps' },
+                standard: { title: 'Standard scan', detail: 'all installed apps' },
+                full: { title: 'Full scan', detail: 'everything, including system items' }
+            };
+            const level = levelLabels[results.scan_mode];
+            if (level) {
+                document.getElementById('scan-level-display').innerHTML =
+                    `${level.title} <span style="font-weight:400; color:#64748b;">— ${level.detail}</span>`;
+            }
+
             // Counts
             document.getElementById('count-native').textContent = results.native?.length || 0;
             document.getElementById('count-emulated').textContent = results.emulated?.length || 0;
             document.getElementById('count-unsupported').textContent = results.unsupported?.length || 0;
             document.getElementById('count-unknown').textContent = results.unknown?.length || 0;
 
+            const deviceList = results.devices || [];
+            const nativeCount = deviceList.filter(d => isLikelyNative(d)).length;
+            const reviewCount = deviceList.length - nativeCount;
+
+            document.getElementById('count-devices').textContent = deviceList.length;
+            document.getElementById('devices-plural').textContent = (deviceList.length === 1) ? '' : 's';
+            document.getElementById('count-devices-native').textContent = nativeCount;
+            document.getElementById('count-devices-review').textContent = reviewCount;
+
             // Tables
             document.getElementById('native-section').innerHTML = buildTable(results.native, 'native');
             document.getElementById('emulated-section').innerHTML = buildTable(results.emulated, 'emulated');
             document.getElementById('unsupported-section').innerHTML = buildTable(results.unsupported, 'unsupported');
             document.getElementById('unknown-section').innerHTML = buildTable(results.unknown, 'unknown');
+            document.getElementById('devices-section').innerHTML = buildDeviceTable(results.devices);
+
 
             // Show report
             document.getElementById('loading').style.display = 'none';
