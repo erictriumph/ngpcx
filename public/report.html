@@ -331,20 +331,13 @@
             color: #cbd5e1;
         }
 
-        .refresh-banner-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
         .refresh-status-msg {
             color: #64748b;
             font-size: 0.8rem;
         }
 
         .refresh-btn {
+            align-self: flex-start;
             border: 1px solid #3b82f6;
             background: transparent;
             color: #3b82f6;
@@ -488,7 +481,7 @@
         </div>
 
         <!-- BACKGROUND RESEARCH BANNER -->
-        <div id="refresh-banner" style="display:none;"></div>
+        <div id="refresh-banner" class="refresh-banner" style="display:none;"></div>
 
         <!-- DEVICES SUMMARY -->
         <a href="#devices-section"
@@ -954,10 +947,8 @@
 
             banner.style.display = 'flex';
             banner.innerHTML = `
-                <div class="refresh-banner-row">
-                    <span>🔍 Some apps here don't have a confirmed verdict yet. An automatic check already ran when you scanned — refresh to see if anything's been confirmed since, or share what you know below.</span>
-                    <button class="refresh-btn" id="refresh-results-btn">Refresh results</button>
-                </div>
+                <span>🔍 Some apps don't have a confirmed verdict yet. A check already ran automatically — refresh for updates, or share what you know below.</span>
+                <button class="refresh-btn" id="refresh-results-btn">Refresh results</button>
                 <div class="refresh-status-msg" id="refresh-status-msg"></div>
             `;
             document.getElementById('refresh-results-btn').addEventListener('click', refreshResults);

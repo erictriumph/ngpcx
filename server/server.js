@@ -32,6 +32,21 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'NGPCX server is running' });
 });
 
+// TEMPORARY — diagnosing the ADMIN_SECRET auth failure on the live deploy.
+// Logs to stdout (Railway's log viewer, private to the account) rather than
+// serving over HTTP — never the actual secret value, just enough to tell
+// whether it's set at all and whether it has stray whitespace. Remove once
+// resolved.
+function describeSecret(value) {
+  if (value === undefined || value === '') return 'NOT SET';
+  const flags = [];
+  if (/^\s/.test(value)) flags.push('leading whitespace');
+  if (/\s$/.test(value)) flags.push('trailing whitespace');
+  return `set, length ${value.length}${flags.length ? ' — ' + flags.join(', ') : ''}`;
+}
+console.log('[env-check] ADMIN_SECRET:', describeSecret(process.env.ADMIN_SECRET));
+console.log('[env-check] GITHUB_TOKEN:', describeSecret(process.env.GITHUB_TOKEN));
+
 // Stats endpoint
 app.get('/api/stats', (req, res) => {
   const appCount = db.prepare(`SELECT COUNT(*) as count FROM apps WHERE type = 'app'`).get();
