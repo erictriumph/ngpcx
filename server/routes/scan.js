@@ -2,6 +2,28 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
+const SYSTEM_COMPONENT_PATTERNS = [
+  'redistributable',
+  'runtime',
+  'sdk',
+  'desktop runtime',
+  'shared framework',
+  'class driver',
+  'windows software development kit',
+  'update health tools',
+  'corefonts',
+  'coreeditorfonts',
+];
+
+function isSystemComponent(name, publisher) {
+  if (!name) return false;
+  const isMicrosoft = (publisher || '').toLowerCase().includes('microsoft');
+  if (!isMicrosoft) return false;
+
+  const nameLower = name.toLowerCase();
+  return SYSTEM_COMPONENT_PATTERNS.some((p) => nameLower.includes(p));
+}
+
 function trackUnknownApp(name) {
   if (!name) return;
   try {
@@ -30,6 +52,7 @@ router.post('/scan', (req, res) => {
   const emulated = [];
   const unsupported = [];
   const unknown = [];
+  const systemComponents = [];
 
   for (const app of apps) {
     // Look up this app in the database
@@ -42,7 +65,7 @@ router.post('/scan', (req, res) => {
     if (!entry && app.name) {
       const normalized = app.name.toLowerCase().replace(/[\s\-_.]/g, '');
       entry = db.prepare(`
-        SELECT * FROM apps 
+        SELECT * FROM apps
         WHERE REPLACE(REPLACE(REPLACE(REPLACE(LOWER(name), ' ', ''), '-', ''), '_', ''), '.', '') = ?
         ORDER BY confidence DESC
         LIMIT 1
@@ -53,18 +76,30 @@ router.post('/scan', (req, res) => {
     if (!entry && app.name) {
       const nameLower = app.name.toLowerCase();
       entry = db.prepare(`
-        SELECT * FROM apps 
+        SELECT * FROM apps
         WHERE LOWER(name) LIKE ?
         ORDER BY confidence DESC
         LIMIT 1
       `).get(`%${nameLower}%`);
     }
 
+    // Admin-confirmed system components override the heuristic
+    if (entry && entry.type === 'system') {
+      systemComponents.push({ ...entry, ...app });
+      continue;
+    }
+
     if (!entry) {
+      if (isSystemComponent(app.name, app.publisher)) {
+        systemComponents.push(app);
+        continue;
+      }
       trackUnknownApp(app.name);
       unknown.push({ ...app, arm_support: 'unknown' });
       continue;
     }
+
+    db.prepare(`UPDATE apps SET times_matched = times_matched + 1 WHERE id = ?`).run(entry.id);
 
     switch (entry.arm_support) {
       case 'native':
@@ -98,6 +133,7 @@ router.post('/scan', (req, res) => {
     emulated,
     unsupported,
     unknown,
+    systemComponents,
     lastScanned: new Date().toISOString()
   };
 

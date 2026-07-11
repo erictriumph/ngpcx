@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGPCX Admin — Unknown App Research</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .empty,
+        .status-msg {
+            color: #64748b;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .app-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .app-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .app-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .app-meta {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
+        .notes-input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+            margin-bottom: 0.75rem;
+        }
+
+        .notes-input::placeholder {
+            color: #475569;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 0.4rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            border-color: #3b82f6;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .action-btn.native {
+            color: #10b981;
+        }
+
+        .action-btn.emulated {
+            color: #f59e0b;
+        }
+
+        .action-btn.unsupported {
+            color: #ef4444;
+        }
+
+        .action-btn.system {
+            color: #94a3b8;
+        }
+
+        footer {
+            text-align: center;
+            color: #475569;
+            font-size: 0.8rem;
+            padding: 2rem 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo">NGPCX<span>Admin</span></div>
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <a href="/admin-revisit.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">Revisit
+                stale apps</a>
+            <a href="/" style="color:#64748b; text-decoration:none; font-size:0.9rem;">← Back to scanner</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Unknown App Research</h1>
+        <p class="subtitle">Apps real scans found with no database match, sorted by how often they've been seen.
+            Resolve each one using the same search links end users see.</p>
+
+        <form id="secret-form" style="display:none; gap:0.5rem; margin-bottom:2rem;">
+            <div style="display:flex; gap:0.5rem;">
+                <input type="password" id="secret-input" class="notes-input" style="margin-bottom:0;"
+                    placeholder="Admin secret" autocomplete="off" />
+                <button type="submit" class="action-btn" style="white-space:nowrap;">Unlock</button>
+            </div>
+            <p id="secret-error" class="app-meta" style="color:#ef4444; margin-top:0.5rem; display:none;"></p>
+        </form>
+
+        <div id="list" class="status-msg">Loading…</div>
+    </div>
+
+    <footer>NGPCX Admin — internal tool, not for public use.</footer>
+
+    <script>
+        const SECRET_KEY = 'ngpcx_admin_secret';
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML;
+        }
+
+        function getSecret() {
+            return localStorage.getItem(SECRET_KEY) || '';
+        }
+
+        function clearSecret() {
+            localStorage.removeItem(SECRET_KEY);
+        }
+
+        function showSecretForm(message) {
+            const form = document.getElementById('secret-form');
+            const error = document.getElementById('secret-error');
+            form.style.display = 'flex';
+            form.style.flexDirection = 'column';
+            if (message) {
+                error.textContent = message;
+                error.style.display = 'block';
+            } else {
+                error.style.display = 'none';
+            }
+        }
+
+        function hideSecretForm() {
+            document.getElementById('secret-form').style.display = 'none';
+        }
+
+        async function adminFetch(path, options = {}) {
+            const secret = getSecret();
+            const res = await fetch(path, {
+                ...options,
+                headers: {
+                    ...(options.headers || {}),
+                    'x-admin-secret': secret,
+                },
+            });
+            if (res.status === 401) {
+                clearSecret();
+                throw new Error('UNAUTHORIZED');
+            }
+            return res;
+        }
+
+        function buildAppSearchUrl(name) {
+            return 'https://www.google.com/search?q=' + encodeURIComponent(`${name} ARM64 Windows compatibility`);
+        }
+
+        function renderApps(apps) {
+            const list = document.getElementById('list');
+            list.className = '';
+
+            if (!apps || apps.length === 0) {
+                list.innerHTML = '<p class="empty">No unknown apps right now — the queue is empty.</p>';
+                return;
+            }
+
+            list.innerHTML = apps.map((app) => {
+                const name = escapeHtml(app.name);
+                return `
+        <div class="app-card" data-name="${name}">
+          <div class="app-card-head">
+            <span class="app-name">${name}</span>
+            <span class="app-meta">seen ${app.count}× · last ${escapeHtml(app.last_seen)}</span>
+          </div>
+          <input type="text" class="notes-input" placeholder="Notes (optional)" />
+          <div class="actions">
+            <a href="${buildAppSearchUrl(app.name)}" target="_blank" rel="noopener" class="action-btn">Check →</a>
+            <button class="action-btn native" data-status="native">Native</button>
+            <button class="action-btn emulated" data-status="x64-emulated">x64 Emulated</button>
+            <button class="action-btn emulated" data-status="x86-emulated">x86 Emulated</button>
+            <button class="action-btn unsupported" data-status="unsupported">Unsupported</button>
+            <button class="action-btn system" data-status="system">System Component</button>
+          </div>
+        </div>`;
+            }).join('');
+
+            list.querySelectorAll('.app-card').forEach((card) => {
+                const name = card.dataset.name;
+                card.querySelectorAll('button.action-btn').forEach((btn) => {
+                    btn.addEventListener('click', () => resolveApp(card, name, btn.dataset.status));
+                });
+            });
+        }
+
+        async function resolveApp(card, name, status) {
+            const buttons = card.querySelectorAll('button.action-btn');
+            buttons.forEach((b) => (b.disabled = true));
+
+            const notes = card.querySelector('.notes-input').value.trim();
+            const body = status === 'system'
+                ? { name, type: 'system', notes: notes || undefined }
+                : { name, arm_support: status, notes: notes || undefined };
+
+            try {
+                const res = await adminFetch('/api/admin/resolve-app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `Request failed (${res.status})`);
+                }
+                card.remove();
+                const list = document.getElementById('list');
+                if (!list.querySelector('.app-card')) {
+                    list.innerHTML = '<p class="empty">No unknown apps right now — the queue is empty.</p>';
+                }
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    showSecretForm('Incorrect secret — try again.');
+                    buttons.forEach((b) => (b.disabled = false));
+                    return;
+                }
+                let errorEl = card.querySelector('.card-error');
+                if (!errorEl) {
+                    errorEl = document.createElement('p');
+                    errorEl.className = 'card-error app-meta';
+                    errorEl.style.color = '#ef4444';
+                    errorEl.style.marginTop = '0.5rem';
+                    card.appendChild(errorEl);
+                }
+                errorEl.textContent = 'Failed to resolve: ' + err.message;
+                buttons.forEach((b) => (b.disabled = false));
+            }
+        }
+
+        async function loadApps() {
+            document.getElementById('list').innerHTML = '<p class="status-msg">Loading…</p>';
+            try {
+                const res = await adminFetch('/api/admin/unknown-apps');
+                if (!res.ok) throw new Error(`Request failed (${res.status})`);
+                const data = await res.json();
+                hideSecretForm();
+                renderApps(data.apps);
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    document.getElementById('list').innerHTML = '';
+                    showSecretForm(getSecret() ? 'Incorrect secret — try again.' : null);
+                } else {
+                    document.getElementById('list').innerHTML =
+                        `<p class="status-msg">${escapeHtml(err.message)}</p>`;
+                }
+            }
+        }
+
+        document.getElementById('secret-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('secret-input');
+            const value = input.value.trim();
+            if (!value) return;
+            localStorage.setItem(SECRET_KEY, value);
+            input.value = '';
+            loadApps();
+        });
+
+        if (getSecret()) {
+            loadApps();
+        } else {
+            document.getElementById('list').innerHTML = '';
+            showSecretForm();
+        }
+    </script>
+</body>
+
+</html>

@@ -185,6 +185,20 @@
             border-color: rgba(100, 116, 139, 0.3);
         }
 
+        .summary-card.system {
+            background: rgba(100, 116, 139, 0.05);
+            border-color: rgba(100, 116, 139, 0.2);
+        }
+
+        .system .summary-count {
+            color: #475569;
+        }
+
+        .badge.system {
+            background: rgba(100, 116, 139, 0.15);
+            color: #64748b;
+        }
+
         .summary-count {
             font-size: 2.5rem;
             font-weight: 800;
@@ -408,6 +422,7 @@
         <div id="emulated-section"></div>
         <div id="unsupported-section"></div>
         <div id="unknown-section"></div>
+        <div id="system-section"></div>
 
         <!-- DEVICES -->
         <div id="devices-section"></div>
@@ -476,7 +491,8 @@
                 native: '✓ Native ARM64',
                 emulated: '⚡ Emulated',
                 unsupported: '✗ Unsupported',
-                unknown: '? Unknown'
+                unknown: '? Unknown',
+                system: '⚙ System Component'
             };
 
             const showActionColumn = type === 'unknown' || type === 'emulated';
@@ -690,11 +706,19 @@
                 document.getElementById('printer-note').insertAdjacentElement('afterend', quickNote);
             }
 
+            if (results.systemComponents && results.systemComponents.length > 0) {
+                const systemNote = document.createElement('p');
+                systemNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
+                systemNote.textContent = 'Windows system components are not evaluated for compatibility and do not impact your readiness score, but are listed further below.';
+                document.getElementById('printer-note').insertAdjacentElement('afterend', systemNote);
+            }
+
             // Counts
             document.getElementById('count-native').textContent = results.native?.length || 0;
             document.getElementById('count-emulated').textContent = results.emulated?.length || 0;
             document.getElementById('count-unsupported').textContent = results.unsupported?.length || 0;
             document.getElementById('count-unknown').textContent = results.unknown?.length || 0;
+            document.getElementById('system-section').innerHTML = buildTable(results.systemComponents, 'system');
 
             const deviceList = results.devices || [];
             const nativeCount = deviceList.filter(d => isLikelyNative(d)).length;

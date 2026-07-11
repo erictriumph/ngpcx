@@ -63,6 +63,12 @@ try {
   // Column already exists, ignore
 }
 
+try {
+  db.exec(`ALTER TABLE apps ADD COLUMN times_matched INTEGER NOT NULL DEFAULT 0`);
+} catch {
+  // Column already exists, ignore
+}
+
 console.log('Database ready at', DB_PATH);
 
 module.exports = db;

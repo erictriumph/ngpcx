@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');   // ADD THIS
@@ -18,6 +19,9 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // Routes
 const scanRoute = require('./routes/scan');
 app.use('/api', scanRoute);
+
+const adminRoute = require('./routes/admin');
+app.use('/api/admin', adminRoute);
 
 // Health check
 app.get('/health', (req, res) => {
