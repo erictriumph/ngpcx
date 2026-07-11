@@ -1,6 +1,7 @@
 use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::env::temp_dir;
 use std::fs;
 use std::process::Command;
@@ -24,6 +25,7 @@ struct AppEntry {
     id: Option<String>,
     version: Option<String>,
     recently_used: bool,
+    publisher: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -132,8 +134,13 @@ fn get_system_info() -> SystemInfo {
 //  Prefetch - Recently Used Apps
 // ─────────────────────────────────────────
 
-fn get_recent_app_names() -> HashMap<String, bool> {
+// Maps app name (derived from Prefetch filename) -> days since the .pf file
+// was last modified, used as a cheap last-run proxy. mtime updates each time
+// Windows rewrites the Prefetch file (i.e. each time the app runs), so it
+// tracks usage recency, not just "was this ever run at some point."
+fn get_recent_app_names() -> HashMap<String, f64> {
     let mut recent = HashMap::new();
+    let now = std::time::SystemTime::now();
 
     let prefetch_dir = "C:\\Windows\\Prefetch";
     if let Ok(entries) = std::fs::read_dir(prefetch_dir) {
@@ -141,21 +148,98 @@ fn get_recent_app_names() -> HashMap<String, bool> {
             let name = entry.file_name();
             let name_str = name.to_string_lossy().to_lowercase();
             if name_str.ends_with(".pf") {
-                // Extract app name from prefetch filename (APP-HASH.pf)
                 let app_name = name_str
                     .split('-')
                     .next()
                     .unwrap_or("")
-                    .replace(".pf", "")
+                    .trim_end_matches(".exe")
                     .to_string();
-                if !app_name.is_empty() {
-                    recent.insert(app_name, true);
+                if app_name.is_empty() {
+                    continue;
+                }
+
+                let days_ago = entry
+                    .metadata()
+                    .and_then(|m| m.modified())
+                    .ok()
+                    .and_then(|modified| now.duration_since(modified).ok())
+                    .map(|d| d.as_secs_f64() / 86400.0);
+
+                if let Some(days) = days_ago {
+                    recent
+                        .entry(app_name)
+                        .and_modify(|existing: &mut f64| {
+                            if days < *existing {
+                                *existing = days;
+                            }
+                        })
+                        .or_insert(days);
                 }
             }
         }
     }
 
     recent
+}
+
+// Currently-running processes, used as a Prefetch-independent recency signal —
+// covers systems where Windows has Prefetch tracking disabled entirely (common
+// on SSD installs), which Prefetch-only detection can't see at all.
+fn get_running_process_names() -> HashSet<String> {
+    let mut running = HashSet::new();
+
+    let output = Command::new("powershell")
+        .args([
+            "-NoProfile",
+            "-Command",
+            "Get-Process | Select-Object -ExpandProperty ProcessName",
+        ])
+        .output();
+
+    if let Ok(o) = output {
+        let text = String::from_utf8_lossy(&o.stdout);
+        for line in text.lines() {
+            let name = line.trim().to_lowercase();
+            if !name.is_empty() {
+                running.insert(name);
+            }
+        }
+    }
+
+    running
+}
+
+// Best (smallest) days-ago among any Prefetch entries whose key is a substring
+// of `haystack` (app name or winget id, lowercased) — mirrors the contains-match
+// already used for name/id matching elsewhere in this file.
+fn find_recency_days(haystack: &str, recent: &HashMap<String, f64>) -> Option<f64> {
+    recent
+        .iter()
+        .filter(|(key, _)| haystack.contains(key.as_str()))
+        .map(|(_, days)| *days)
+        .fold(None, |best, days| match best {
+            Some(b) if b <= days => Some(b),
+            _ => Some(days),
+        })
+}
+
+fn is_process_running(haystack: &str, running: &HashSet<String>) -> bool {
+    running.iter().any(|key| haystack.contains(key.as_str()))
+}
+
+// Quick: any Prefetch record at all, or currently running (unchanged from the
+// original boolean-presence behavior, just also OR'd with live process state).
+// Standard: used within the last 60 days, or no recency data at all (mirrors
+// the device tiering formula's "unknown = keep" rule — a missing Prefetch
+// record doesn't prove staleness, since Prefetch itself can be disabled
+// system-wide), or currently running.
+// Full: everything, unfiltered.
+fn include_by_recency(mode: &str, is_running: bool, days_ago: Option<f64>) -> bool {
+    match mode {
+        "quick" => is_running || days_ago.is_some(),
+        "standard" => is_running || days_ago.map_or(true, |d| d <= 60.0),
+        _ => true,
+    }
 }
 
 // ─────────────────────────────────────────
@@ -421,7 +505,11 @@ Get-Printer | Where-Object {
 //  Installed Apps via Winget
 // ─────────────────────────────────────────
 
-fn get_installed_apps(mode: &str, recent: &HashMap<String, bool>) -> Vec<AppEntry> {
+fn get_installed_apps(
+    mode: &str,
+    recent: &HashMap<String, f64>,
+    running: &HashSet<String>,
+) -> Vec<AppEntry> {
     println!("  Exporting winget package list...");
 
     // Write to a temp file
@@ -521,13 +609,15 @@ fn get_installed_apps(mode: &str, recent: &HashMap<String, bool>) -> Vec<AppEntr
                                 .replace(".exe", "")
                         };
 
-                    // Check recently used
+                    // Check recency via Prefetch mtime and live process state
                     let name_lower = name.to_lowercase();
-                    let recently_used = recent.iter().any(|(r, _)| {
-                        name_lower.contains(r.as_str()) || id_lower.contains(r.as_str())
-                    });
+                    let days_ago = find_recency_days(&name_lower, recent)
+                        .or_else(|| find_recency_days(&id_lower, recent));
+                    let is_running =
+                        is_process_running(&name_lower, running) || is_process_running(&id_lower, running);
+                    let recently_used = days_ago.is_some() || is_running;
 
-                    if mode == "quick" && !recently_used {
+                    if !include_by_recency(mode, is_running, days_ago) {
                         continue;
                     }
 
@@ -536,6 +626,7 @@ fn get_installed_apps(mode: &str, recent: &HashMap<String, bool>) -> Vec<AppEntr
                         id: Some(id),
                         version: pkg["Version"].as_str().map(|s| s.to_string()),
                         recently_used,
+                        publisher: None,
                     });
                 }
             }
@@ -686,7 +777,13 @@ fn normalize_name(s: &str) -> String {
         .collect()
 }
 
-fn merge_arp_into_apps(apps: &mut Vec<AppEntry>, arp_apps: Vec<ArpAppEntry>) {
+fn merge_arp_into_apps(
+    apps: &mut Vec<AppEntry>,
+    arp_apps: Vec<ArpAppEntry>,
+    mode: &str,
+    recent: &HashMap<String, f64>,
+    running: &HashSet<String>,
+) {
     let existing_normalized: Vec<String> = apps.iter().map(|a| normalize_name(&a.name)).collect();
 
     let mut added = 0;
@@ -701,15 +798,26 @@ fn merge_arp_into_apps(apps: &mut Vec<AppEntry>, arp_apps: Vec<ArpAppEntry>) {
             .iter()
             .any(|existing| existing.contains(&arp_norm) || arp_norm.contains(existing));
 
-        if !already_covered {
-            apps.push(AppEntry {
-                name: arp_app.name,
-                id: None,
-                version: arp_app.version,
-                recently_used: false,
-            });
-            added += 1;
+        if already_covered {
+            continue;
         }
+
+        let name_lower = arp_app.name.to_lowercase();
+        let days_ago = find_recency_days(&name_lower, recent);
+        let is_running = is_process_running(&name_lower, running);
+
+        if !include_by_recency(mode, is_running, days_ago) {
+            continue;
+        }
+
+        apps.push(AppEntry {
+            name: arp_app.name,
+            id: None,
+            version: arp_app.version,
+            recently_used: days_ago.is_some() || is_running,
+            publisher: arp_app.publisher,
+        });
+        added += 1;
     }
 
     println!("  ARP added {} apps not found via winget", added);
@@ -905,16 +1013,18 @@ fn main() {
         "  Found {} recently used app signatures in Prefetch",
         recent.len()
     );
+    let running = get_running_process_names();
+    println!("  Found {} currently running process(es)", running.len());
 
-    let mut apps = get_installed_apps(&mode, &recent);
+    let mut apps = get_installed_apps(&mode, &recent, &running);
     if apps.is_empty() && mode == "quick" {
         println!("  Quick mode found no apps (Prefetch unavailable) — falling back to standard...");
-        apps = get_installed_apps("standard", &recent);
+        apps = get_installed_apps("standard", &recent, &running);
     }
     println!("  Found {} apps to check", apps.len());
 
     let arp_apps = get_arp_apps();
-    merge_arp_into_apps(&mut apps, arp_apps);
+    merge_arp_into_apps(&mut apps, arp_apps, &mode, &recent, &running);
     println!("  {} total apps after ARP merge", apps.len());
 
     println!("\nScanning connected devices...");
