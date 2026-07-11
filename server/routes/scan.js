@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { lookupGithubForApp } = require('../scrapers/github-lookup');
+
+const LOOKUP_COOLDOWN_DAYS = 14;
 
 const SYSTEM_COMPONENT_PATTERNS = [
   'redistributable',
@@ -39,15 +42,11 @@ function trackUnknownApp(name) {
   }
 }
 
-// POST /api/scan
-// Receives a list of apps from the scanner, returns a readiness report
-router.post('/scan', (req, res) => {
-  const { apps, system, scan_mode } = req.body;
-
-  if (!apps || !Array.isArray(apps)) {
-    return res.status(400).json({ error: 'Invalid request - expected an apps array' });
-  }
-
+// Classifies a raw apps array against current DB state. Pulled out of the
+// /scan handler so the refresh endpoint can re-run the identical logic
+// later, once background lookups or admin edits have changed the DB —
+// without needing a whole new physical scan.
+function classifyApps(apps) {
   const native = [];
   const emulated = [];
   const unsupported = [];
@@ -124,16 +123,60 @@ router.post('/scan', (req, res) => {
     (total * 100) * 100
   );
 
+  return { native, emulated, unsupported, unknown, systemComponents, score };
+}
+
+function shouldAttemptLookup(lastAttemptIso) {
+  if (!lastAttemptIso) return true;
+  const days = (Date.now() - new Date(lastAttemptIso).getTime()) / 86400000;
+  return days > LOOKUP_COOLDOWN_DAYS;
+}
+
+// Fires on-demand GitHub lookups for apps this scan couldn't confidently
+// classify, bounded by a cooldown so volume stays tied to real scan
+// activity — never a bulk crawl. Never awaited by the caller; each lookup
+// runs independently after the response has already been sent.
+function triggerBackgroundLookups(classified) {
+  for (const app of classified.unknown) {
+    if (!app.name) continue;
+    const row = db.prepare(`SELECT last_lookup_attempt FROM unknown_apps WHERE name = ?`).get(app.name);
+    if (!row || !shouldAttemptLookup(row.last_lookup_attempt)) continue;
+
+    db.prepare(`UPDATE unknown_apps SET last_lookup_attempt = datetime('now') WHERE name = ?`).run(app.name);
+    lookupGithubForApp(app.name).catch((err) => {
+      console.error('  Background lookup error for', app.name, '-', err.message);
+    });
+  }
+
+  // Emulated/unsupported apps already have an apps-table row, so reuse its
+  // last_updated as the cooldown gate instead of a separate column.
+  for (const app of [...classified.emulated, ...classified.unsupported]) {
+    if (!app.id || !app.name) continue;
+    if (!shouldAttemptLookup(app.last_updated)) continue;
+
+    db.prepare(`UPDATE apps SET last_updated = datetime('now') WHERE id = ?`).run(app.id);
+    lookupGithubForApp(app.name).catch((err) => {
+      console.error('  Background lookup error for', app.name, '-', err.message);
+    });
+  }
+}
+
+// POST /api/scan
+// Receives a list of apps from the scanner, returns a readiness report
+router.post('/scan', (req, res) => {
+  const { apps, system, scan_mode } = req.body;
+
+  if (!apps || !Array.isArray(apps)) {
+    return res.status(400).json({ error: 'Invalid request - expected an apps array' });
+  }
+
+  const classified = classifyApps(apps);
+
   const report = {
-    score,
+    ...classified,
     scan_mode: scan_mode || 'unknown',
     system: system || null,
     devices: req.body.devices || [],
-    native,
-    emulated,
-    unsupported,
-    unknown,
-    systemComponents,
     lastScanned: new Date().toISOString()
   };
 
@@ -143,15 +186,18 @@ router.post('/scan', (req, res) => {
     const session = db.prepare(`SELECT expires_at FROM sessions WHERE id = ?`).get(sessionId);
     if (session && new Date(session.expires_at) >= new Date()) {
       db.prepare(`
-        UPDATE sessions SET status = 'complete', results = ?
+        UPDATE sessions SET status = 'complete', results = ?, raw_apps = ?
         WHERE id = ?
-      `).run(JSON.stringify(report), sessionId);
+      `).run(JSON.stringify(report), JSON.stringify(apps), sessionId);
     } else if (session) {
       console.log(`  Ignored scan submission for expired session: ${sessionId}`);
     }
   }
 
   res.json(report);
+
+  triggerBackgroundLookups(classified);
 });
 
 module.exports = router;
+module.exports.classifyApps = classifyApps;

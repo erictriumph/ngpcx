@@ -317,6 +317,41 @@
             color: #475569;
             font-size: 0.85rem;
         }
+
+        .refresh-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 0.9rem 1.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+
+        .refresh-btn {
+            border: 1px solid #3b82f6;
+            background: transparent;
+            color: #3b82f6;
+            padding: 0.4rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
     </style>
 </head>
 
@@ -400,6 +435,9 @@
             </div>
         </div>
 
+        <!-- BACKGROUND RESEARCH BANNER -->
+        <div id="refresh-banner" style="display:none;"></div>
+
         <!-- DEVICES SUMMARY -->
         <a href="#devices-section"
             style="text-decoration:none; display:flex; align-items:center; justify-content:space-between; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:1rem 1.5rem; margin-bottom:2rem; color:#f1f5f9; flex-wrap:wrap; gap:0.75rem;">
@@ -436,6 +474,7 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get('session');
+        let currentResults = null;
         const GENERIC_DRIVER_CLASSES = ['Camera', 'HIDClass', 'MEDIA'];
         const GENERIC_DRIVER_NAME_PATTERNS = /ipp|mopria|universal print|pcl6 class driver|postscript class driver|microsoft.*class driver/i;
 
@@ -626,6 +665,7 @@
 
         function renderReport(data) {
             const results = data.results;
+            currentResults = results;
 
             // System info
             if (results.system) {
@@ -736,10 +776,83 @@
             document.getElementById('unknown-section').innerHTML = buildTable(results.unknown, 'unknown');
             document.getElementById('devices-section').innerHTML = buildDeviceTable(results.devices);
 
+            renderRefreshBanner(results);
 
             // Show report
             document.getElementById('loading').style.display = 'none';
             document.getElementById('report').style.display = 'block';
+        }
+
+        function pendingResearchCount(results) {
+            return (results.unknown?.length || 0) +
+                (results.emulated?.length || 0) +
+                (results.unsupported?.length || 0);
+        }
+
+        function snapshotStatuses(results) {
+            const map = {};
+            ['native', 'emulated', 'unsupported', 'unknown'].forEach((bucket) => {
+                (results[bucket] || []).forEach((app) => {
+                    if (app.name) map[app.name] = bucket;
+                });
+            });
+            return map;
+        }
+
+        function countStatusChanges(before, after) {
+            let changed = 0;
+            for (const name in after) {
+                if (before[name] && before[name] !== after[name]) changed++;
+            }
+            return changed;
+        }
+
+        function renderRefreshBanner(results) {
+            const banner = document.getElementById('refresh-banner');
+            if (!sessionId || pendingResearchCount(results) === 0) {
+                banner.style.display = 'none';
+                banner.innerHTML = '';
+                return;
+            }
+
+            banner.style.display = 'flex';
+            banner.innerHTML = `
+                <span>🔍 Some apps are still being researched in the background — check back later, or refresh now.</span>
+                <button class="refresh-btn" id="refresh-results-btn">Refresh results</button>
+            `;
+            document.getElementById('refresh-results-btn').addEventListener('click', refreshResults);
+        }
+
+        async function refreshResults() {
+            const btn = document.getElementById('refresh-results-btn');
+            const beforeMap = snapshotStatuses(currentResults || {});
+
+            btn.disabled = true;
+            btn.textContent = 'Refreshing…';
+
+            try {
+                const res = await fetch('/api/session/' + sessionId + '/refresh', { method: 'POST' });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `Request failed (${res.status})`);
+                }
+                const data = await res.json();
+                const changed = countStatusChanges(beforeMap, snapshotStatuses(data.results));
+
+                renderReport(data);
+
+                const msg = document.createElement('p');
+                msg.style.cssText = 'color:#64748b; font-size:0.8rem; margin:-1rem 0 1.5rem;';
+                msg.textContent = changed > 0
+                    ? `Refreshed — ${changed} app${changed === 1 ? '' : 's'} updated.`
+                    : 'Refreshed — no changes yet.';
+                document.getElementById('refresh-banner').insertAdjacentElement('afterend', msg);
+                setTimeout(() => msg.remove(), 6000);
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'Refresh results';
+                alert('Failed to refresh: ' + err.message);
+            }
         }
 
         // If we have a session ID, poll for results

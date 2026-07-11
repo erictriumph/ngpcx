@@ -19,6 +19,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // Routes
 const scanRoute = require('./routes/scan');
 app.use('/api', scanRoute);
+const { classifyApps } = scanRoute;
 
 const adminRoute = require('./routes/admin');
 app.use('/api/admin', adminRoute);
@@ -76,6 +77,39 @@ app.get('/api/session/:id', (req, res) => {
     status: 'complete',
     results: JSON.parse(session.results)
   });
+});
+
+// Re-classify a stored session's raw apps against current DB state — picks
+// up anything an admin resolved or a background lookup found since the
+// original scan, without needing a whole new physical scan.
+app.post('/api/session/:id/refresh', (req, res) => {
+  const session = db.prepare(`SELECT * FROM sessions WHERE id = ?`).get(req.params.id);
+
+  if (!session) {
+    return res.status(404).json({ error: 'Session not found' });
+  }
+
+  if (new Date(session.expires_at) < new Date()) {
+    return res.status(410).json({ error: 'Session expired' });
+  }
+
+  if (!session.raw_apps) {
+    return res.status(400).json({ error: 'This session predates refresh support — re-scan to use it.' });
+  }
+
+  const apps = JSON.parse(session.raw_apps);
+  const classified = classifyApps(apps);
+  const previous = JSON.parse(session.results);
+
+  const report = {
+    ...previous,
+    ...classified,
+    lastScanned: new Date().toISOString()
+  };
+
+  db.prepare(`UPDATE sessions SET results = ? WHERE id = ?`).run(JSON.stringify(report), req.params.id);
+
+  res.json({ status: 'complete', results: report });
 });
 
 // Serve scanner exe with correct headers to prevent browser blocking

@@ -69,6 +69,18 @@ try {
   // Column already exists, ignore
 }
 
+try {
+  db.exec(`ALTER TABLE sessions ADD COLUMN raw_apps TEXT`);
+} catch {
+  // Column already exists, ignore
+}
+
+try {
+  db.exec(`ALTER TABLE unknown_apps ADD COLUMN last_lookup_attempt TEXT`);
+} catch {
+  // Column already exists, ignore
+}
+
 console.log('Database ready at', DB_PATH);
 
 module.exports = db;
