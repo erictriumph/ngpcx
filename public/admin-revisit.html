@@ -203,6 +203,12 @@
             color: #ef4444;
         }
 
+        .action-btn.delete {
+            color: #ef4444;
+            border-color: #7f1d1d;
+            margin-left: auto;
+        }
+
         footer {
             text-align: center;
             color: #475569;
@@ -336,7 +342,7 @@
                 const notes = app.notes ? `<p class="app-notes">${escapeHtml(app.notes)}</p>` : '';
                 const flaggedBadge = app.flagged ? '<span class="flagged-badge">⚠ community disagrees</span>' : '';
                 return `
-        <div class="app-card" data-name="${name}">
+        <div class="app-card" data-name="${name}" data-id="${escapeHtml(app.id)}">
           <div class="app-card-head">
             <span class="app-name">${name}${flaggedBadge}</span>
             <span class="app-meta">matched ${app.times_matched || 0}× · last verified ${escapeHtml(app.last_updated)}</span>
@@ -354,16 +360,47 @@
             <button class="action-btn emulated" data-status="x64-emulated">x64 Emulated</button>
             <button class="action-btn emulated" data-status="x86-emulated">x86 Emulated</button>
             <button class="action-btn unsupported" data-status="unsupported">Unsupported</button>
+            <button class="action-btn delete" data-action="delete">Delete</button>
           </div>
         </div>`;
             }).join('');
 
             list.querySelectorAll('.app-card').forEach((card) => {
                 const name = card.dataset.name;
-                card.querySelectorAll('button.action-btn').forEach((btn) => {
+                const id = card.dataset.id;
+                card.querySelectorAll('button.action-btn[data-status]').forEach((btn) => {
                     btn.addEventListener('click', () => resolveApp(card, name, btn.dataset.status));
                 });
+                card.querySelector('button.action-btn.delete').addEventListener('click', () => deleteApp(card, id, name));
             });
+        }
+
+        async function deleteApp(card, id, name) {
+            if (!confirm(`Permanently delete "${name}" from the database? This can't be undone.`)) return;
+
+            const buttons = card.querySelectorAll('button.action-btn');
+            buttons.forEach((b) => (b.disabled = true));
+
+            try {
+                const res = await adminFetch(`/api/admin/apps/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `Request failed (${res.status})`);
+                }
+                card.remove();
+                const list = document.getElementById('list');
+                if (!list.querySelector('.app-card')) {
+                    list.innerHTML = '<p class="empty">Nothing to revisit right now — every verdict is current.</p>';
+                }
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    showSecretForm('Incorrect secret — try again.');
+                    buttons.forEach((b) => (b.disabled = false));
+                    return;
+                }
+                buttons.forEach((b) => (b.disabled = false));
+                alert('Failed to delete: ' + err.message);
+            }
         }
 
         async function resolveApp(card, name, status) {

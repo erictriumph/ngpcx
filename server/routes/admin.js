@@ -153,4 +153,20 @@ router.post('/resolve-app', (req, res) => {
   res.json({ success: true, type: resolvedType });
 });
 
+// DELETE /api/admin/unknown-apps/:name — remove a queue entry (and any
+// community submissions referencing it) without recording a verdict.
+// Mainly for clearing out test/junk data, not a normal resolution path.
+router.delete('/unknown-apps/:name', (req, res) => {
+  const name = req.params.name;
+  db.prepare(`DELETE FROM unknown_apps WHERE name = ?`).run(name);
+  db.prepare(`DELETE FROM community_submissions WHERE app_name = ?`).run(name);
+  res.json({ success: true });
+});
+
+// DELETE /api/admin/apps/:id — permanently remove an apps-table entry.
+router.delete('/apps/:id', (req, res) => {
+  db.prepare(`DELETE FROM apps WHERE id = ?`).run(req.params.id);
+  res.json({ success: true });
+});
+
 module.exports = router;

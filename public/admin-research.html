@@ -146,6 +146,12 @@
             color: #94a3b8;
         }
 
+        .action-btn.delete {
+            color: #ef4444;
+            border-color: #7f1d1d;
+            margin-left: auto;
+        }
+
         .submission-badge {
             display: inline-block;
             font-size: 0.75rem;
@@ -297,16 +303,46 @@
             <button class="action-btn emulated" data-status="x86-emulated">x86 Emulated</button>
             <button class="action-btn unsupported" data-status="unsupported">Unsupported</button>
             <button class="action-btn system" data-status="system">System Component</button>
+            <button class="action-btn delete" data-action="delete">Delete</button>
           </div>
         </div>`;
             }).join('');
 
             list.querySelectorAll('.app-card').forEach((card) => {
                 const name = card.dataset.name;
-                card.querySelectorAll('button.action-btn').forEach((btn) => {
+                card.querySelectorAll('button.action-btn[data-status]').forEach((btn) => {
                     btn.addEventListener('click', () => resolveApp(card, name, btn.dataset.status));
                 });
+                card.querySelector('button.action-btn.delete').addEventListener('click', () => deleteUnknownApp(card, name));
             });
+        }
+
+        async function deleteUnknownApp(card, name) {
+            if (!confirm(`Delete "${name}" from the queue without recording a verdict? This can't be undone.`)) return;
+
+            const buttons = card.querySelectorAll('button.action-btn');
+            buttons.forEach((b) => (b.disabled = true));
+
+            try {
+                const res = await adminFetch(`/api/admin/unknown-apps/${encodeURIComponent(name)}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `Request failed (${res.status})`);
+                }
+                card.remove();
+                const list = document.getElementById('list');
+                if (!list.querySelector('.app-card')) {
+                    list.innerHTML = '<p class="empty">No unknown apps right now — the queue is empty.</p>';
+                }
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    showSecretForm('Incorrect secret — try again.');
+                    buttons.forEach((b) => (b.disabled = false));
+                    return;
+                }
+                buttons.forEach((b) => (b.disabled = false));
+                alert('Failed to delete: ' + err.message);
+            }
         }
 
         async function resolveApp(card, name, status) {

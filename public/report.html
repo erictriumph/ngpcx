@@ -320,10 +320,8 @@
 
         .refresh-banner {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 0.4rem;
             background: rgba(59, 130, 246, 0.08);
             border: 1px solid rgba(59, 130, 246, 0.3);
             border-radius: 12px;
@@ -331,6 +329,19 @@
             margin-bottom: 1.5rem;
             font-size: 0.85rem;
             color: #cbd5e1;
+        }
+
+        .refresh-banner-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .refresh-status-msg {
+            color: #64748b;
+            font-size: 0.8rem;
         }
 
         .refresh-btn {
@@ -648,9 +659,12 @@
                 const sourceUrl = app.source_url ? escapeHtml(app.source_url) : null;
 
                 const findingsId = `findings-${type}-${idx}`;
+                const findingsIntro = type === 'unknown'
+                    ? "Researched this app's ARM64 compatibility? Let us know what you found."
+                    : 'What did you actually experience with this app?';
                 const findingsBlock = type === 'system' ? '' : `
             <div class="findings-block" id="${findingsId}" style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #1e293b;">
-              <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.4rem;">Share your Findings — what did you actually experience with this app?</div>
+              <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.4rem;">Share your Findings — ${findingsIntro}</div>
               <input type="text" class="findings-notes" placeholder="Notes (optional)" />
               <div class="findings-actions">
                 <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'native')">Native</button>
@@ -845,8 +859,15 @@
 
             document.getElementById('printer-note').textContent = 'Installed printers are always included, regardless of scan level.';
 
+            // renderReport can run more than once (refresh) — remove any notes
+            // from a previous render before adding new ones, so they don't
+            // accumulate as duplicate rows on every refresh.
+            document.getElementById('quick-mode-note')?.remove();
+            document.getElementById('system-component-note')?.remove();
+
             if (results.scan_mode === 'quick') {
                 const quickNote = document.createElement('p');
+                quickNote.id = 'quick-mode-note';
                 quickNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
                 quickNote.textContent = 'Quick scan only detects devices currently plugged in — devices you use regularly but had disconnected won\'t appear here.';
                 document.getElementById('printer-note').insertAdjacentElement('afterend', quickNote);
@@ -854,6 +875,7 @@
 
             if (results.systemComponents && results.systemComponents.length > 0) {
                 const systemNote = document.createElement('p');
+                systemNote.id = 'system-component-note';
                 systemNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
                 systemNote.textContent = 'Windows system components are not evaluated for compatibility and do not impact your readiness score, but are listed further below.';
                 document.getElementById('printer-note').insertAdjacentElement('afterend', systemNote);
@@ -923,8 +945,11 @@
 
             banner.style.display = 'flex';
             banner.innerHTML = `
-                <span>🔍 Some apps are still being researched in the background — check back later, or refresh now.</span>
-                <button class="refresh-btn" id="refresh-results-btn">Refresh results</button>
+                <div class="refresh-banner-row">
+                    <span>🔍 Some apps here don't have a confirmed verdict yet. An automatic check already ran when you scanned — refresh to see if anything's been confirmed since, or share what you know below.</span>
+                    <button class="refresh-btn" id="refresh-results-btn">Refresh results</button>
+                </div>
+                <div class="refresh-status-msg" id="refresh-status-msg"></div>
             `;
             document.getElementById('refresh-results-btn').addEventListener('click', refreshResults);
         }
@@ -947,13 +972,12 @@
 
                 renderReport(data);
 
-                const msg = document.createElement('p');
-                msg.style.cssText = 'color:#64748b; font-size:0.8rem; margin:-1rem 0 1.5rem;';
-                msg.textContent = changed > 0
-                    ? `Refreshed — ${changed} app${changed === 1 ? '' : 's'} updated.`
-                    : 'Refreshed — no changes yet.';
-                document.getElementById('refresh-banner').insertAdjacentElement('afterend', msg);
-                setTimeout(() => msg.remove(), 6000);
+                const statusMsg = document.getElementById('refresh-status-msg');
+                if (statusMsg) {
+                    statusMsg.textContent = changed > 0
+                        ? `Refreshed — ${changed} app${changed === 1 ? '' : 's'} updated.`
+                        : 'Refreshed — no changes yet.';
+                }
             } catch (err) {
                 btn.disabled = false;
                 btn.textContent = 'Refresh results';
