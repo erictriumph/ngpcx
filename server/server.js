@@ -24,6 +24,9 @@ const { classifyApps } = scanRoute;
 const adminRoute = require('./routes/admin');
 app.use('/api/admin', adminRoute);
 
+const communityRoute = require('./routes/community');
+app.use('/api/community', communityRoute);
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'NGPCX server is running' });

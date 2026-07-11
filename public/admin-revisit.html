@@ -128,6 +128,22 @@
             color: #ef4444;
         }
 
+        .status-badge.native {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .flagged-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            margin-left: 0.5rem;
+        }
+
         .app-notes {
             color: #94a3b8;
             font-size: 0.8rem;
@@ -232,7 +248,7 @@
             if (str === null || str === undefined) return '';
             const div = document.createElement('div');
             div.textContent = String(str);
-            return div.innerHTML;
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         function getSecret() {
@@ -281,10 +297,26 @@
         }
 
         const STATUS_LABELS = {
+            'native': 'Native',
             'x64-emulated': 'x64 Emulated',
             'x86-emulated': 'x86 Emulated',
             'unsupported': 'Unsupported',
         };
+
+        const SUBMISSION_STATUS_LABELS = {
+            native: 'native',
+            'x64-emulated': 'x64 emulated',
+            'x86-emulated': 'x86 emulated',
+            unsupported: 'unsupported',
+        };
+
+        function buildSubmissionSummary(submissions) {
+            if (!submissions) return '';
+            const parts = Object.entries(submissions.breakdown)
+                .map(([status, n]) => `${n} ${SUBMISSION_STATUS_LABELS[status] || status}`)
+                .join(', ');
+            return `<span class="app-meta">· community: ${escapeHtml(parts)}</span>`;
+        }
 
         function renderApps(apps) {
             const list = document.getElementById('list');
@@ -302,15 +334,17 @@
                     ? Math.round(app.confidence * 100) + '%'
                     : '—';
                 const notes = app.notes ? `<p class="app-notes">${escapeHtml(app.notes)}</p>` : '';
+                const flaggedBadge = app.flagged ? '<span class="flagged-badge">⚠ community disagrees</span>' : '';
                 return `
         <div class="app-card" data-name="${name}">
           <div class="app-card-head">
-            <span class="app-name">${name}</span>
+            <span class="app-name">${name}${flaggedBadge}</span>
             <span class="app-meta">matched ${app.times_matched || 0}× · last verified ${escapeHtml(app.last_updated)}</span>
           </div>
           <div class="app-current">
             <span class="status-badge ${escapeHtml(app.arm_support)}">${statusLabel}</span>
             <span class="app-meta">· source: ${escapeHtml(app.source || 'unknown')} · confidence: ${confidence}</span>
+            ${buildSubmissionSummary(app.submissions)}
           </div>
           ${notes}
           <input type="text" class="notes-input" placeholder="Notes (optional)" />

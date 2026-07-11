@@ -146,6 +146,22 @@
             color: #94a3b8;
         }
 
+        .submission-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            margin-left: 0.5rem;
+        }
+
+        .submission-badge.disagreement {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
         footer {
             text-align: center;
             color: #475569;
@@ -191,7 +207,7 @@
             if (str === null || str === undefined) return '';
             const div = document.createElement('div');
             div.textContent = String(str);
-            return div.innerHTML;
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         function getSecret() {
@@ -239,6 +255,23 @@
             return 'https://www.google.com/search?q=' + encodeURIComponent(`${name} ARM64 Windows compatibility`);
         }
 
+        const SUBMISSION_STATUS_LABELS = {
+            native: 'native',
+            'x64-emulated': 'x64 emulated',
+            'x86-emulated': 'x86 emulated',
+            unsupported: 'unsupported',
+        };
+
+        function buildSubmissionBadge(submissions) {
+            if (!submissions) return '';
+            const parts = Object.entries(submissions.breakdown)
+                .map(([status, n]) => `${n} ${SUBMISSION_STATUS_LABELS[status] || status}`)
+                .join(', ');
+            const cls = submissions.disagreement ? 'submission-badge disagreement' : 'submission-badge';
+            const suffix = submissions.disagreement ? ' — disagreement' : '';
+            return `<span class="${cls}">👥 ${escapeHtml(parts)}${suffix}</span>`;
+        }
+
         function renderApps(apps) {
             const list = document.getElementById('list');
             list.className = '';
@@ -253,7 +286,7 @@
                 return `
         <div class="app-card" data-name="${name}">
           <div class="app-card-head">
-            <span class="app-name">${name}</span>
+            <span class="app-name">${name}${buildSubmissionBadge(app.submissions)}</span>
             <span class="app-meta">seen ${app.count}× · last ${escapeHtml(app.last_seen)}</span>
           </div>
           <input type="text" class="notes-input" placeholder="Notes (optional)" />

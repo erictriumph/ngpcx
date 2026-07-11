@@ -36,6 +36,17 @@ db.exec(`
     name TEXT PRIMARY KEY,
     count INTEGER NOT NULL DEFAULT 1,
     last_seen TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS community_submissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    app_name TEXT NOT NULL,
+    normalized_name TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    user_id TEXT,
+    arm_support TEXT NOT NULL,
+    notes TEXT,
+    created_at TEXT NOT NULL,
+    UNIQUE(app_name, session_id)
   )
 `);
 

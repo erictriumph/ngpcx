@@ -352,6 +352,47 @@
             opacity: 0.5;
             cursor: default;
         }
+
+        .findings-notes {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.8rem;
+            font-family: inherit;
+            margin-bottom: 0.5rem;
+        }
+
+        .findings-notes::placeholder {
+            color: #475569;
+        }
+
+        .findings-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .findings-btn {
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 0.3rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .findings-btn:hover {
+            border-color: #3b82f6;
+        }
+
+        .findings-btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
     </style>
 </head>
 
@@ -482,7 +523,7 @@
             if (str === null || str === undefined) return '';
             const div = document.createElement('div');
             div.textContent = String(str);
-            return div.innerHTML;
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         function toggleAppDetail(id, btn) {
@@ -491,6 +532,56 @@
             const isHidden = row.style.display === 'none';
             row.style.display = isHidden ? 'table-row' : 'none';
             btn.textContent = isHidden ? '▼' : '▶';
+        }
+
+        // type/idx are safe, programmer-generated values (never raw app data) —
+        // the actual app name is looked up from currentResults rather than
+        // embedded in the onclick attribute, avoiding any HTML/JS-attribute
+        // injection risk from app names containing quote characters.
+        async function submitFinding(btn, type, idx, status) {
+            const block = btn.closest('.findings-block');
+            const buttons = block.querySelectorAll('.findings-btn');
+            buttons.forEach((b) => (b.disabled = true));
+
+            const app = currentResults && currentResults[type] && currentResults[type][idx];
+            const appName = app ? app.name : null;
+            if (!appName || !sessionId) {
+                block.innerHTML = '<span style="color:#ef4444; font-size:0.8rem;">Unable to submit — missing app or session info.</span>';
+                return;
+            }
+
+            const notesInput = block.querySelector('.findings-notes');
+            const notes = notesInput ? notesInput.value.trim() : '';
+
+            try {
+                const res = await fetch('/api/community/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        app_name: appName,
+                        arm_support: status,
+                        notes: notes || undefined,
+                    }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(data.error || `Request failed (${res.status})`);
+                }
+                block.innerHTML = data.alreadySubmitted
+                    ? '<span style="color:#64748b; font-size:0.8rem;">You already shared findings for this app.</span>'
+                    : '<span style="color:#10b981; font-size:0.8rem;">✓ Thanks — your findings were shared.</span>';
+            } catch (err) {
+                buttons.forEach((b) => (b.disabled = false));
+                let errorEl = block.querySelector('.findings-error');
+                if (!errorEl) {
+                    errorEl = document.createElement('div');
+                    errorEl.className = 'findings-error';
+                    errorEl.style.cssText = 'color:#ef4444; font-size:0.75rem; margin-top:0.4rem;';
+                    block.appendChild(errorEl);
+                }
+                errorEl.textContent = 'Failed to submit: ' + err.message;
+            }
         }
 
         function animateScore(target) {
@@ -556,6 +647,20 @@
                 const notes = escapeHtml(app.notes || '');
                 const sourceUrl = app.source_url ? escapeHtml(app.source_url) : null;
 
+                const findingsId = `findings-${type}-${idx}`;
+                const findingsBlock = type === 'system' ? '' : `
+            <div class="findings-block" id="${findingsId}" style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #1e293b;">
+              <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.4rem;">Share your Findings — what did you actually experience with this app?</div>
+              <input type="text" class="findings-notes" placeholder="Notes (optional)" />
+              <div class="findings-actions">
+                <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'native')">Native</button>
+                <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'x64-emulated')">x64 Emulated</button>
+                <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'x86-emulated')">x86 Emulated</button>
+                <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'unsupported')">Unsupported</button>
+              </div>
+            </div>
+        `;
+
                 const detailRow = `
         <tr class="detail-row" id="${detailId}" style="display:none;">
           <td colspan="${colCount}" style="background:#0f172a; font-size:0.85rem; color:#94a3b8; padding:0.75rem 1rem;">
@@ -564,6 +669,7 @@
             <strong style="color:#94a3b8;">Confidence:</strong> ${confidence}
             ${notes ? `<br><strong style="color:#94a3b8;">Notes:</strong> ${notes}` : ''}
             ${sourceUrl ? `<br><a href="${sourceUrl}" target="_blank" rel="noopener" style="color:#3b82f6;">View source →</a>` : ''}
+            ${findingsBlock}
           </td>
         </tr>
       `;
