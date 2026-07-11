@@ -242,6 +242,20 @@ fn include_by_recency(mode: &str, is_running: bool, days_ago: Option<f64>) -> bo
     }
 }
 
+// Standard mode's device recency window varies by class: Camera/HIDClass/
+// MEDIA/Biometric/SmartCardReader tend to cluster into "near-daily" or
+// "effectively abandoned" (printers already bypass this filter entirely),
+// so a tight 14-day window fits. Net/Display (docks, USB-Ethernet/WiFi
+// adapters, DisplayLink-style graphics) behave more like the app side of
+// the report — someone might use a travel dock monthly and still want it
+// flagged — so they keep a 60-day window, matching the app-tiering logic.
+fn standard_threshold_days(class: &str) -> f64 {
+    match class {
+        "Net" | "Display" => 60.0,
+        _ => 14.0,
+    }
+}
+
 // ─────────────────────────────────────────
 //  Connected/Recent Devices
 // ─────────────────────────────────────────
@@ -259,7 +273,7 @@ fn get_devices(mode: &str) -> Vec<DeviceEntry> {
         // lookups below are the expensive part and quick mode doesn't need them,
         // since "currently present" alone qualifies for every tier.
         r#"
-$classes = @('Printer','Image','MEDIA','Biometric','SmartCardReader','Camera','HIDClass')
+$classes = @('Printer','Image','MEDIA','Biometric','SmartCardReader','Camera','HIDClass','Net','Display')
 
 Get-PnpDevice -PresentOnly:$true | Where-Object {
     $_.Class -in $classes -and
@@ -278,7 +292,7 @@ Get-PnpDevice -PresentOnly:$true | Where-Object {
 "#
     } else {
         r#"
-$classes = @('Printer','Image','MEDIA','Biometric','SmartCardReader','Camera','HIDClass')
+$classes = @('Printer','Image','MEDIA','Biometric','SmartCardReader','Camera','HIDClass','Net','Display')
 $present = (Get-PnpDevice -PresentOnly:$true).InstanceId
 
 Get-PnpDevice | Where-Object {
@@ -408,7 +422,7 @@ Get-PnpDevice | Where-Object {
 
         let include = match mode {
             "quick" => is_present || days_ago.map_or(false, |d| d <= 8.0),
-            "standard" => is_present || days_ago.map_or(true, |d| d <= 60.0),
+            "standard" => is_present || days_ago.map_or(true, |d| d <= standard_threshold_days(&class)),
             _ => true,
         };
 
@@ -424,14 +438,6 @@ Get-PnpDevice | Where-Object {
     }
 
     devices
-}
-
-fn extract_hardware_id(instance_id: &str) -> Option<String> {
-    let vid_pos = instance_id.find("VID_")?;
-    let pid_pos = instance_id.find("PID_")?;
-    let vid = &instance_id[vid_pos..vid_pos + 8];
-    let pid = &instance_id[pid_pos..pid_pos + 8];
-    Some(format!("{}&{}", vid, pid))
 }
 
 fn get_printers() -> Vec<DeviceEntry> {
@@ -1056,4 +1062,34 @@ fn main() {
     println!("\nScan complete. Press Enter to exit.");
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).ok();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn standard_threshold_is_60_days_for_net_and_display() {
+        assert_eq!(standard_threshold_days("Net"), 60.0);
+        assert_eq!(standard_threshold_days("Display"), 60.0);
+    }
+
+    #[test]
+    fn standard_threshold_is_14_days_for_other_device_classes() {
+        for class in ["Camera", "HIDClass", "MEDIA", "Biometric", "SmartCardReader", "Printer"] {
+            assert_eq!(standard_threshold_days(class), 14.0);
+        }
+    }
+
+    #[test]
+    fn standard_threshold_split_matches_a_dock_vs_a_webcam() {
+        // A Net-class device (e.g. a dock's Ethernet adapter) last used 40
+        // days ago should still be included in Standard mode...
+        let net_days_ago = Some(40.0);
+        assert!(net_days_ago.map_or(true, |d| d <= standard_threshold_days("Net")));
+
+        // ...while a Camera-class device last used 20 days ago should not.
+        let camera_days_ago = Some(20.0);
+        assert!(!camera_days_ago.map_or(true, |d| d <= standard_threshold_days("Camera")));
+    }
 }

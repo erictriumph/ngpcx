@@ -848,7 +848,7 @@
             // Scan level
             const levelLabels = {
                 quick: { title: 'Quick scan', detail: 'recently used apps and currently connected devices' },
-                standard: { title: 'Standard scan', detail: 'all installed apps and devices used in the last 60 days' },
+                standard: { title: 'Standard scan', detail: 'all installed apps used in the last 60 days, and most devices used recently' },
                 full: { title: 'Full scan', detail: 'everything — all apps and device history, including system items' }
             };
             const level = levelLabels[results.scan_mode];
@@ -863,6 +863,7 @@
             // from a previous render before adding new ones, so they don't
             // accumulate as duplicate rows on every refresh.
             document.getElementById('quick-mode-note')?.remove();
+            document.getElementById('standard-mode-note')?.remove();
             document.getElementById('system-component-note')?.remove();
 
             if (results.scan_mode === 'quick') {
@@ -871,6 +872,14 @@
                 quickNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
                 quickNote.textContent = 'Quick scan only detects devices currently plugged in — devices you use regularly but had disconnected won\'t appear here.';
                 document.getElementById('printer-note').insertAdjacentElement('afterend', quickNote);
+            }
+
+            if (results.scan_mode === 'standard') {
+                const standardNote = document.createElement('p');
+                standardNote.id = 'standard-mode-note';
+                standardNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
+                standardNote.textContent = 'Standard scan checks most device types used in the last 14 days, and docks/network adapters used in the last 60 days.';
+                document.getElementById('printer-note').insertAdjacentElement('afterend', standardNote);
             }
 
             if (results.systemComponents && results.systemComponents.length > 0) {
