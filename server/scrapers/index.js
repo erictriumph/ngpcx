@@ -8,12 +8,6 @@ const scrapers = [
         description: 'Microsoft Winget package manifests — high confidence native ARM64 data'
     },
     {
-        name: 'WindowsUpdateCatalog',
-        module: './drivers/windowsupdatecatalog',
-        enabled: true,
-        description: 'Windows Update Catalog driver search — ARM64 peripheral driver availability'
-    },
-    {
         name: 'Qualcomm',
         module: './vendor/qualcomm',
         enabled: false,
