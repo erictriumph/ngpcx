@@ -31,6 +31,11 @@ db.exec(`
     results TEXT,
     created_at TEXT,
     expires_at TEXT
+  );
+  CREATE TABLE IF NOT EXISTS unknown_apps (
+    name TEXT PRIMARY KEY,
+    count INTEGER NOT NULL DEFAULT 1,
+    last_seen TEXT NOT NULL
   )
 `);
 

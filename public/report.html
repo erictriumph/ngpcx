@@ -115,7 +115,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
         }
 
         .gauge-wrap svg {
@@ -324,7 +324,7 @@
     <div class="report" id="report">
 
         <div class="report-header">
-            <div>
+            <div style="max-width: 480px;">
                 <h1>Your ARM Readiness Report</h1>
                 <p id="scan-time"></p>
                 <p id="scan-level-display"
@@ -431,6 +431,14 @@
             return div.innerHTML;
         }
 
+        function toggleAppDetail(id, btn) {
+            const row = document.getElementById(id);
+            if (!row) return;
+            const isHidden = row.style.display === 'none';
+            row.style.display = isHidden ? 'table-row' : 'none';
+            btn.textContent = isHidden ? '▼' : '▶';
+        }
+
         function animateScore(target) {
             const circle = document.getElementById('gauge-circle');
             const scoreEl = document.getElementById('gauge-score-svg');
@@ -473,42 +481,67 @@
 
             const showActionColumn = type === 'unknown' || type === 'emulated';
             const actionLabel = type === 'unknown' ? 'Check' : 'Check for update';
+            const colCount = showActionColumn ? 5 : 4;
 
-            const rows = apps.map(app => {
+            const rows = apps.map((app, idx) => {
                 const name = escapeHtml(app.name || app.id);
                 const packageId = escapeHtml(app.id || '');
                 const version = escapeHtml(app.version || '—');
+
                 let actionCell = '';
                 if (showActionColumn) {
                     actionCell = `<td><a href="${buildAppSearchUrl(name, type)}" target="_blank" rel="noopener" class="badge check" style="text-decoration:none;">${actionLabel} →</a></td>`;
                 }
 
+                const detailId = `detail-${type}-${idx}`;
+                const source = escapeHtml(app.source || 'Unknown');
+                const confidence = (app.confidence !== null && app.confidence !== undefined)
+                    ? Math.round(app.confidence * 100) + '%'
+                    : '—';
+                const notes = escapeHtml(app.notes || '');
+                const sourceUrl = app.source_url ? escapeHtml(app.source_url) : null;
+
+                const detailRow = `
+        <tr class="detail-row" id="${detailId}" style="display:none;">
+          <td colspan="${colCount}" style="background:#0f172a; font-size:0.85rem; color:#94a3b8; padding:0.75rem 1rem;">
+            <strong style="color:#94a3b8;">Source:</strong> ${source}
+            &nbsp;·&nbsp;
+            <strong style="color:#94a3b8;">Confidence:</strong> ${confidence}
+            ${notes ? `<br><strong style="color:#94a3b8;">Notes:</strong> ${notes}` : ''}
+            ${sourceUrl ? `<br><a href="${sourceUrl}" target="_blank" rel="noopener" style="color:#3b82f6;">View source →</a>` : ''}
+          </td>
+        </tr>
+      `;
+
                 return `
-    <tr>
-      <td>${name}</td>
-      <td style="color:#64748b;font-size:0.8rem">${packageId}</td>
-      <td>${version}</td>
-      <td><span class="badge ${type}">${labels[type]}</span></td>
-      ${actionCell}
-    </tr>
-  `;
+        <tr>
+          <td>
+            <button onclick="toggleAppDetail('${detailId}', this)" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:0.75rem;padding:0;margin-right:0.5rem;">▶</button>${name}
+          </td>
+          <td style="color:#64748b;font-size:0.8rem">${packageId}</td>
+          <td>${version}</td>
+          <td><span class="badge ${type}">${labels[type]}</span></td>
+          ${actionCell}
+        </tr>
+        ${detailRow}
+      `;
             }).join('');
 
             return `
-    <div class="section-title">${labels[type]} (${apps.length})</div>
-    <table class="app-table">
-      <thead>
-        <tr>
-          <th>App</th>
-          <th>Package ID</th>
-          <th>Version</th>
-          <th>Status</th>
-          ${showActionColumn ? '<th></th>' : ''}
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
+        <div class="section-title">${labels[type]} (${apps.length})</div>
+        <table class="app-table">
+          <thead>
+            <tr>
+              <th>App</th>
+              <th>Package ID</th>
+              <th>Version</th>
+              <th>Status</th>
+              ${showActionColumn ? '<th></th>' : ''}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
         }
 
         // Presentation style for the device driver-check column.
@@ -647,7 +680,15 @@
                 document.getElementById('scan-level-display').innerHTML =
                     `${level.title} <span style="font-weight:400; color:#64748b;">— ${level.detail}</span>`;
             }
+
             document.getElementById('printer-note').textContent = 'Installed printers are always included, regardless of scan level.';
+
+            if (results.scan_mode === 'quick') {
+                const quickNote = document.createElement('p');
+                quickNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
+                quickNote.textContent = 'Quick scan only detects devices currently plugged in — devices you use regularly but had disconnected won\'t appear here.';
+                document.getElementById('printer-note').insertAdjacentElement('afterend', quickNote);
+            }
 
             // Counts
             document.getElementById('count-native').textContent = results.native?.length || 0;

@@ -2,6 +2,21 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
+function trackUnknownApp(name) {
+  if (!name) return;
+  try {
+    db.prepare(`
+      INSERT INTO unknown_apps (name, count, last_seen)
+      VALUES (?, 1, datetime('now'))
+      ON CONFLICT(name) DO UPDATE SET
+        count = count + 1,
+        last_seen = excluded.last_seen
+    `).run(name);
+  } catch (err) {
+    console.error('  Failed to track unknown app:', name, '-', err.message);
+  }
+}
+
 // POST /api/scan
 // Receives a list of apps from the scanner, returns a readiness report
 router.post('/scan', (req, res) => {
@@ -46,6 +61,7 @@ router.post('/scan', (req, res) => {
     }
 
     if (!entry) {
+      trackUnknownApp(app.name);
       unknown.push({ ...app, arm_support: 'unknown' });
       continue;
     }

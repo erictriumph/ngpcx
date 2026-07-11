@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env::temp_dir;
@@ -24,6 +24,15 @@ struct AppEntry {
     id: Option<String>,
     version: Option<String>,
     recently_used: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ArpAppEntry {
+    name: String,
+    version: Option<String>,
+    publisher: Option<String>,
+    install_date_raw: Option<String>,
+    days_ago: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -154,9 +163,37 @@ fn get_recent_app_names() -> HashMap<String, bool> {
 // ─────────────────────────────────────────
 
 fn get_devices(mode: &str) -> Vec<DeviceEntry> {
-    println!("  Scanning connected/recent devices...");
+    if mode == "quick" {
+        println!("  Scanning connected devices...");
+    } else {
+        println!("  Scanning connected/recent devices (checking device history, this can take a moment)...");
+    }
 
-    let ps_script = r#"
+    let ps_script = if mode == "quick" {
+        // Fast path: presence-only, no per-device property lookups.
+        // This is what actually makes Quick fast — the LastArrival/LastRemoval
+        // lookups below are the expensive part and quick mode doesn't need them,
+        // since "currently present" alone qualifies for every tier.
+        r#"
+$classes = @('Printer','Image','MEDIA','Biometric','SmartCardReader','Camera','HIDClass')
+
+Get-PnpDevice -PresentOnly:$true | Where-Object {
+    $_.Class -in $classes -and
+    $_.InstanceId -notmatch '^SW\\' -and
+    $_.InstanceId -match 'VID_[0-9A-F]{4}&PID_[0-9A-F]{4}'
+} | ForEach-Object {
+    $vidPid = [regex]::Match($_.InstanceId, 'VID_[0-9A-F]{4}&PID_[0-9A-F]{4}').Value
+    [PSCustomObject]@{
+        Name = $_.FriendlyName
+        Class = $_.Class
+        VidPid = $vidPid
+        IsPresent = $true
+        DaysAgo = $null
+    }
+} | ConvertTo-Json
+"#
+    } else {
+        r#"
 $classes = @('Printer','Image','MEDIA','Biometric','SmartCardReader','Camera','HIDClass')
 $present = (Get-PnpDevice -PresentOnly:$true).InstanceId
 
@@ -182,7 +219,8 @@ Get-PnpDevice | Where-Object {
         DaysAgo = $recency
     }
 } | ConvertTo-Json
-"#;
+"#
+    };
 
     let output = Command::new("powershell")
         .args(["-NoProfile", "-Command", ps_script])
@@ -508,6 +546,176 @@ fn get_installed_apps(mode: &str, recent: &HashMap<String, bool>) -> Vec<AppEntr
 }
 
 // ─────────────────────────────────────────
+//  Installed Programs Registry (ARP) — supplemental app data
+// ─────────────────────────────────────────
+
+fn month_from_abbr(abbr: &str) -> Option<u32> {
+    match abbr.to_lowercase().as_str() {
+        "jan" => Some(1),
+        "feb" => Some(2),
+        "mar" => Some(3),
+        "apr" => Some(4),
+        "may" => Some(5),
+        "jun" => Some(6),
+        "jul" => Some(7),
+        "aug" => Some(8),
+        "sep" => Some(9),
+        "oct" => Some(10),
+        "nov" => Some(11),
+        "dec" => Some(12),
+        _ => None,
+    }
+}
+
+fn days_since(d: NaiveDate) -> f64 {
+    let today = Utc::now().date_naive();
+    today.signed_duration_since(d).num_days() as f64
+}
+
+// ARP's InstallDate field has no fixed format. We've seen at least three:
+//   "20260628"                     (YYYYMMDD)
+//   "2026/ 6/ 4"                   (slashed, irregular spacing)
+//   "Sun Jul 14 00:44:14 EDT 2024" (full unix-style timestamp string)
+// Only day-level precision matters for recency banding, so we don't
+// bother parsing time-of-day or timezone for the third format.
+fn parse_arp_date(raw: &str) -> Option<f64> {
+    let raw = raw.trim();
+    if raw.is_empty() {
+        return None;
+    }
+
+    // Format 1: YYYYMMDD
+    if let Ok(d) = NaiveDate::parse_from_str(raw, "%Y%m%d") {
+        return Some(days_since(d));
+    }
+
+    // Format 2: "YYYY/ M/ D" — strip spaces first
+    let normalized: String = raw.chars().filter(|c| !c.is_whitespace()).collect();
+    if let Ok(d) = NaiveDate::parse_from_str(&normalized, "%Y/%m/%d") {
+        return Some(days_since(d));
+    }
+
+    // Format 3: "Sun Jul 14 00:44:14 EDT 2024" — token-split rather than
+    // regex, since this project has deliberately avoided adding the regex
+    // crate for one-off extractions like this.
+    let tokens: Vec<&str> = raw.split_whitespace().collect();
+    if tokens.len() >= 5 {
+        let month = month_from_abbr(tokens[1]);
+        let day = tokens[2].parse::<u32>().ok();
+        let year = tokens.last().and_then(|y| y.parse::<i32>().ok());
+
+        if let (Some(m), Some(d), Some(y)) = (month, day, year) {
+            if let Some(date) = NaiveDate::from_ymd_opt(y, m, d) {
+                return Some(days_since(date));
+            }
+        }
+    }
+
+    None
+}
+
+fn get_arp_apps() -> Vec<ArpAppEntry> {
+    println!("  Checking installed-programs registry (ARP)...");
+
+    let ps_script = r#"
+Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*, HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue |
+    Where-Object { $_.DisplayName -and $_.SystemComponent -ne 1 } |
+    Select-Object DisplayName, DisplayVersion, InstallDate, Publisher |
+    ConvertTo-Json
+"#;
+
+    let output = Command::new("powershell")
+        .args(["-NoProfile", "-Command", ps_script])
+        .output();
+
+    let output = match output {
+        Ok(o) => o,
+        Err(e) => {
+            eprintln!("  Failed to run ARP scan: {}", e);
+            return vec![];
+        }
+    };
+
+    let json_text = String::from_utf8_lossy(&output.stdout);
+    if json_text.trim().is_empty() {
+        return vec![];
+    }
+
+    let json: serde_json::Value = match serde_json::from_str(&json_text) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("  Failed to parse ARP JSON: {}", e);
+            return vec![];
+        }
+    };
+
+    let items: Vec<&serde_json::Value> = if json.is_array() {
+        json.as_array().unwrap().iter().collect()
+    } else {
+        vec![&json]
+    };
+
+    let mut apps = Vec::new();
+
+    for item in items {
+        let name = match item["DisplayName"].as_str() {
+            Some(n) if !n.trim().is_empty() => n.to_string(),
+            _ => continue,
+        };
+        let version = item["DisplayVersion"].as_str().map(|s| s.to_string());
+        let publisher = item["Publisher"].as_str().map(|s| s.to_string());
+        let install_date_raw = item["InstallDate"].as_str().map(|s| s.to_string());
+        let days_ago = install_date_raw.as_deref().and_then(parse_arp_date);
+
+        apps.push(ArpAppEntry {
+            name,
+            version,
+            publisher,
+            install_date_raw,
+            days_ago,
+        });
+    }
+
+    apps
+}
+
+fn normalize_name(s: &str) -> String {
+    s.to_lowercase()
+        .chars()
+        .filter(|c| c.is_alphanumeric())
+        .collect()
+}
+
+fn merge_arp_into_apps(apps: &mut Vec<AppEntry>, arp_apps: Vec<ArpAppEntry>) {
+    let existing_normalized: Vec<String> = apps.iter().map(|a| normalize_name(&a.name)).collect();
+
+    let mut added = 0;
+
+    for arp_app in arp_apps {
+        let arp_norm = normalize_name(&arp_app.name);
+        if arp_norm.is_empty() {
+            continue;
+        }
+
+        let already_covered = existing_normalized
+            .iter()
+            .any(|existing| existing.contains(&arp_norm) || arp_norm.contains(existing));
+
+        if !already_covered {
+            apps.push(AppEntry {
+                name: arp_app.name,
+                id: None,
+                version: arp_app.version,
+                recently_used: false,
+            });
+            added += 1;
+        }
+    }
+
+    println!("  ARP added {} apps not found via winget", added);
+}
+
+// ─────────────────────────────────────────
 //  Send to Server
 // ─────────────────────────────────────────
 
@@ -571,7 +779,7 @@ fn start_local_server() -> (Option<String>, Option<String>) {
                         break;
                     }
                 };
-                
+
                 let mut request_line = String::new();
                 if let Some(Ok(line)) = reader.lines().next() {
                     request_line = line;
@@ -704,6 +912,10 @@ fn main() {
         apps = get_installed_apps("standard", &recent);
     }
     println!("  Found {} apps to check", apps.len());
+
+    let arp_apps = get_arp_apps();
+    merge_arp_into_apps(&mut apps, arp_apps);
+    println!("  {} total apps after ARP merge", apps.len());
 
     println!("\nScanning connected devices...");
     let mut devices = get_devices(&mode);
