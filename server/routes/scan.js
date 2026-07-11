@@ -85,13 +85,18 @@ router.post('/scan', (req, res) => {
     lastScanned: new Date().toISOString()
   };
 
-  // If a session ID was provided, store results
+  // If a session ID was provided, store results (only if not expired)
   const sessionId = req.body.session_id;
   if (sessionId) {
-    const result = db.prepare(`
-      UPDATE sessions SET status = 'complete', results = ?
-      WHERE id = ?
-    `).run(JSON.stringify(report), sessionId);
+    const session = db.prepare(`SELECT expires_at FROM sessions WHERE id = ?`).get(sessionId);
+    if (session && new Date(session.expires_at) >= new Date()) {
+      db.prepare(`
+        UPDATE sessions SET status = 'complete', results = ?
+        WHERE id = ?
+      `).run(JSON.stringify(report), sessionId);
+    } else if (session) {
+      console.log(`  Ignored scan submission for expired session: ${sessionId}`);
+    }
   }
 
   res.json(report);

@@ -99,8 +99,14 @@ fn get_system_info() -> SystemInfo {
     let ram_bytes: u64 = ram_output.trim().parse().unwrap_or(0);
     let ram_gb = ram_bytes / 1_073_741_824;
 
-    // Architecture
-    let arch = std::env::var("PROCESSOR_ARCHITECTURE").unwrap_or_else(|_| "Unknown".to_string());
+    // Architecture — check PROCESSOR_ARCHITEW6432 first, since it reflects the
+    // true native OS architecture even when this process is running under
+    // emulation (e.g. this x64 exe on a real ARM64 machine). Windows only sets
+    // this variable when emulation is active, so falling back to
+    // PROCESSOR_ARCHITECTURE on non-emulated machines is correct.
+    let arch = std::env::var("PROCESSOR_ARCHITEW6432")
+        .or_else(|_| std::env::var("PROCESSOR_ARCHITECTURE"))
+        .unwrap_or_else(|_| "Unknown".to_string());
 
     let is_arm = arch.to_lowercase().contains("arm");
 
@@ -556,7 +562,16 @@ fn start_local_server() -> (Option<String>, Option<String>) {
         match listener.accept() {
             Ok((mut stream, _)) => {
                 stream.set_nonblocking(false).ok();
-                let reader = BufReader::new(stream.try_clone().unwrap());
+                stream.set_read_timeout(Some(Duration::from_secs(5))).ok();
+
+                let reader = match stream.try_clone() {
+                    Ok(cloned) => BufReader::new(cloned),
+                    Err(e) => {
+                        eprintln!("  Failed to clone stream: {}", e);
+                        break;
+                    }
+                };
+                
                 let mut request_line = String::new();
                 if let Some(Ok(line)) = reader.lines().next() {
                     request_line = line;

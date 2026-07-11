@@ -281,6 +281,11 @@
             color: #94a3b8;
         }
 
+        .badge.check {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
         .arm-warning {
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid rgba(59, 130, 246, 0.3);
@@ -311,8 +316,8 @@
     <!-- LOADING STATE -->
     <div class="loading" id="loading">
         <div class="spinner"></div>
-        <h2>Waiting for scanner...</h2>
-        <p>Run the downloaded <code>ngpcx-scanner.exe</code> to see your results here.</p>
+        <h2>Scanner connected</h2>
+        <p>Running your scan now — this page will update automatically when it's done.</p>
     </div>
 
     <!-- REPORT -->
@@ -324,6 +329,7 @@
                 <p id="scan-time"></p>
                 <p id="scan-level-display"
                     style="color:#94a3b8; font-size:0.95rem; font-weight:600; margin-top:0.6rem;"></p>
+                <p id="printer-note" style="color:#64748b; font-size:0.8rem; margin-top:0.3rem;"></p>
             </div>
             <div class="gauge-wrap">
                 <svg width="120" height="120" viewBox="0 0 120 120" id="gauge-svg">
@@ -418,6 +424,12 @@
         const GENERIC_DRIVER_CLASSES = ['Camera', 'HIDClass', 'MEDIA'];
         const GENERIC_DRIVER_NAME_PATTERNS = /ipp|mopria|universal print|pcl6 class driver|postscript class driver|microsoft.*class driver/i;
 
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML;
+        }
 
         function animateScore(target) {
             const circle = document.getElementById('gauge-circle');
@@ -442,6 +454,13 @@
             requestAnimationFrame(tick);
         }
 
+        function buildAppSearchUrl(appName, mode) {
+            const query = mode === 'unknown'
+                ? `${appName} ARM64 Windows compatibility`
+                : `${appName} ARM64 native version`;
+            return 'https://www.google.com/search?q=' + encodeURIComponent(query);
+        }
+
         function buildTable(apps, type) {
             if (!apps || apps.length === 0) return '';
 
@@ -452,29 +471,44 @@
                 unknown: '? Unknown'
             };
 
-            const rows = apps.map(app => `
-        <tr>
-          <td>${app.name || app.id}</td>
-          <td style="color:#64748b;font-size:0.8rem">${app.id || ''}</td>
-          <td>${app.version || '—'}</td>
-          <td><span class="badge ${type}">${labels[type]}</span></td>
-        </tr>
-      `).join('');
+            const showActionColumn = type === 'unknown' || type === 'emulated';
+            const actionLabel = type === 'unknown' ? 'Check' : 'Check for update';
+
+            const rows = apps.map(app => {
+                const name = escapeHtml(app.name || app.id);
+                const packageId = escapeHtml(app.id || '');
+                const version = escapeHtml(app.version || '—');
+                let actionCell = '';
+                if (showActionColumn) {
+                    actionCell = `<td><a href="${buildAppSearchUrl(name, type)}" target="_blank" rel="noopener" class="badge check" style="text-decoration:none;">${actionLabel} →</a></td>`;
+                }
+
+                return `
+    <tr>
+      <td>${name}</td>
+      <td style="color:#64748b;font-size:0.8rem">${packageId}</td>
+      <td>${version}</td>
+      <td><span class="badge ${type}">${labels[type]}</span></td>
+      ${actionCell}
+    </tr>
+  `;
+            }).join('');
 
             return `
-        <div class="section-title">${labels[type]} (${apps.length})</div>
-        <table class="app-table">
-          <thead>
-            <tr>
-              <th>App</th>
-              <th>Package ID</th>
-              <th>Version</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
+    <div class="section-title">${labels[type]} (${apps.length})</div>
+    <table class="app-table">
+      <thead>
+        <tr>
+          <th>App</th>
+          <th>Package ID</th>
+          <th>Version</th>
+          <th>Status</th>
+          ${showActionColumn ? '<th></th>' : ''}
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
         }
 
         // Presentation style for the device driver-check column.
@@ -497,6 +531,8 @@
 
             const rows = devices.map(device => {
                 const isGeneric = isLikelyNative(device);
+                const safeName = escapeHtml(device.name);
+                const safeClass = escapeHtml(device.class);
                 const recency = device.days_ago === null || device.days_ago === undefined
                     ? '—'
                     : device.days_ago === 0 ? 'Currently connected' : `${device.days_ago}d ago`;
@@ -506,13 +542,13 @@
                     checkCell = `<span class="badge native">✓ Likely native</span>`;
                 } else {
                     const url = buildDriverSearchUrl(device);
-                    checkCell = `<a href="${url}" target="_blank" rel="noopener" class="badge unknown" style="text-decoration:none;">Check →</a>`;
+                    checkCell = `<a href="${url}" target="_blank" rel="noopener" class="badge check" style="text-decoration:none;">Check →</a>`;
                 }
 
                 return `
         <tr>
-          <td>${device.name}</td>
-          <td style="color:#64748b;font-size:0.8rem">${device.class}${device.is_network ? ' (network)' : ''}</td>
+          <td>${safeName}</td>
+          <td style="color:#64748b;font-size:0.8rem">${safeClass}${device.is_network ? ' (network)' : ''}</td>
           <td style="color:#64748b;font-size:0.85rem">${recency}</td>
           <td>${checkCell}</td>
         </tr>
@@ -546,10 +582,10 @@
             if (results.system) {
                 const s = results.system;
                 document.getElementById('system-info').innerHTML = `
-          <div class="sys-item"><label>OS</label><span>${s.os_version}</span></div>
-          <div class="sys-item"><label>CPU</label><span>${s.cpu}</span></div>
+          <div class="sys-item"><label>OS</label><span>${escapeHtml(s.os_version)}</span></div>
+          <div class="sys-item"><label>CPU</label><span>${escapeHtml(s.cpu)}</span></div>
           <div class="sys-item"><label>RAM</label><span>${s.ram_gb} GB</span></div>
-          <div class="sys-item"><label>Architecture</label><span>${s.architecture}</span></div>
+          <div class="sys-item"><label>Architecture</label><span>${escapeHtml(s.architecture)}</span></div>
         `;
                 if (s.is_arm) {
                     document.getElementById('arm-warning').style.display = 'block';
@@ -602,15 +638,16 @@
 
             // Scan level
             const levelLabels = {
-                quick: { title: 'Quick scan', detail: 'recently used apps' },
-                standard: { title: 'Standard scan', detail: 'all installed apps' },
-                full: { title: 'Full scan', detail: 'everything, including system items' }
+                quick: { title: 'Quick scan', detail: 'recently used apps and currently connected devices' },
+                standard: { title: 'Standard scan', detail: 'all installed apps and devices used in the last 60 days' },
+                full: { title: 'Full scan', detail: 'everything — all apps and device history, including system items' }
             };
             const level = levelLabels[results.scan_mode];
             if (level) {
                 document.getElementById('scan-level-display').innerHTML =
                     `${level.title} <span style="font-weight:400; color:#64748b;">— ${level.detail}</span>`;
             }
+            document.getElementById('printer-note').textContent = 'Installed printers are always included, regardless of scan level.';
 
             // Counts
             document.getElementById('count-native').textContent = results.native?.length || 0;

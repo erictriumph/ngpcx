@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const crypto = require('crypto');   // ADD THIS
 const db = require('./db');
 const { seedFromCache } = require('./seed');
 
@@ -39,8 +40,7 @@ app.get('/api/stats', (req, res) => {
 
 // Create a new scan session
 app.post('/api/session', (req, res) => {
-  const id = Math.random().toString(36).substring(2, 15) +
-    Math.random().toString(36).substring(2, 15);
+  const id = crypto.randomUUID();
 
   db.prepare(`
     INSERT INTO sessions (id, status, created_at, expires_at)
@@ -58,6 +58,10 @@ app.get('/api/session/:id', (req, res) => {
 
   if (!session) {
     return res.status(404).json({ error: 'Session not found' });
+  }
+
+  if (new Date(session.expires_at) < new Date()) {
+    return res.status(410).json({ error: 'Session expired' });
   }
 
   if (session.status === 'waiting') {
