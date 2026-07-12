@@ -4,7 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NGPCX — Your ARM Readiness Report</title>
+    <title>CheckMyARM — Your ARM Readiness Report</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <style>
         * {
             box-sizing: border-box;
@@ -28,10 +32,18 @@
         }
 
         .logo {
+            display: flex;
+            align-items: center;
             font-size: 1.5rem;
             font-weight: 800;
             color: #3b82f6;
             letter-spacing: -0.5px;
+        }
+
+        .logo img {
+            height: 28px;
+            width: auto;
+            margin-right: 0.5rem;
         }
 
         .logo span {
@@ -403,7 +415,7 @@
 <body>
 
     <nav>
-        <div class="logo">NGPC<span>X</span></div>
+        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
         <a href="/" class="back-link">← Run another scan</a>
     </nav>
 
@@ -412,6 +424,7 @@
         <div class="spinner"></div>
         <h2>Scanner connected</h2>
         <p>Running your scan now — this page will update automatically when it's done.</p>
+        <p id="loading-level-note" style="color:#64748b; font-size:0.85rem; margin-top:0.5rem; display:none;"></p>
     </div>
 
     <!-- REPORT -->
@@ -424,6 +437,12 @@
                 <p id="scan-level-display"
                     style="color:#94a3b8; font-size:0.95rem; font-weight:600; margin-top:0.6rem;"></p>
                 <p id="printer-note" style="color:#64748b; font-size:0.8rem; margin-top:0.3rem;"></p>
+                <p style="color:#64748b; font-size:0.8rem; margin-top:0.3rem;">
+                    CheckMyARM is free and we intend to keep it that way — with no ads. If it saved you some
+                    research, consider <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
+                        style="color:#3b82f6;">buying us a coffee</a> or using our affiliate links when you buy your
+                    next laptop.
+                </p>
             </div>
             <div class="gauge-wrap">
                 <svg width="120" height="120" viewBox="0 0 120 120" id="gauge-svg">
@@ -513,13 +532,24 @@
     </div>
 
     <footer>
-        NGPCX — ARM Readiness Scanner. Data sourced from Winget, vendor sites, and community reports.
+        CheckMyARM — ARM Readiness Scanner. Data sourced from Winget, vendor sites, and community reports.
+        Free, no ads — <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
+            style="color:#3b82f6;">buy us a coffee</a> if it helped.
     </footer>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get('session');
+        const scanLevelParam = params.get('level');
         let currentResults = null;
+
+        if (scanLevelParam === 'standard' || scanLevelParam === 'full') {
+            const levelNote = document.getElementById('loading-level-note');
+            if (levelNote) {
+                levelNote.textContent = 'Standard/Full scans check device history — this can take a bit longer than Quick.';
+                levelNote.style.display = 'block';
+            }
+        }
         const GENERIC_DRIVER_CLASSES = ['Camera', 'HIDClass', 'MEDIA'];
         const GENERIC_DRIVER_NAME_PATTERNS = /ipp|mopria|universal print|pcl6 class driver|postscript class driver|microsoft.*class driver/i;
 

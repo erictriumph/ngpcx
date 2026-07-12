@@ -4,7 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NGPCX Admin — Unknown App Research</title>
+    <title>CheckMyARM Admin — Unknown App Research</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <style>
         * {
             box-sizing: border-box;
@@ -28,10 +32,18 @@
         }
 
         .logo {
+            display: flex;
+            align-items: center;
             font-size: 1.5rem;
             font-weight: 800;
             color: #3b82f6;
             letter-spacing: -0.5px;
+        }
+
+        .logo img {
+            height: 28px;
+            width: auto;
+            margin-right: 0.5rem;
         }
 
         .logo span {
@@ -179,7 +191,7 @@
 
 <body>
     <nav>
-        <div class="logo">NGPCX<span>Admin</span></div>
+        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMyARM<span>Admin</span></div>
         <div style="display:flex; align-items:center; gap:1.25rem;">
             <a href="/admin-revisit.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">Revisit
                 stale apps</a>
@@ -204,7 +216,7 @@
         <div id="list" class="status-msg">Loading…</div>
     </div>
 
-    <footer>NGPCX Admin — internal tool, not for public use.</footer>
+    <footer>CheckMyARM Admin — internal tool, not for public use.</footer>
 
     <script>
         const SECRET_KEY = 'ngpcx_admin_secret';

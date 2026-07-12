@@ -1,7 +1,12 @@
 # NGPCX — ARM Readiness Scanner
 
 ## What this is
-Free Windows ARM (Snapdragon) readiness scanner. Consumer-facing brand: CheckMyARM (planned redirect domain, not yet live — see Branding section). Learning project with real utility; affiliate monetization is a bonus, not the goal.
+Free Windows ARM (Snapdragon) readiness scanner. Consumer-facing brand: CheckMyARM — live on the visitor-facing pages (see Branding & monetization section); redirect domain still pending. Learning project with real utility; affiliate monetization is a bonus, not the goal.
+
+## Branding & monetization
+- CheckMyARM is the consumer-facing name; NGPCX is the underlying project/codebase name — both are intentional, not a half-finished rename. CheckMyARM appears in visitor-facing text only: page `<title>`s, nav logos, and footers across `index.html`, `report.html`, `admin-research.html`, `admin-revisit.html`. Everything else stays NGPCX: the `ngpcx-scanner.exe` filename, the GitHub repo, all variable/function names, code comments, the `ngpcx_admin_secret` localStorage key, and the scanner's hardcoded server URL (`get_server_url()` → `ngpcx.com` — must stay stable regardless of branding, since already-distributed exes can't be updated).
+- Logo is live: a 64px PNG (`public/logo-64.png`) paired with the text wordmark (`CheckMy` + `<span>ARM</span>` on the main pages, `CheckMyARM` + `<span>Admin</span>` on admin pages) in every nav, plus a full favicon set (`favicon.ico`, 16/32/48px PNGs, `apple-touch-icon.png`, `android-chrome-*` sizes) wired via `<head>` tags on all four HTML pages. Source files (multiple sizes, the original SVG wrapper, and generation notes) live in `branding/` at the repo root — not served, kept for reference/future regeneration. `logo-source.svg` is not a true vector, it's an 817×817 raster PNG wrapped in SVG, so that's the resolution ceiling if a larger version is ever needed.
+- Ko-fi is live at `https://ko-fi.com/checkmyarm` — used in `report.html`'s donation callout and both visitor-facing footers (`index.html`, `report.html`). Affiliate links are still **placeholder/nonexistent** — the "affiliate links" mention in `report.html`'s donation callout is plain text, not a link, until an actual affiliate program exists. Don't wire up real affiliate tracking without checking first.
 
 ## Stack — do not deviate without asking
 - Server: Node.js + Express, **plain JavaScript, no TypeScript**. SQLite (better-sqlite3). Runs on Railway, auto-deploys from GitHub on push.

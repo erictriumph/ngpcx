@@ -4,7 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NGPCX — ARM Readiness Scanner</title>
+  <title>CheckMyARM — ARM Readiness Scanner</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <style>
     * {
       box-sizing: border-box;
@@ -28,10 +32,18 @@
     }
 
     .logo {
+      display: flex;
+      align-items: center;
       font-size: 1.5rem;
       font-weight: 800;
       color: #3b82f6;
       letter-spacing: -0.5px;
+    }
+
+    .logo img {
+      height: 28px;
+      width: auto;
+      margin-right: 0.5rem;
     }
 
     .logo span {
@@ -302,7 +314,7 @@
 <body>
 
   <nav>
-    <div class="logo">NGPC<span>X</span></div>
+    <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
     <div class="nav-tag">ARM Readiness Scanner</div>
   </nav>
 
@@ -338,6 +350,10 @@
         style="max-width:420px; margin:0 auto 1.5rem auto; text-align:center; color:#64748b; font-size:0.8rem; line-height:1.5;">
         Downloads a small tool. You'll need to allow it to run (Windows may warn it's from an unrecognized publisher).
         It opens a console window, runs the scan, then stays open — you can close it once you see "Scan complete."
+      </div>
+
+      <div style="max-width:420px; margin:0 auto 1.5rem auto; text-align:center; color:#475569; font-size:0.75rem;">
+        CheckMyARM runs on NGPCX (Next-Gen PC eXplorer) — we just like the cute name better.
       </div>
 
 
@@ -446,7 +462,9 @@
   </div>
 
   <footer>
-    NGPCX is a community-driven ARM compatibility tool. Data sourced from Winget, vendor sites, and community reports.
+    CheckMyARM is a community-driven ARM compatibility tool. Data sourced from Winget, vendor sites, and community
+    reports. Free, no ads — <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
+      style="color:#3b82f6;">buy us a coffee</a> if it helped.
   </footer>
 
   <script>
@@ -494,7 +512,7 @@
           });
           console.log('localhost connected!');
           clearInterval(pollInterval);
-          window.location.href = '/report.html?session=' + sessionId;
+          window.location.href = '/report.html?session=' + sessionId + '&level=' + scanLevel;
           return;
         } catch (e) {
           console.log('localhost failed:', e.message);
@@ -507,7 +525,7 @@
           console.log('session status:', data.status);
           if (data.status === 'complete') {
             clearInterval(pollInterval);
-            window.location.href = '/report.html?session=' + sessionId;
+            window.location.href = '/report.html?session=' + sessionId + '&level=' + scanLevel;
           }
         } catch (e) {
           console.log('session poll failed:', e.message);
