@@ -4,10 +4,12 @@ const { mergeApp } = require('./merge');
 // On-demand, single-app GitHub lookup — different from winget.js, which
 // searches *within* microsoft/winget-pkgs for manifest files. This searches
 // GitHub broadly by app name and checks that repo's latest release assets.
-// Confidence is set below every real data source's floor (worksonwoa is
-// 0.75-0.90+) so mergeApp()'s existing conflict resolution never lets this
-// silently override real data — it can only fill genuine gaps or reinforce
-// an existing low-confidence match.
+// Confidence (0.70) sits in a similar range to WorksOnWoA but stays strictly
+// below its lowest tier (0.75, community-validated) — so mergeApp()'s
+// existing conflict resolution still never lets this silently override a
+// real source, only fill genuine gaps or reinforce agreement with another
+// github-auto match. The star-count gate below is the other half of that
+// caution: a wrong match is worse than no match.
 
 const HEADERS = {
   'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
@@ -18,6 +20,10 @@ const HEADERS = {
 function normalize(s) {
   return (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
+
+// Below this, treat a name match as too likely to be an obscure/abandoned/
+// unrelated repo that just happens to share a normalized name. Easy to tune.
+const MIN_STARS = 20;
 
 async function apiFetch(url) {
   const res = await fetch(url, { headers: HEADERS });
@@ -45,6 +51,10 @@ async function lookupGithubForApp(name) {
     const repo = items.find((r) => normalize(r.name) === targetNorm);
     if (!repo) return null;
 
+    // Sanity-check against star count — record "no confident match" rather
+    // than guessing on an obscure repo that just happens to share a name.
+    if ((repo.stargazers_count || 0) < MIN_STARS) return null;
+
     const releaseRes = await apiFetch(`https://api.github.com/repos/${repo.full_name}/releases/latest`);
     if (!releaseRes) return null;
 
@@ -60,8 +70,8 @@ async function lookupGithubForApp(name) {
       type: 'app',
       source: 'github-auto',
       source_url: release.html_url,
-      notes: `Auto-detected via GitHub release scan (${repo.full_name}) — unverified, needs admin confirmation.`,
-      confidence: 0.4
+      notes: `Auto-detected via GitHub release scan (${repo.full_name}, ${repo.stargazers_count} stars) — unverified, needs admin confirmation.`,
+      confidence: 0.70
     });
 
     return { name, repo: repo.full_name, release_url: release.html_url };

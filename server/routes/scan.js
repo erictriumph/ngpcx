@@ -116,10 +116,16 @@ function classifyApps(apps) {
     }
   }
 
-  // Calculate readiness score
-  const total = native.length + emulated.length + unsupported.length;
+  // Calculate readiness score. Unclassified apps count as presumed-emulated
+  // (same 60-point weight as confirmed Emulated) rather than being excluded —
+  // Windows on ARM runs ordinary x86/x64 apps under emulation by default, so
+  // true incompatibility is the rare case, not "no data either way." The
+  // confidence indicator (report.html) deliberately stays scoped to
+  // native+emulated+unsupported — it answers "how much do we actually know,"
+  // a different question from the score's "how likely is this to work."
+  const total = native.length + emulated.length + unsupported.length + unknown.length;
   const score = total === 0 ? 0 : Math.round(
-    (native.length * 100 + emulated.length * 60 - unsupported.length * 20) /
+    (native.length * 100 + (emulated.length + unknown.length) * 60 - unsupported.length * 20) /
     (total * 100) * 100
   );
 

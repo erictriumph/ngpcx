@@ -416,7 +416,10 @@
 
     <nav>
         <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
-        <a href="/" class="back-link">← Run another scan</a>
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <a href="/about.html" class="back-link">About</a>
+            <a href="/" class="back-link">← Run another scan</a>
+        </div>
     </nav>
 
     <!-- LOADING STATE -->
@@ -495,7 +498,7 @@
             </div>
             <div class="summary-card unknown">
                 <div class="summary-count" id="count-unknown">0</div>
-                <div class="summary-label">Unknown</div>
+                <div class="summary-label">Unclassified</div>
             </div>
         </div>
 
@@ -655,7 +658,7 @@
                 native: '✓ Native ARM64',
                 emulated: '⚡ Emulated',
                 unsupported: '✗ Unsupported',
-                unknown: '? Unknown',
+                unknown: '? Unclassified',
                 system: '⚙ System Component'
             };
 
@@ -718,15 +721,20 @@
           </td>
           <td style="color:#64748b;font-size:0.8rem">${packageId}</td>
           <td>${version}</td>
-          <td><span class="badge ${type}">${labels[type]}</span></td>
+          <td><span class="badge ${type}"${type === 'unknown' ? ' title="Emulation likely, but not yet verified."' : ''}>${labels[type]}</span></td>
           ${actionCell}
         </tr>
         ${detailRow}
       `;
             }).join('');
 
+            const sectionCaption = type === 'unknown'
+                ? '<p style="color:#64748b; font-size:0.8rem; margin:-0.5rem 0 0.75rem 0;">Emulation likely, but not yet verified. <a href="/about.html#methodology" style="color:#3b82f6;">Why?</a></p>'
+                : '';
+
             return `
         <div class="section-title">${labels[type]} (${apps.length})</div>
+        ${sectionCaption}
         <table class="app-table">
           <thead>
             <tr>
