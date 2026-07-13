@@ -417,6 +417,8 @@
     <nav>
         <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
         <div style="display:flex; align-items:center; gap:1.25rem;">
+            <span id="auth-status"></span>
+            <a href="/my-submissions.html" class="back-link">My Submissions</a>
             <a href="/about.html" class="back-link">About</a>
             <a href="/" class="back-link">← Run another scan</a>
         </div>
@@ -605,8 +607,8 @@
                 if (!res.ok) {
                     throw new Error(data.error || `Request failed (${res.status})`);
                 }
-                block.innerHTML = data.alreadySubmitted
-                    ? '<span style="color:#64748b; font-size:0.8rem;">You already shared findings for this app.</span>'
+                block.innerHTML = data.updated
+                    ? '<span style="color:#10b981; font-size:0.8rem;">✓ Updated — thanks for the correction.</span>'
                     : '<span style="color:#10b981; font-size:0.8rem;">✓ Thanks — your findings were shared.</span>';
             } catch (err) {
                 buttons.forEach((b) => (b.disabled = false));
@@ -618,6 +620,90 @@
                     block.appendChild(errorEl);
                 }
                 errorEl.textContent = 'Failed to submit: ' + err.message;
+            }
+        }
+
+        const SUBMISSION_LABELS = {
+            native: 'Native ARM64',
+            'x64-emulated': 'x64 Emulated',
+            'x86-emulated': 'x86 Emulated',
+            unsupported: 'Unsupported',
+        };
+
+        // Best-effort enhancement, called after tables render: pre-fills each findings
+        // block with the caller's own prior submission for that app (if any), so
+        // resubmitting reads as an edit rather than a blank slate. Silently does nothing
+        // if the request fails — the report itself doesn't depend on this.
+        async function applyMySubmissions() {
+            if (!currentResults) return;
+            try {
+                const res = await fetch('/api/community/mine');
+                if (!res.ok) return;
+                const data = await res.json();
+                const byName = {};
+                (data.submissions || []).forEach((s) => { byName[s.app_name] = s; });
+
+                ['native', 'emulated', 'unsupported', 'unknown'].forEach((type) => {
+                    (currentResults[type] || []).forEach((app, idx) => {
+                        const sub = app.name && byName[app.name];
+                        if (!sub) return;
+                        const block = document.getElementById(`findings-${type}-${idx}`);
+                        if (!block) return;
+
+                        const notesInput = block.querySelector('.findings-notes');
+                        let priorEl = block.querySelector('.findings-prior');
+                        if (!priorEl) {
+                            priorEl = document.createElement('div');
+                            priorEl.className = 'findings-prior';
+                            priorEl.style.cssText = 'font-size:0.78rem; color:#3b82f6; margin-bottom:0.4rem;';
+                            if (notesInput) block.insertBefore(priorEl, notesInput);
+                            else block.appendChild(priorEl);
+                        }
+                        priorEl.textContent = `You said: ${SUBMISSION_LABELS[sub.submitted_status] || sub.submitted_status} — you can change this below.`;
+
+                        if (notesInput && !notesInput.value && sub.notes) {
+                            notesInput.value = sub.notes;
+                        }
+                    });
+                });
+            } catch (err) {
+                // best-effort — report still works without this
+            }
+        }
+
+        // Populates the nav sign-in/account indicator and, when OAuth is enabled and
+        // the visitor isn't signed in, the "sign in to have your contribution carry
+        // more weight" hint on each findings block. Login is entirely optional — if
+        // OAuth isn't enabled (not yet validated in production) or the request fails,
+        // this just leaves the anonymous-only UI as-is.
+        async function loadAuthStatus() {
+            const authEl = document.getElementById('auth-status');
+            try {
+                const res = await fetch('/api/auth-status');
+                const data = await res.json();
+
+                if (!data.enabled) {
+                    if (authEl) authEl.innerHTML = '';
+                    return;
+                }
+
+                if (data.user) {
+                    if (authEl) {
+                        authEl.innerHTML = `<span class="back-link">Signed in as ${escapeHtml(data.user.displayName || 'you')}</span> · <a href="/auth/logout" class="back-link">Log out</a>`;
+                    }
+                    return;
+                }
+
+                const returnParam = sessionId ? `?return=${encodeURIComponent(sessionId)}` : '';
+                if (authEl) {
+                    authEl.innerHTML = `<a href="/auth/google${returnParam}" class="back-link">Sign In</a>`;
+                }
+                document.querySelectorAll('.findings-signin-hint').forEach((el) => {
+                    el.textContent = 'Sign in to have your contribution carry more weight.';
+                    el.style.display = 'block';
+                });
+            } catch (err) {
+                // best-effort — anonymous workflow still works without this
             }
         }
 
@@ -698,6 +784,7 @@
                 <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'x86-emulated')">x86 Emulated</button>
                 <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'unsupported')">Unsupported</button>
               </div>
+              <div class="findings-signin-hint" style="display:none; font-size:0.75rem; color:#64748b; margin-top:0.4rem;"></div>
             </div>
         `;
 
@@ -944,6 +1031,8 @@
             document.getElementById('unknown-section').innerHTML = buildTable(results.unknown, 'unknown');
             document.getElementById('devices-section').innerHTML = buildDeviceTable(results.devices);
 
+            applyMySubmissions();
+            loadAuthStatus();
             renderRefreshBanner(results);
 
             // Show report

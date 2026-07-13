@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-"scripts": {
+  "scripts": {
     "start": "node server/server.js",
     "scrape": "node server/scrapers/index.js",
     "scrape:winget": "node server/scrapers/winget.js",
@@ -12,14 +12,19 @@
     "scrape:wuc": "node server/scrapers/index.js --only=windowsupdatecatalog",
     "postinstall": "npm rebuild better-sqlite3",
     "test": "echo \"Error: no test specified\" && exit 1"
-},
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
     "better-sqlite3": "^12.11.1",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
+    "passport-google-oauth20": "^2.0.0"
   }
 }

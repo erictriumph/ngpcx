@@ -2,42 +2,72 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { mergeApp } = require('../scrapers/merge');
+const { requireRole } = require('../middleware/auth');
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'change-me';
+// Deliberate migration path from shared-secret to OAuth-based admin access: both stay
+// active simultaneously until OAuth/sessions/Railway Volume persistence have all been
+// validated in production, at which point setting this to 'false' retires the
+// shared-secret path — a config change, not a code change, reversible in seconds if
+// anything goes wrong. Like any process.env value, this takes effect on the next
+// process restart/redeploy, not against the already-running process.
+const ADMIN_SECRET_ENABLED = process.env.ADMIN_SECRET_ENABLED !== 'false';
 
-function requireAdminAuth(req, res, next) {
+const requireAdminRole = requireRole('admin');
+
+function requireAdminAuthOrOAuth(req, res, next) {
   const provided = req.headers['x-admin-secret'] || req.query.secret;
-  if (provided !== ADMIN_SECRET) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (ADMIN_SECRET_ENABLED && provided === ADMIN_SECRET) {
+    return next();
   }
-  next();
+  return requireAdminRole(req, res, next);
 }
 
-router.use(requireAdminAuth);
+router.use(requireAdminAuthOrOAuth);
 
 function normalize(name) {
   return (name || '').toLowerCase().replace(/[\s\-_.]/g, '');
 }
 
-// Groups all community submissions by normalized app name, for attaching a
-// summary (per-status counts, total, disagreement flag) to admin queue rows.
+// Only rows with an identity, not superseded, count here — same predicate used by
+// community.js's auto-accept gate, so admins see the same signal it acts on. Legacy
+// (identity-less) and superseded rows stay visible elsewhere but never factor into
+// this summary.
+const ACTIVE_WITH_IDENTITY = `state = 'active' AND (anonymous_id IS NOT NULL OR user_id IS NOT NULL)`;
+const ANON_WEIGHT = 1;
+const AUTH_WEIGHT = 3;
+
+// Groups all community submissions by normalized app name, for attaching a summary
+// (per-status counts + weighted confidence, total, disagreement flag) to admin queue
+// rows. Weighting here is purely informational — it mirrors the weight community.js's
+// auto-accept uses for display, but never auto-resolves anything itself; admins still
+// decide manually.
 function submissionsByNormalizedName() {
   const rows = db.prepare(`
-    SELECT normalized_name, arm_support, COUNT(*) AS n
+    SELECT normalized_name, arm_support,
+      COUNT(*) AS n,
+      SUM(CASE WHEN user_id IS NOT NULL THEN 1 ELSE 0 END) AS authenticatedN
     FROM community_submissions
+    WHERE ${ACTIVE_WITH_IDENTITY}
     GROUP BY normalized_name, arm_support
   `).all();
 
   const byName = {};
   for (const row of rows) {
     if (!byName[row.normalized_name]) byName[row.normalized_name] = {};
-    byName[row.normalized_name][row.arm_support] = row.n;
+    const anonymousN = row.n - row.authenticatedN;
+    byName[row.normalized_name][row.arm_support] = {
+      count: row.n,
+      authenticated: row.authenticatedN,
+      weight: anonymousN * ANON_WEIGHT + row.authenticatedN * AUTH_WEIGHT
+    };
   }
 
   const summaries = {};
   for (const [name, breakdown] of Object.entries(byName)) {
-    const total = Object.values(breakdown).reduce((sum, n) => sum + n, 0);
-    summaries[name] = { breakdown, total, disagreement: Object.keys(breakdown).length > 1 };
+    const total = Object.values(breakdown).reduce((sum, b) => sum + b.count, 0);
+    const totalWeight = Object.values(breakdown).reduce((sum, b) => sum + b.weight, 0);
+    summaries[name] = { breakdown, total, totalWeight, disagreement: Object.keys(breakdown).length > 1 };
   }
   return summaries;
 }
@@ -69,11 +99,14 @@ router.get('/unknown-apps', (req, res) => {
 // Matches a community submission to an apps row by normalized name, flagging
 // rows where the community disagrees with the current classification —
 // including native apps, which the staleness gate below otherwise excludes.
+// Same consensus predicate as ACTIVE_WITH_IDENTITY above, qualified with cs. for this
+// correlated subquery — keep the two in sync if that predicate ever changes.
 const COMMUNITY_FLAG_EXISTS = `
   EXISTS (
     SELECT 1 FROM community_submissions cs
     WHERE cs.normalized_name = REPLACE(REPLACE(REPLACE(REPLACE(LOWER(apps.name), ' ', ''), '-', ''), '_', ''), '.', '')
       AND cs.arm_support != apps.arm_support
+      AND cs.state = 'active' AND (cs.anonymous_id IS NOT NULL OR cs.user_id IS NOT NULL)
   )
 `;
 
@@ -153,13 +186,15 @@ router.post('/resolve-app', (req, res) => {
   res.json({ success: true, type: resolvedType });
 });
 
-// DELETE /api/admin/unknown-apps/:name — remove a queue entry (and any
-// community submissions referencing it) without recording a verdict.
-// Mainly for clearing out test/junk data, not a normal resolution path.
+// DELETE /api/admin/unknown-apps/:name — remove a queue entry without recording a
+// verdict. Mainly for clearing out test/junk data, not a normal resolution path.
+// Community submissions referencing it are deliberately left in place (not deleted) —
+// with no unknown_apps entry and no apps row, they derive to "Removed" in My
+// Submissions (see community.js GET /mine), which is more honest to a contributor than
+// their submission silently vanishing.
 router.delete('/unknown-apps/:name', (req, res) => {
   const name = req.params.name;
   db.prepare(`DELETE FROM unknown_apps WHERE name = ?`).run(name);
-  db.prepare(`DELETE FROM community_submissions WHERE app_name = ?`).run(name);
   res.json({ success: true });
 });
 

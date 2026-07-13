@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Submissions — CheckMyARM</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            letter-spacing: -0.5px;
+        }
+
+        .logo img {
+            height: 28px;
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        .logo span {
+            color: #f1f5f9;
+        }
+
+        .back-link {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 4rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .intro {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        a {
+            color: #3b82f6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            text-align: left;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #1e293b;
+            color: #e2e8f0;
+        }
+
+        .state-badge {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .state-Accepted { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .state-Pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .state-Disputed { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .state-Superseded { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+        .state-Removed { background: rgba(100, 116, 139, 0.15); color: #64748b; }
+
+        .empty-state {
+            color: #64748b;
+            font-size: 0.95rem;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        footer {
+            border-top: 1px solid #1e293b;
+            padding: 2rem;
+            text-align: center;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        <a href="/" class="back-link">← Back to scanner</a>
+    </nav>
+
+    <div class="container">
+        <h1>My Submissions</h1>
+        <p class="intro">
+            The compatibility findings you've shared, and where they currently stand. This is tied to your browser
+            (or your signed-in account, if you've signed in) — nothing here is public or shared with anyone else.
+        </p>
+
+        <div id="content">
+            <div class="empty-state">Loading…</div>
+        </div>
+    </div>
+
+    <footer>CheckMyARM — ARM Readiness Scanner.</footer>
+
+    <script>
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        const STATUS_LABELS = {
+            native: 'Native ARM64',
+            'x64-emulated': 'x64 Emulated',
+            'x86-emulated': 'x86 Emulated',
+            unsupported: 'Unsupported',
+        };
+
+        function renderSubmissions(submissions) {
+            const content = document.getElementById('content');
+
+            if (!submissions || submissions.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        You haven't shared any findings yet. Scan your PC and look for "Share your Findings" on
+                        unclassified or emulated apps in your report.
+                    </div>
+                `;
+                return;
+            }
+
+            const rows = submissions.map((s) => {
+                const app = escapeHtml(s.app_name);
+                const yours = escapeHtml(STATUS_LABELS[s.submitted_status] || s.submitted_status);
+                const current = s.current_status
+                    ? escapeHtml(STATUS_LABELS[s.current_status] || s.current_status)
+                    : '—';
+                const state = escapeHtml(s.state);
+                return `
+                    <tr>
+                        <td>${app}</td>
+                        <td>${yours}</td>
+                        <td>${current}</td>
+                        <td><span class="state-badge state-${state}">${state}</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            content.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Application</th>
+                            <th>Your answer</th>
+                            <th>Current status</th>
+                            <th>State</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
+        }
+
+        async function load() {
+            try {
+                const res = await fetch('/api/community/mine');
+                const data = await res.json();
+                renderSubmissions(data.submissions);
+            } catch (err) {
+                document.getElementById('content').innerHTML =
+                    '<div class="empty-state">Failed to load your submissions.</div>';
+            }
+        }
+
+        load();
+    </script>
+</body>
+
+</html>

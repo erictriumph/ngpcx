@@ -284,7 +284,7 @@
         function buildSubmissionBadge(submissions) {
             if (!submissions) return '';
             const parts = Object.entries(submissions.breakdown)
-                .map(([status, n]) => `${n} ${SUBMISSION_STATUS_LABELS[status] || status}`)
+                .map(([status, b]) => `${b.count} ${SUBMISSION_STATUS_LABELS[status] || status}${b.authenticated ? ` (${b.authenticated} verified)` : ''}`)
                 .join(', ');
             const cls = submissions.disagreement ? 'submission-badge disagreement' : 'submission-badge';
             const suffix = submissions.disagreement ? ' — disagreement' : '';

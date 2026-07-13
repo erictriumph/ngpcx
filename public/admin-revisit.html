@@ -332,7 +332,7 @@
         function buildSubmissionSummary(submissions) {
             if (!submissions) return '';
             const parts = Object.entries(submissions.breakdown)
-                .map(([status, n]) => `${n} ${SUBMISSION_STATUS_LABELS[status] || status}`)
+                .map(([status, b]) => `${b.count} ${SUBMISSION_STATUS_LABELS[status] || status}${b.authenticated ? ` (${b.authenticated} verified)` : ''}`)
                 .join(', ');
             return `<span class="app-meta">· community: ${escapeHtml(parts)}</span>`;
         }

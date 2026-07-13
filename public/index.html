@@ -317,6 +317,8 @@
     <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
     <div style="display:flex; align-items:center; gap:1.25rem;">
       <div class="nav-tag">ARM Readiness Scanner</div>
+      <span id="auth-status" style="font-size:0.9rem;"></span>
+      <a href="/my-submissions.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">My Submissions</a>
       <a href="/about.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">About</a>
     </div>
   </nav>
@@ -575,6 +577,35 @@
           document.getElementById(id).textContent = '—';
         });
       });
+
+    // Sign-in is entirely optional and only shown once OAuth is actually enabled
+    // server-side (not yet validated in production — see CLAUDE.md).
+    fetch('/api/auth-status')
+      .then(res => res.json())
+      .then(data => {
+        const el = document.getElementById('auth-status');
+        if (!el || !data.enabled) return;
+
+        el.textContent = '';
+        if (data.user) {
+          const signedInAs = document.createElement('span');
+          signedInAs.style.color = '#64748b';
+          signedInAs.textContent = `Signed in as ${data.user.displayName || 'you'}`;
+          const sep = document.createTextNode(' · ');
+          const logout = document.createElement('a');
+          logout.href = '/auth/logout';
+          logout.style.cssText = 'color:#64748b; text-decoration:none;';
+          logout.textContent = 'Log out';
+          el.append(signedInAs, sep, logout);
+        } else {
+          const signIn = document.createElement('a');
+          signIn.href = '/auth/google';
+          signIn.style.cssText = 'color:#64748b; text-decoration:none;';
+          signIn.textContent = 'Sign In';
+          el.append(signIn);
+        }
+      })
+      .catch(() => {});
   </script>
 
 </body>

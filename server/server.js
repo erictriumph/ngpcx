@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');   // ADD THIS
+const cookieParser = require('cookie-parser');
 const db = require('./db');
 const { seedFromCache } = require('./seed');
 
@@ -10,8 +11,69 @@ const app = express();
 seedFromCache();
 const PORT = process.env.PORT || 3000;
 
+// Railway terminates TLS at its edge — without trust proxy, Express can't see the
+// request as secure, which breaks Secure-flagged cookies.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Parse JSON request bodies
 app.use(express.json());
+app.use(cookieParser());
+
+// OAuth login is entirely opt-in, off by default even after this code is deployed —
+// this is the deploy-readiness safeguard: turning it on in production is a deliberate
+// one-line config change the operator makes only after manually confirming the Railway
+// Volume (auth_sessions/users persistence) is provisioned, not something that happens
+// automatically on push. See CLAUDE.md for the pre-flight verification procedure.
+if (process.env.OAUTH_ENABLED === 'true') {
+  if (!process.env.SESSION_SECRET) {
+    console.error('OAUTH_ENABLED is true but SESSION_SECRET is not set — refusing to start.');
+    process.exit(1);
+  }
+
+  const session = require('express-session');
+  const passport = require('passport');
+  const SqliteSessionStore = require('./sqliteSessionStore');
+  const { configurePassport } = require('./passportConfig');
+
+  configurePassport(passport);
+
+  app.use(session({
+    store: new SqliteSessionStore({ db }),
+    secret: process.env.SESSION_SECRET,
+    name: 'ngpcx.sid',
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    },
+  }));
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  const authRoute = require('./routes/auth');
+  app.use('/auth', authRoute);
+}
+
+// Public, always registered (even when OAuth is disabled) so the frontend can decide
+// whether to show sign-in UI at all rather than linking to routes that don't exist.
+app.get('/api/auth-status', (req, res) => {
+  const enabled = process.env.OAUTH_ENABLED === 'true';
+  res.json({
+    enabled,
+    providers: {
+      google: enabled && !!process.env.GOOGLE_CLIENT_ID,
+      github: enabled && !!process.env.GITHUB_CLIENT_ID,
+    },
+    user: req.user ? { displayName: req.user.display_name, role: req.user.role } : null,
+  });
+});
 
 // Serve the public folder (HTML/JS front end)
 app.use(express.static(path.join(__dirname, '..', 'public')));
