@@ -314,12 +314,16 @@ router.post('/researcher-requests/:id/approve', requireAdminAuthOrOAuth, (req, r
   if (request.status !== 'pending') return res.status(409).json({ error: `Request is already ${request.status}` });
 
   const decisionNote = (req.body && req.body.decisionNote) || null;
+  // req.user only exists when authenticated via OAuth (Passport session) — the legacy
+  // shared-secret path (requireAdminAuthOrOAuth's first branch) never populates it, so
+  // reviewed_by is left NULL for that path rather than crashing on req.user.id.
+  const reviewerId = req.user ? req.user.id : null;
 
   const approve = db.transaction(() => {
     db.prepare(`
       UPDATE researcher_requests SET status = 'approved', reviewed_at = datetime('now'), reviewed_by = ?, decision_note = ?
       WHERE id = ?
-    `).run(req.user.id, decisionNote, requestId);
+    `).run(reviewerId, decisionNote, requestId);
     db.prepare(`UPDATE users SET role = 'researcher' WHERE id = ?`).run(request.user_id);
   });
   approve();
@@ -339,11 +343,13 @@ router.post('/researcher-requests/:id/decline', requireAdminAuthOrOAuth, (req, r
   if (request.status !== 'pending') return res.status(409).json({ error: `Request is already ${request.status}` });
 
   const decisionNote = (req.body && req.body.decisionNote) || null;
+  // See the approve route above for why this can't just be req.user.id.
+  const reviewerId = req.user ? req.user.id : null;
 
   db.prepare(`
     UPDATE researcher_requests SET status = 'declined', reviewed_at = datetime('now'), reviewed_by = ?, decision_note = ?
     WHERE id = ?
-  `).run(req.user.id, decisionNote, requestId);
+  `).run(reviewerId, decisionNote, requestId);
 
   res.json({ success: true, status: 'declined' });
 });
@@ -392,7 +398,10 @@ router.post('/users/:id/role', requireAdminAuthOrOAuth, (req, res) => {
   const target = db.prepare(`SELECT * FROM users WHERE id = ?`).get(targetId);
   if (!target) return res.status(404).json({ error: 'User not found' });
 
-  if (target.id === req.user.id && role !== target.role && !confirmSelf) {
+  // "Self" only means something when authenticated via an actual account (OAuth) — the
+  // shared secret has no associated user row, so req.user is undefined and there's no
+  // self-change concept to guard against in that mode.
+  if (req.user && target.id === req.user.id && role !== target.role && !confirmSelf) {
     return res.status(400).json({ error: 'Changing your own role requires confirmation.', needsConfirmation: true });
   }
 
