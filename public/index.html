@@ -598,11 +598,23 @@
           logout.textContent = 'Log out';
           el.append(signedInAs, sep, logout);
         } else {
-          const signIn = document.createElement('a');
-          signIn.href = '/auth/google';
-          signIn.style.cssText = 'color:#64748b; text-decoration:none;';
-          signIn.textContent = 'Sign In';
-          el.append(signIn);
+          const nodes = [];
+          if (data.providers && data.providers.google) {
+            const google = document.createElement('a');
+            google.href = '/auth/google';
+            google.style.cssText = 'color:#64748b; text-decoration:none;';
+            google.textContent = 'Sign in with Google';
+            nodes.push(google);
+          }
+          if (data.providers && data.providers.github) {
+            if (nodes.length) nodes.push(document.createTextNode(' · '));
+            const github = document.createElement('a');
+            github.href = '/auth/github';
+            github.style.cssText = 'color:#64748b; text-decoration:none;';
+            github.textContent = 'GitHub';
+            nodes.push(github);
+          }
+          el.append(...nodes);
         }
       })
       .catch(() => {});

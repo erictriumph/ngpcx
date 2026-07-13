@@ -696,7 +696,14 @@
 
                 const returnParam = sessionId ? `?return=${encodeURIComponent(sessionId)}` : '';
                 if (authEl) {
-                    authEl.innerHTML = `<a href="/auth/google${returnParam}" class="back-link">Sign In</a>`;
+                    const links = [];
+                    if (data.providers && data.providers.google) {
+                        links.push(`<a href="/auth/google${returnParam}" class="back-link">Sign in with Google</a>`);
+                    }
+                    if (data.providers && data.providers.github) {
+                        links.push(`<a href="/auth/github${returnParam}" class="back-link">GitHub</a>`);
+                    }
+                    authEl.innerHTML = links.join(' · ');
                 }
                 document.querySelectorAll('.findings-signin-hint').forEach((el) => {
                     el.textContent = 'Sign in to have your contribution carry more weight.';
