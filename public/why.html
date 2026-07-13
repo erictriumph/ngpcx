@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckMyARM — Why</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            letter-spacing: -0.5px;
+        }
+
+        .logo img {
+            height: 28px;
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        .logo span {
+            color: #f1f5f9;
+        }
+
+        .back-link {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 4rem;
+        }
+
+        .eyebrow {
+            color: #64748b;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 0.75rem;
+        }
+
+        .intro {
+            color: #94a3b8;
+            font-size: 0.98rem;
+            line-height: 1.65;
+            margin-bottom: 3rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        section h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 0.85rem;
+            line-height: 1.35;
+        }
+
+        section p {
+            color: #cbd5e1;
+            font-size: 0.97rem;
+            line-height: 1.7;
+        }
+
+        section p+p {
+            margin-top: 0.85rem;
+        }
+
+        section em {
+            color: #93c5fd;
+            font-style: normal;
+        }
+
+        a {
+            color: #3b82f6;
+        }
+
+        .closing {
+            border-top: 1px solid #1e293b;
+            padding-top: 2rem;
+            margin-top: 1rem;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.65;
+            text-align: center;
+        }
+
+        footer {
+            border-top: 1px solid #1e293b;
+            padding: 2rem;
+            text-align: center;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        <a href="/" class="back-link">← Back to scanner</a>
+    </nav>
+
+    <div class="container">
+        <div class="eyebrow">A plain-language explainer</div>
+        <h1>Why Windows on ARM works the way it does</h1>
+        <p class="intro">
+            Not a FAQ — just the reasoning behind Windows on ARM and why compatibility isn't as simple as
+            "it works" or "it doesn't."
+        </p>
+
+        <section>
+            <h2>Why Windows on ARM?</h2>
+            <p>
+                Most Windows PCs, for the last few decades, have used processors built on what's called the
+                x86 architecture — the design Intel and AMD chips share. ARM processors are built differently,
+                around a design that prioritizes power efficiency over raw clock speed. It's the same family of
+                chip design that's powered phones and tablets for years, which is exactly why those devices can
+                run all day on a small battery without a fan.
+            </p>
+            <p>
+                Windows on ARM brings that same processor design to laptops. The appeal is straightforward:
+                longer battery life, quieter operation (often no fan at all), and less heat — without asking
+                you to give up a full desktop operating system.
+            </p>
+        </section>
+
+        <section>
+            <h2>Why doesn't everything work?</h2>
+            <p>
+                Software is compiled — translated from source code into instructions a specific processor
+                understands. An application built for x86 contains x86 instructions; an ARM processor doesn't
+                natively speak that language.
+            </p>
+            <p>
+                Windows solves most of this with emulation: it translates x86 instructions to ARM on the fly,
+                and for the large majority of everyday applications, that translation is good enough that you'd
+                barely notice. Where things get harder is lower-level software — certain drivers, anti-cheat
+                systems, virtualization tools, and other code that talks directly to hardware or the operating
+                system kernel. Emulation has a harder time there, and some of it simply doesn't run until the
+                developer ships a version built specifically for ARM.
+            </p>
+        </section>
+
+        <section>
+            <h2>Why does compatibility change?</h2>
+            <p>
+                Compatibility isn't a fixed, one-time fact — it's a moving target, and mostly in a good
+                direction. Developers ship native ARM64 versions of their apps over time. Microsoft improves
+                its emulation layer with each Windows update. Hardware vendors catch up on ARM drivers for
+                printers, docks, and other devices.
+            </p>
+            <p>
+                That means an app that only runs emulated today might run natively in six months — which is
+                exactly why CheckMyARM treats its database as something to keep revisiting, not a snapshot to
+                take once and consider finished.
+            </p>
+        </section>
+
+        <section>
+            <h2>Why can't Microsoft simply publish a perfect compatibility list?</h2>
+            <p>
+                There are hundreds of thousands of Windows applications in active use, built by everyone from
+                large software companies to a single developer maintaining a niche tool on the side. Most of
+                them aren't centrally registered anywhere. New versions ship constantly, and compatibility can
+                depend on the exact version, how it's configured, and what other hardware or software it's
+                interacting with.
+            </p>
+            <p>
+                No single organization — including Microsoft — has visibility into all of that at once. A
+                complete, always-current, authoritative list isn't something anyone can simply publish; it has
+                to be assembled and continually rechecked from many angles.
+            </p>
+        </section>
+
+        <section>
+            <h2>Why does community matter?</h2>
+            <p>
+                Because of that gap, firsthand experience is often the fastest way to find out how something
+                actually behaves. Someone who's already running a particular app on Windows on ARM knows more
+                about it in that moment than any database does.
+            </p>
+            <p>
+                CheckMyARM combines automated sources with real reports from real people — and a small group of
+                volunteer Researchers who dig into the harder, ambiguous cases — because compatibility knowledge
+                genuinely gets better the more people contribute what they've found. See the
+                <a href="/about.html">About page</a> for how that community model actually works.
+            </p>
+        </section>
+
+        <p class="closing">
+            None of this is meant to talk you into anything — just to explain why "will my stuff work?" doesn't
+            have a simple yes-or-no answer, and why a real scan of your real PC is more useful than a guess.
+        </p>
+    </div>
+
+    <footer>CheckMyARM — ARM Readiness Scanner. © 2026 CheckMyARM. All rights reserved.</footer>
+</body>
+
+</html>

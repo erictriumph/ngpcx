@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About — CheckMyARM</title>
+    <title>CheckMyARM — About</title>
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
@@ -61,42 +61,119 @@
         }
 
         .container {
-            max-width: 700px;
+            max-width: 680px;
             margin: 0 auto;
-            padding: 3rem 1.5rem 4rem;
+            padding: 3.5rem 1.5rem 4rem;
         }
 
-        h1 {
-            font-size: 2rem;
+        /* ORIGIN */
+        .origin-mark {
+            display: block;
+            height: 72px;
+            width: auto;
+            margin: 0 auto 1.75rem;
+        }
+
+        .origin {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .origin .eyebrow {
+            color: #64748b;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .origin .eyebrow .tm {
+            font-size: 0.75em;
+            vertical-align: super;
+        }
+
+        .origin h1 {
+            font-size: 1.9rem;
             font-weight: 800;
-            margin-bottom: 2rem;
+            line-height: 1.3;
+            max-width: 520px;
+            margin: 0 auto 1.5rem;
         }
 
+        .origin p {
+            color: #cbd5e1;
+            font-size: 1rem;
+            line-height: 1.7;
+            text-align: left;
+        }
+
+        .origin p+p {
+            margin-top: 1rem;
+        }
+
+        .origin em {
+            color: #93c5fd;
+            font-style: normal;
+        }
+
+        /* SECTIONS */
         section {
-            margin-bottom: 2.5rem;
+            margin-bottom: 2.75rem;
         }
 
         h2 {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.75rem;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.85rem;
         }
 
         section p {
             color: #cbd5e1;
             font-size: 0.95rem;
-            line-height: 1.6;
+            line-height: 1.65;
         }
 
         section p+p {
             margin-top: 0.75rem;
         }
 
+        section ul {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.65;
+            margin: 0.75rem 0 0 1.25rem;
+        }
+
+        section li+li {
+            margin-top: 0.35rem;
+        }
+
         a {
             color: #3b82f6;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #1e293b;
+            margin: 2.75rem 0;
+        }
+
+        .humor-note {
+            text-align: center;
+            color: #475569;
+            font-size: 0.85rem;
+            font-style: italic;
+            margin-top: 3rem;
+        }
+
+        .legal-note {
+            color: #475569;
+            font-size: 0.78rem;
+            line-height: 1.6;
+            margin-top: 1rem;
         }
 
         footer {
@@ -116,30 +193,59 @@
     </nav>
 
     <div class="container">
-        <h1>About CheckMyARM</h1>
+        <div class="origin">
+            <img src="/logo-64.png" alt="CheckMyARM logo" class="origin-mark">
+            <div class="eyebrow">About CheckMyARM<span class="tm">™</span></div>
+            <h1>CheckMyARM began with a simple question.</h1>
+            <p>
+                <em>How can someone know whether their existing software and devices will work — before
+                    investing in a Windows on ARM PC?</em>
+            </p>
+            <p>
+                At the time, the alternatives were hours of manual research, digging through forum posts, or
+                simply hoping for the best. There had to be a better way.
+            </p>
+            <p>
+                CheckMyARM was built to make that process fast, objective, and a lot less uncertain — a single
+                scan of the PC you already own, checked against a compatibility database that keeps getting
+                better.
+            </p>
+        </div>
 
-        <section id="methodology">
-            <h2>How we classify apps</h2>
+        <section>
+            <h2>How it works</h2>
             <p>
                 CheckMyARM maintains an evolving, evidence-based compatibility database. Applications without
-                verified compatibility data are marked Unclassified. Most conventional x86/x64 Windows applications
-                are expected to run under emulation until confirmed native or unsupported.
+                verified compatibility data are marked Unclassified rather than assumed broken — most
+                conventional x86/x64 Windows applications are expected to run under emulation until confirmed
+                native or unsupported.
+            </p>
+            <p>
+                The scanner reads what's installed on your machine, checks it against that database, and gives
+                you a plain-language report — not a guess, and not a sales pitch.
             </p>
         </section>
 
         <section>
-            <h2>Why "CheckMyARM" runs on something called NGPCX</h2>
+            <h2>Community</h2>
             <p>
-                CheckMyARM runs on NGPCX (Next-Gen PC eXplorer) — we just like the cute name better.
+                No single source can catalog every application. When CheckMyARM doesn't have an answer yet,
+                real people fill the gap — anonymously or signed in, it's entirely optional either way. A small
+                group of trusted Researcher volunteers helps investigate the harder cases and keep existing
+                entries accurate over time.
+            </p>
+            <p>
+                Want to dig deeper into <em>why</em> compatibility works the way it does? See the
+                <a href="/why.html">Why page</a>.
             </p>
         </section>
 
         <section>
             <h2>Privacy</h2>
             <p>
-                The scanner talks to your browser over <code>localhost:7878</code> — that connection never leaves
-                your machine. All real network traffic (submitting scan results, checking compatibility data) goes
-                over HTTPS on port 443 to the CheckMyARM server, the same as any normal website.
+                The scanner talks to your browser over <code>localhost:7878</code> — that connection never
+                leaves your machine. All real network traffic (submitting scan results, checking compatibility
+                data) goes over HTTPS on port 443 to the CheckMyARM server, the same as any normal website.
             </p>
             <p>
                 <a href="/privacy.html">Read the full privacy page →</a>
@@ -147,16 +253,39 @@
         </section>
 
         <section>
-            <h2>Support</h2>
+            <h2>Open philosophy</h2>
             <p>
-                CheckMyARM is free and we intend to keep it that way — with no ads. If it saved you some research,
-                consider <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener">buying us a
-                    coffee</a> or using our affiliate links when you buy your next laptop.
+                CheckMyARM's compatibility research is done by hand — by admins and volunteer Researchers using
+                the same public search results anyone could find — not scraped in bulk or bought from a paid
+                API. It's slower, but it keeps the data honest.
+            </p>
+            <p>
+                One bit of trivia in the spirit of that honesty: CheckMyARM runs on a codebase we still
+                internally call NGPCX (Next-Gen PC eXplorer) — we just like the name CheckMyARM better for
+                everyone else.
             </p>
         </section>
+
+        <section>
+            <h2>Support the project</h2>
+            <p>
+                CheckMyARM is free and we intend to keep it that way — with no ads. If it saved you some
+                research, consider <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener">buying
+                    us a coffee</a> or using our affiliate links when you buy your next laptop.
+            </p>
+        </section>
+
+        <hr class="divider">
+
+        <p class="legal-note">
+            Windows and Windows on ARM are trademarks of Microsoft Corporation. CheckMyARM is an independent
+            project and is not affiliated with, sponsored by, or endorsed by Microsoft.
+        </p>
+
+        <p class="humor-note">Despite the name, no blood pressure cuff is required.</p>
     </div>
 
-    <footer>CheckMyARM — ARM Readiness Scanner.</footer>
+    <footer>CheckMyARM — ARM Readiness Scanner. © 2026 CheckMyARM. All rights reserved.</footer>
 </body>
 
 </html>

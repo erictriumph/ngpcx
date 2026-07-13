@@ -50,9 +50,27 @@
       color: #f1f5f9;
     }
 
-    .nav-tag {
+    /* Brand group: logo + tagline read as one unit, visually distinct from the
+       utility nav links on the right (which already separate via space-between). */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-tag {
       color: #64748b;
-      font-size: 0.9rem;
+      font-size: 0.75rem;
+      padding-left: 0.75rem;
+      border-left: 1px solid #334155;
+    }
+
+    .tm {
+      font-size: 0.55em;
+      font-weight: 400;
+      vertical-align: super;
+      color: #64748b;
+      margin-left: 0.1em;
     }
 
     /* HERO */
@@ -107,45 +125,6 @@
 
     .scan-button:hover {
       background: #2563eb;
-    }
-
-    /* STATS BAR */
-    .stats-bar {
-      max-width: 800px;
-      margin: 0 auto 4rem auto;
-      padding: 0 1rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-    }
-
-    .stat-card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 1.25rem 1.5rem;
-      text-align: center;
-    }
-
-    .stat-number {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: #3b82f6;
-      line-height: 1;
-      margin-bottom: 0.4rem;
-    }
-
-    .stat-label {
-      font-size: 0.85rem;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .stat-loading {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: #334155;
     }
 
     /* HOW IT WORKS */
@@ -321,12 +300,16 @@
 <body>
 
   <nav>
-    <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+    <div class="brand">
+      <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span><span class="tm">™</span>
+      </div>
+      <div class="brand-tag">ARM Readiness Scanner</div>
+    </div>
     <div style="display:flex; align-items:center; gap:1.25rem;">
-      <div class="nav-tag">ARM Readiness Scanner</div>
       <span id="auth-status" style="font-size:0.9rem;"></span>
       <span id="workspace-nav" style="font-size:0.9rem;"></span>
       <a href="/my-submissions.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">My Submissions</a>
+      <a href="/why.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">Why</a>
       <a href="/about.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">About</a>
     </div>
   </nav>
@@ -380,26 +363,6 @@
     </div>
   </div>
 
-  <!-- STATS BAR -->
-  <div class="stats-bar">
-    <div class="stat-card">
-      <div class="stat-number" id="stat-apps">—</div>
-      <div class="stat-label">Apps Catalogued</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number" id="stat-drivers">—</div>
-      <div class="stat-label">Drivers Catalogued</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number" id="stat-native">—</div>
-      <div class="stat-label">Native ARM64</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number" id="stat-total">—</div>
-      <div class="stat-label">Total Entries</div>
-    </div>
-  </div>
-
   <!-- HOW IT WORKS -->
   <div class="how-it-works">
     <div class="section-title">How it works</div>
@@ -407,7 +370,7 @@
       <div class="step">
         <div class="step-number">1</div>
         <h3>Download the Scanner</h3>
-        <p>A small Windows tool that reads your installed apps and drivers. No installation required — just run it.</p>
+        <p>A small Windows tool that reads your installed apps and devices. No installation required — just run it.</p>
       </div>
       <div class="step">
         <div class="step-number">2</div>
@@ -437,14 +400,15 @@
       <div class="check-card">
         <div class="check-icon">🔧</div>
         <div>
-          <h3>Drivers</h3>
-          <p>Hardware drivers are often the hardest part of ARM migration — we flag the risky ones.</p>
+          <h3>Devices</h3>
+          <p>Printers, docks, webcams, audio devices, and other hardware rely on compatible drivers. We help
+            identify potential compatibility issues before you make the move.</p>
         </div>
       </div>
       <div class="check-card">
         <div class="check-icon">🏗️</div>
         <div>
-          <h3>Binary Architecture</h3>
+          <h3>Application Architecture</h3>
           <p>We inspect the actual executable to confirm whether it's x86, x64, or already ARM64.</p>
         </div>
       </div>
@@ -452,7 +416,8 @@
         <div class="check-icon">⚡</div>
         <div>
           <h3>Emulation Impact</h3>
-          <p>Apps running under emulation work but reduce battery life — we tell you which ones and by how much.</p>
+          <p>Emulation is a useful compatibility technology — many apps run very well under it. Native ARM64 apps
+            may offer the best efficiency and battery life, and we show you which is which.</p>
         </div>
       </div>
     </div>
@@ -486,7 +451,9 @@
     CheckMyARM is a community-driven ARM compatibility tool. Data sourced from Winget, vendor sites, and community
     reports. Free, no ads — <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
       style="color:#3b82f6;">buy us a coffee</a> if it helped. ·
-    <a href="/privacy.html" style="color:#64748b;">Privacy</a>
+    <a href="/privacy.html" style="color:#64748b;">Privacy</a> ·
+    <a href="/why.html" style="color:#64748b;">Why</a>
+    <br>© 2026 CheckMyARM. All rights reserved.
   </footer>
 
   <script>
@@ -577,21 +544,6 @@
       `;
       hero.appendChild(msg);
     }
-
-    // Load live stats
-    fetch('/api/stats')
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('stat-apps').textContent = data.apps.toLocaleString();
-        document.getElementById('stat-drivers').textContent = data.drivers.toLocaleString();
-        document.getElementById('stat-native').textContent = data.native.toLocaleString();
-        document.getElementById('stat-total').textContent = data.total.toLocaleString();
-      })
-      .catch(() => {
-        ['stat-apps', 'stat-drivers', 'stat-native', 'stat-total'].forEach(id => {
-          document.getElementById(id).textContent = '—';
-        });
-      });
 
     // Sign-in is entirely optional and only shown once OAuth is actually enabled
     // server-side (not yet validated in production — see CLAUDE.md).

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Submissions — CheckMyARM</title>
+    <title>CheckMyARM — My Submissions</title>
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
@@ -126,6 +126,45 @@
             text-align: center;
         }
 
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.1rem 1.25rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #3b82f6;
+            line-height: 1;
+            margin-bottom: 0.4rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-text {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #3b82f6;
+            line-height: 1.2;
+            margin-bottom: 0.4rem;
+        }
+
+        .stat-label {
+            font-size: 0.78rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
         .researcher-card {
             margin-top: 2.5rem;
             background: #1e293b;
@@ -228,6 +267,25 @@
             (or your signed-in account, if you've signed in) — nothing here is public or shared with anyone else.
         </p>
 
+        <div id="stats-grid" class="stats-grid" style="display:none;">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-total">—</div>
+                <div class="stat-label">Application Submissions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-active">—</div>
+                <div class="stat-label">Active</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-superseded">—</div>
+                <div class="stat-label">Superseded</div>
+            </div>
+            <div class="stat-card" id="researcher-status-card" style="display:none;">
+                <div class="stat-text" id="stat-researcher-status">—</div>
+                <div class="stat-label">Researcher Status</div>
+            </div>
+        </div>
+
         <div id="content">
             <div class="empty-state">Loading…</div>
         </div>
@@ -235,7 +293,9 @@
         <div id="researcher-card"></div>
     </div>
 
-    <footer>CheckMyARM — ARM Readiness Scanner. <a href="/privacy.html" style="color:#64748b;">Privacy</a></footer>
+    <footer>CheckMyARM — ARM Readiness Scanner. <a href="/privacy.html" style="color:#64748b;">Privacy</a>
+        <br>© 2026 CheckMyARM. All rights reserved.
+    </footer>
 
     <script>
         function escapeHtml(str) {
@@ -252,8 +312,30 @@
             unsupported: 'Unsupported',
         };
 
+        // The stats grid's visibility depends on two independent async fetches
+        // (submissions and auth status) — shown if either has something to say, so an
+        // authenticated user with zero submissions still sees their Researcher Status.
+        let hasSubmissions = false;
+        let hasResearcherStatus = false;
+
+        function updateStatsGridVisibility() {
+            document.getElementById('stats-grid').style.display =
+                (hasSubmissions || hasResearcherStatus) ? 'grid' : 'none';
+        }
+
+        function renderStats(submissions) {
+            const count = submissions ? submissions.length : 0;
+            const superseded = submissions ? submissions.filter((s) => s.state === 'Superseded').length : 0;
+            document.getElementById('stat-total').textContent = count;
+            document.getElementById('stat-active').textContent = count - superseded;
+            document.getElementById('stat-superseded').textContent = superseded;
+            hasSubmissions = count > 0;
+            updateStatsGridVisibility();
+        }
+
         function renderSubmissions(submissions) {
             const content = document.getElementById('content');
+            renderStats(submissions);
 
             if (!submissions || submissions.length === 0) {
                 content.innerHTML = `
@@ -422,6 +504,8 @@
             el.appendChild(link);
         }
 
+        const ROLE_LABELS = { admin: 'Admin', researcher: 'Researcher', user: 'Not yet a Researcher' };
+
         async function loadResearcherWorkflow() {
             try {
                 const authRes = await fetch('/api/auth-status');
@@ -429,6 +513,12 @@
                 if (!authData.enabled || !authData.user) return;
 
                 loadWorkspaceNav(authData.user);
+
+                document.getElementById('researcher-status-card').style.display = 'block';
+                document.getElementById('stat-researcher-status').textContent =
+                    ROLE_LABELS[authData.user.role] || authData.user.role;
+                hasResearcherStatus = true;
+                updateStatsGridVisibility();
 
                 const statusRes = await fetch('/api/researcher/status');
                 if (!statusRes.ok) return;
