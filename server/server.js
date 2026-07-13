@@ -188,3 +188,12 @@ app.get('/ngpcx-scanner.exe', (req, res) => {
 app.listen(PORT, () => {
   console.log(`NGPCX server running at http://localhost:${PORT}`);
 });
+
+// Re-run the same expiry cleanup db.js does once at startup, on a recurring basis —
+// startup-only leaves expired sessions/auth_sessions/oauth_states physically on disk
+// until the next restart, even though the app already treats them as inaccessible.
+// Only registered here (not in db.js itself), since db.js is also required by one-off
+// scripts (seed, scrapers) that need to exit normally — an interval registered at
+// module load would keep those alive indefinitely.
+const CLEANUP_INTERVAL_MS = 6 * 60 * 60 * 1000;
+setInterval(() => db.cleanupExpiredRecords(), CLEANUP_INTERVAL_MS);

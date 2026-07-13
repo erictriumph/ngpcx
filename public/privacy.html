@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy — CheckMyARM</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            letter-spacing: -0.5px;
+        }
+
+        .logo img {
+            height: 28px;
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        .logo span {
+            color: #f1f5f9;
+        }
+
+        .back-link {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 4rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .intro {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 2.5rem;
+        }
+
+        section {
+            margin-bottom: 2.5rem;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        section p {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        section p+p {
+            margin-top: 0.75rem;
+        }
+
+        section ul {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0.75rem 0 0 1.25rem;
+        }
+
+        section li+li {
+            margin-top: 0.35rem;
+        }
+
+        section li::marker {
+            color: #64748b;
+        }
+
+        a {
+            color: #3b82f6;
+        }
+
+        code {
+            background: #1e293b;
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .philosophy {
+            border-left: 3px solid #3b82f6;
+            padding-left: 1.25rem;
+        }
+
+        footer {
+            border-top: 1px solid #1e293b;
+            padding: 2rem;
+            text-align: center;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        <a href="/" class="back-link">← Back to scanner</a>
+    </nav>
+
+    <div class="container">
+        <h1>Privacy</h1>
+        <p class="intro">
+            This isn't a legal document — it's a plain description of what CheckMyARM actually does with your
+            data today, based directly on how the app is built. See <a href="/about.html">About</a> for how
+            compatibility classification works.
+        </p>
+
+        <section>
+            <h2>What we collect</h2>
+            <p>
+                When you run a scan, the scanner sends your browser (and then our server) a list of your installed
+                applications, some basic device information, and the compatibility results we look up for them:
+            </p>
+            <ul>
+                <li><strong>Installed applications</strong> — name, publisher, and version, so we can match them
+                    against our compatibility database.</li>
+                <li><strong>Basic device information</strong> — device names and types (like "camera" or
+                    "printer"), used the same way.</li>
+                <li><strong>Compatibility data</strong> — the native/emulated/unsupported verdicts we already know,
+                    matched to what you have installed.</li>
+            </ul>
+            <p>
+                Sharing your own compatibility findings with the community is optional, and signing in with Google
+                or GitHub is optional too — CheckMyARM works fully anonymously if you never do either.
+            </p>
+        </section>
+
+        <section>
+            <h2>What we do NOT collect</h2>
+            <p>CheckMyARM currently:</p>
+            <ul>
+                <li>does <strong>not</strong> request your email address from Google or GitHub when you sign in</li>
+                <li>does <strong>not</strong> store the OAuth access or refresh tokens Google/GitHub issue during
+                    sign-in</li>
+                <li>does <strong>not</strong> use analytics of any kind</li>
+                <li>does <strong>not</strong> use advertising trackers</li>
+                <li>does <strong>not</strong> use marketing pixels</li>
+                <li>does <strong>not</strong> retain raw device serial numbers or full Plug-and-Play identifiers —
+                    only a generic vendor/product code (like "this is a Logitech webcam"), never anything that
+                    identifies your specific physical unit</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Scan retention</h2>
+            <p>
+                Scan sessions are temporary. They exist primarily so we can generate your report and let you refresh
+                it later without re-scanning — not as a permanent record of your machine.
+            </p>
+            <p>
+                Compatibility contributions are different: if you share what you found about an app, that
+                contribution is intentionally kept, because it becomes part of the shared compatibility database
+                that helps everyone else's reports.
+            </p>
+            <p>
+                We'll be upfront that we don't yet have a way for you to export or delete your data on your own.
+                That's a real gap and something we intend to address — see below.
+            </p>
+        </section>
+
+        <section>
+            <h2>Community contributions</h2>
+            <p>
+                You can share what you found about an app's ARM compatibility without signing in — we recognize
+                your browser with a cookie so you don't end up voting on the same app twice, not by anything tied to
+                your identity.
+            </p>
+            <p>
+                Signing in is entirely optional, and never required to use the scanner or contribute. If you sign in
+                after already contributing anonymously, your prior contributions move to your account automatically.
+            </p>
+            <p>
+                If you change your mind about an app, resubmitting updates your existing answer in place — it
+                doesn't create a second, conflicting entry.
+            </p>
+        </section>
+
+        <section>
+            <h2>Third-party services</h2>
+            <p>CheckMyARM relies on a small number of outside services, only where the app actually needs them:</p>
+            <ul>
+                <li><strong>Google OAuth</strong> — only if you choose to sign in with Google.</li>
+                <li><strong>GitHub OAuth</strong> — only if you choose to sign in with GitHub.</li>
+                <li><strong>GitHub compatibility lookups</strong> — used to help classify less common apps by
+                    checking for an ARM64 release on GitHub.</li>
+                <li><strong>Railway</strong> — the hosting platform that runs CheckMyARM.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Our philosophy</h2>
+            <p class="philosophy">
+                We believe compatibility information is valuable, but personal inventories are not. CheckMyARM
+                tries to collect only what's needed to generate your report and improve the shared compatibility
+                database — nothing more.
+            </p>
+        </section>
+    </div>
+
+    <footer>CheckMyARM — ARM Readiness Scanner.</footer>
+</body>
+
+</html>

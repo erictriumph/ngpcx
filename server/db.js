@@ -93,9 +93,18 @@ db.exec(`
   )
 `);
 
-// Clean up expired Passport sessions and stale (never-completed) OAuth handshakes
-db.prepare(`DELETE FROM auth_sessions WHERE expires_at < datetime('now')`).run();
-db.prepare(`DELETE FROM oauth_states WHERE created_at < datetime('now', '-10 minutes')`).run();
+// Deletes expired scan sessions, expired Passport sessions, and stale
+// (never-completed) OAuth handshakes. Run once at startup (below) and again
+// periodically by server.js while the process stays up — startup alone leaves
+// a gap between deploys where logically-expired rows sit on disk until the
+// next restart. Kept here (not in server.js) so the SQL has exactly one
+// definition, reused by both the one-off and recurring callers.
+function cleanupExpiredRecords() {
+  db.prepare(`DELETE FROM auth_sessions WHERE expires_at < datetime('now')`).run();
+  db.prepare(`DELETE FROM oauth_states WHERE created_at < datetime('now', '-10 minutes')`).run();
+  db.prepare(`DELETE FROM sessions WHERE created_at < datetime('now', '-24 hours')`).run();
+}
+cleanupExpiredRecords();
 
 // Rebuild community_submissions if it predates anonymous_id/user_id/state (drops the
 // old UNIQUE(app_name, session_id) constraint, which SQLite can't ALTER away in place,
@@ -141,11 +150,6 @@ db.exec(`
     ON community_submissions(user_id, normalized_name) WHERE user_id IS NOT NULL;
 `);
 
-// Clean up sessions older than 24 hours
-db.prepare(`
-  DELETE FROM sessions WHERE created_at < datetime('now', '-24 hours')
-`).run();
-
 // Add type column if it doesn't exist (for existing databases)
 try {
   db.exec(`ALTER TABLE apps ADD COLUMN type TEXT NOT NULL DEFAULT 'app'`);
@@ -186,3 +190,4 @@ try {
 console.log('Database ready at', DB_PATH);
 
 module.exports = db;
+module.exports.cleanupExpiredRecords = cleanupExpiredRecords;
