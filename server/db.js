@@ -1,7 +1,15 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 
-const DB_PATH = path.join(__dirname, '..', 'data', 'compatibility.db');
+// DATA_DIR is configurable specifically so a Railway Volume can be mounted at any path
+// (e.g. /data) without relying on Railway's internal build-output directory (/app) —
+// defaults to the existing repo-relative location, so local dev and any environment
+// without DATA_DIR set behave exactly as before. See CLAUDE.md, Railway Volume section.
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
+const DB_PATH = path.join(DATA_DIR, 'compatibility.db');
+
+fs.mkdirSync(DATA_DIR, { recursive: true });
 
 const db = new Database(DB_PATH);
 
