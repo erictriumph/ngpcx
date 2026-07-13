@@ -82,6 +82,14 @@ db.exec(`
     state TEXT PRIMARY KEY,
     return_session_id TEXT,
     created_at TEXT NOT NULL
+  );
+  -- Generic key/value marker table. Currently used for one thing: seed.js writes
+  -- 'seeded_at' as the final statement of its seed transaction, so its presence proves
+  -- the cache seed provably ran to completion (see seed.js) — a row count alone can't
+  -- distinguish "fully seeded" from "died halfway through."
+  CREATE TABLE IF NOT EXISTS meta (
+    key TEXT PRIMARY KEY,
+    value TEXT
   )
 `);
 
