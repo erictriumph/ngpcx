@@ -38,6 +38,36 @@ function getConfidence(app) {
 }
 
 // ─────────────────────────────────────────
+//  Raw entry -> mergeApp()-ready entry (or null to skip)
+// ─────────────────────────────────────────
+
+// Pure: no I/O, no DB calls. Shared by the live scraper loop below and
+// seed.js's cache-only reseed path, so both interpret the source data
+// identically — never duplicate this filtering/mapping logic elsewhere.
+function buildAppEntry(app) {
+  // Skip games — focus on apps
+  if (app.type === 'game') return null;
+
+  const name = app.name;
+  if (!name) return null;
+
+  // Skip unknown compatibility — not useful data
+  const arm_support = mapCompatibility(app);
+  if (arm_support === 'unknown') return null;
+
+  return {
+    id: `woa.${app.slug || name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+    name,
+    publisher: app.publisher || null,
+    arm_support,
+    source: 'worksonwoa',
+    source_url: `https://worksonwoa.com/en/apps/${app.slug}`,
+    notes: app.categories ? `Categories: ${app.categories.join(', ')}` : null,
+    confidence: getConfidence(app)
+  };
+}
+
+// ─────────────────────────────────────────
 //  Cache helpers
 // ─────────────────────────────────────────
 
@@ -84,29 +114,10 @@ async function runWorksonwoaScraper() {
   let skipped = 0;
 
   for (const app of apps) {
-    // Skip games — focus on apps
-    if (app.type === 'game') {
-      skipped++;
-      continue;
-    }
+    const entry = buildAppEntry(app);
+    if (!entry) { skipped++; continue; }
 
-    const name = app.name;
-    if (!name) { skipped++; continue; }
-
-    // Skip unknown compatibility — not useful data
-    const arm_support = mapCompatibility(app);
-    if (arm_support === 'unknown') { skipped++; continue; }
-
-    mergeApp({
-      id: `woa.${app.slug || name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
-      name,
-      publisher: app.publisher || null,
-      arm_support,
-      source: 'worksonwoa',
-      source_url: `https://worksonwoa.com/en/apps/${app.slug}`,
-      notes: app.categories ? `Categories: ${app.categories.join(', ')}` : null,
-      confidence: getConfidence(app)
-    });
+    mergeApp(entry);
     saved++;
 
     if (saved % 200 === 0) {
@@ -128,4 +139,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { run: runWorksonwoaScraper };
+module.exports = { run: runWorksonwoaScraper, buildAppEntry };

@@ -316,4 +316,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { run: runWingetScraper };
+module.exports = { run: runWingetScraper, saveToDb };
