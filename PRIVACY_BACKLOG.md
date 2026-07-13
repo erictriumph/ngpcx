@@ -29,6 +29,11 @@ policy document — a practical list, organized by urgency.
   remove their own finding. Identity resolution for this already exists on the
   read path (`GET /api/community/mine`); a scoped delete is the natural next
   step, not a redesign.
+- [ ] Researcher request note deletion/withdrawal — the optional free-text note
+  submitted with a Researcher volunteer request (`researcher_requests.note`)
+  has no self-service deletion path, same gap as community submissions above.
+  `POST /api/researcher/withdraw` exists server-side (sets the request to
+  `withdrawn`) but doesn't clear the note text itself.
 - [ ] Account deletion — a way to remove a `users` row (and decide what happens
   to their attributed community submissions) without a manual SQL statement.
 - [ ] Recurring privacy review — revisit this backlog and the audit's findings

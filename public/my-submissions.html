@@ -126,6 +126,81 @@
             text-align: center;
         }
 
+        .researcher-card {
+            margin-top: 2.5rem;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .researcher-card h2 {
+            font-size: 1.05rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .researcher-card p {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .researcher-card p + p {
+            margin-top: 0.6rem;
+        }
+
+        .researcher-card textarea {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 4.5rem;
+            margin-top: 1rem;
+        }
+
+        .researcher-card textarea::placeholder {
+            color: #475569;
+        }
+
+        .researcher-card .action-row {
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .researcher-card button {
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.55rem 1.1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .researcher-card button:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+
+        .researcher-card button.dismiss {
+            background: transparent;
+            border: 1px solid #334155;
+            color: #94a3b8;
+        }
+
+        .researcher-card .status-note {
+            color: #94a3b8;
+            font-size: 0.82rem;
+        }
+
         footer {
             border-top: 1px solid #1e293b;
             padding: 2rem;
@@ -139,11 +214,15 @@
 <body>
     <nav>
         <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
-        <a href="/" class="back-link">← Back to scanner</a>
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <span id="workspace-nav"></span>
+            <a href="/" class="back-link">← Back to scanner</a>
+        </div>
     </nav>
 
     <div class="container">
-        <h1>My Submissions</h1>
+        <h1>My Submissions <span id="pending-request-badge" class="state-badge state-Pending"
+                style="display:none; vertical-align:middle;">Researcher request pending</span></h1>
         <p class="intro">
             The compatibility findings you've shared, and where they currently stand. This is tied to your browser
             (or your signed-in account, if you've signed in) — nothing here is public or shared with anyone else.
@@ -152,6 +231,8 @@
         <div id="content">
             <div class="empty-state">Loading…</div>
         </div>
+
+        <div id="researcher-card"></div>
     </div>
 
     <footer>CheckMyARM — ARM Readiness Scanner. <a href="/privacy.html" style="color:#64748b;">Privacy</a></footer>
@@ -228,6 +309,137 @@
         }
 
         load();
+
+        // Researcher volunteer workflow — only ever runs for a signed-in user, since
+        // the /api/researcher/* endpoints require authentication. Anonymous visitors
+        // and OAuth-disabled deployments simply never see any of this (auth-status
+        // fetch below leaves everything blank in that case).
+        const RESEARCHER_CARD_MARKUP = {
+            invite: `
+                <div class="researcher-card">
+                    <h2>Interested in helping further?</h2>
+                    <p>You've already helped improve CheckMyARM's compatibility database — thank you. If you've
+                        enjoyed contributing, we'd welcome your help as a Researcher.</p>
+                    <p>Researchers investigate unknown applications, verify compatibility information, improve
+                        existing entries, and help fill the gaps that automated sources can't.</p>
+                    <p>There's no pressure or expectation — just an open invitation, if it sounds interesting to
+                        you.</p>
+                    <textarea id="researcher-note" maxlength="500"
+                        placeholder="Optional: relevant experience, interests, or the kinds of software or hardware you might enjoy researching"></textarea>
+                    <div class="action-row">
+                        <button id="volunteer-btn">Volunteer as a Researcher</button>
+                        <span class="status-note" id="volunteer-status"></span>
+                    </div>
+                </div>`,
+            pending: `
+                <div class="researcher-card">
+                    <h2>Researcher request received</h2>
+                    <p>Thanks for volunteering!</p>
+                    <p>We'll review your request together with your past contributions, and let you know through
+                        CheckMyARM if we're able to invite you as a Researcher.</p>
+                    <p>There's no formal schedule or obligation — please keep contributing whenever you come across
+                        something useful in the meantime.</p>
+                </div>`,
+            declined: `
+                <div class="researcher-card">
+                    <h2>Thanks for volunteering</h2>
+                    <p>We're not adding you as a Researcher right now, but your community contributions remain
+                        valuable and appreciated.</p>
+                    <p>Please keep contributing whenever you find something useful.</p>
+                </div>`,
+            welcome: `
+                <div class="researcher-card">
+                    <h2>Welcome aboard!</h2>
+                    <p>We've invited you to serve as a CheckMyARM Researcher.</p>
+                    <p>Researchers help improve the compatibility database by investigating unknown applications,
+                        verifying compatibility information, improving existing entries, and filling gaps that
+                        automated sources can't.</p>
+                    <p>Thank you for volunteering your time and expertise — we're glad to have you.</p>
+                    <div class="action-row">
+                        <button class="dismiss" id="welcome-dismiss">Got it</button>
+                    </div>
+                </div>`,
+        };
+
+        function renderResearcherCard(uiState) {
+            const el = document.getElementById('researcher-card');
+            const badge = document.getElementById('pending-request-badge');
+            // The full card below already explains the pending state in detail on every
+            // visit, but it sits after the submissions table — a returning user with a
+            // long list might not scroll down far enough to see it. This small badge next
+            // to the heading makes the pending state visible immediately, without needing
+            // any notification system.
+            badge.style.display = (uiState === 'pending') ? 'inline-block' : 'none';
+
+            if (!uiState || uiState === 'none' || !RESEARCHER_CARD_MARKUP[uiState]) {
+                el.innerHTML = '';
+                return;
+            }
+            el.innerHTML = RESEARCHER_CARD_MARKUP[uiState];
+
+            if (uiState === 'invite') {
+                document.getElementById('volunteer-btn').addEventListener('click', async () => {
+                    const btn = document.getElementById('volunteer-btn');
+                    const status = document.getElementById('volunteer-status');
+                    const note = document.getElementById('researcher-note').value.trim();
+                    btn.disabled = true;
+                    status.textContent = 'Submitting…';
+                    try {
+                        const res = await fetch('/api/researcher/volunteer', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ note: note || undefined }),
+                        });
+                        if (!res.ok) throw new Error();
+                        renderResearcherCard('pending');
+                    } catch {
+                        status.textContent = 'Something went wrong — please try again.';
+                        btn.disabled = false;
+                    }
+                });
+            }
+
+            if (uiState === 'welcome') {
+                document.getElementById('welcome-dismiss').addEventListener('click', async () => {
+                    try {
+                        await fetch('/api/researcher/welcome-ack', { method: 'POST' });
+                    } catch {
+                        // best-effort — worst case the welcome message reappears next visit
+                    }
+                    renderResearcherCard('none');
+                });
+            }
+        }
+
+        async function loadWorkspaceNav(user) {
+            if (user.role !== 'researcher' && user.role !== 'admin') return;
+            const el = document.getElementById('workspace-nav');
+            const isAdmin = user.role === 'admin';
+            const link = document.createElement('a');
+            link.href = isAdmin ? '/admin-dashboard.html' : '/admin-research.html';
+            link.className = 'back-link';
+            link.textContent = 'Tools';
+            el.appendChild(link);
+        }
+
+        async function loadResearcherWorkflow() {
+            try {
+                const authRes = await fetch('/api/auth-status');
+                const authData = await authRes.json();
+                if (!authData.enabled || !authData.user) return;
+
+                loadWorkspaceNav(authData.user);
+
+                const statusRes = await fetch('/api/researcher/status');
+                if (!statusRes.ok) return;
+                const statusData = await statusRes.json();
+                renderResearcherCard(statusData.uiState);
+            } catch {
+                // best-effort — My Submissions itself still works without this
+            }
+        }
+
+        loadResearcherWorkflow();
     </script>
 </body>
 

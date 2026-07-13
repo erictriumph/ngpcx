@@ -76,10 +76,17 @@
     }
 
     .subtitle {
-      font-size: 1.2rem;
+      font-size: 1.05rem;
       color: #94a3b8;
       margin-bottom: 2.5rem;
-      line-height: 1.6;
+      line-height: 1.65;
+      max-width: 620px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .subtitle p + p {
+      margin-top: 0.9rem;
     }
 
     .scan-button {
@@ -318,6 +325,7 @@
     <div style="display:flex; align-items:center; gap:1.25rem;">
       <div class="nav-tag">ARM Readiness Scanner</div>
       <span id="auth-status" style="font-size:0.9rem;"></span>
+      <span id="workspace-nav" style="font-size:0.9rem;"></span>
       <a href="/my-submissions.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">My Submissions</a>
       <a href="/about.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">About</a>
     </div>
@@ -325,11 +333,17 @@
 
   <!-- HERO -->
   <div class="hero">
-    <h1>Know Before You <em>Buy</em></h1>
-    <p class="subtitle">
-      Find out if your current apps and drivers are ready for a Snapdragon ARM laptop —
-      before you make the switch.
-    </p>
+    <h1>Is Windows on <em>ARM</em> Right for You?</h1>
+    <div class="subtitle">
+      <p>Windows on ARM laptops can offer excellent battery life, quiet operation, and impressive power
+        efficiency. They're becoming an increasingly compelling option for many Windows users.</p>
+      <p>But because the platform is still evolving, some Windows applications and devices work differently
+        than others.</p>
+      <p>CheckMyARM scans the Windows PC you're using today and evaluates how your applications and devices
+        are expected to work if you decide to make the move.</p>
+      <p>Compatibility information comes from multiple trusted sources and is continually improved by the
+        CheckMyARM community.</p>
+    </div>
 
     <div
       style="display:flex; align-items:center; justify-content:center; gap:2rem; margin-bottom:1.5rem; flex-wrap:wrap;">
@@ -450,7 +464,7 @@
     <div class="legend-grid">
       <div class="legend-card native">
         <div class="legend-label">✓ Native ARM64</div>
-        <p>Runs natively on Snapdragon. Full performance, full battery life.</p>
+        <p>Runs natively on Windows on ARM. Full performance, full battery life.</p>
       </div>
       <div class="legend-card emulated">
         <div class="legend-label">⚡ Emulated</div>
@@ -616,6 +630,19 @@
             nodes.push(github);
           }
           el.append(...nodes);
+        }
+
+        // Compact contextual nav entry for Researchers/Admins only — never shown to
+        // anonymous visitors or normal users. Convenience only: every admin/research
+        // page and endpoint enforces authorization server-side regardless of this.
+        const workspaceEl = document.getElementById('workspace-nav');
+        if (workspaceEl && data.user && (data.user.role === 'researcher' || data.user.role === 'admin')) {
+          const isAdmin = data.user.role === 'admin';
+          const link = document.createElement('a');
+          link.href = isAdmin ? '/admin-dashboard.html' : '/admin-research.html';
+          link.style.cssText = 'color:#64748b; text-decoration:none;';
+          link.textContent = 'Tools';
+          workspaceEl.appendChild(link);
         }
       })
       .catch(() => {});

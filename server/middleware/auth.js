@@ -1,4 +1,6 @@
-const ROLE_RANK = { user: 0, reviewer: 1, admin: 2 };
+// Renamed from the earlier speculative 'reviewer' rank (never used by any route) to
+// 'researcher' to match the three-role product model: user < researcher < admin.
+const ROLE_RANK = { user: 0, researcher: 1, admin: 2 };
 
 // Shared by requireAuthenticatedUser and requireRole so the disabled check lives in
 // exactly one place — a route that only needs "any logged-in user" must still reject a
@@ -32,4 +34,17 @@ function requireRole(role) {
   };
 }
 
-module.exports = { requireAuthenticatedUser, requireRole, resolveActiveUser, ROLE_RANK };
+// Named aliases so route files can express intent ("this needs Admin", "this needs
+// Researcher-or-Admin") without re-deriving the rank comparison at each call site —
+// requireRole('researcher') already admits admins via the rank check above.
+const requireAdmin = requireRole('admin');
+const requireResearcherOrAdmin = requireRole('researcher');
+
+module.exports = {
+  requireAuthenticatedUser,
+  requireRole,
+  requireAdmin,
+  requireResearcherOrAdmin,
+  resolveActiveUser,
+  ROLE_RANK,
+};

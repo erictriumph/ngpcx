@@ -418,6 +418,7 @@
         <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
         <div style="display:flex; align-items:center; gap:1.25rem;">
             <span id="auth-status"></span>
+            <span id="workspace-nav"></span>
             <a href="/my-submissions.html" class="back-link">My Submissions</a>
             <a href="/about.html" class="back-link">About</a>
             <a href="/" class="back-link">← Run another scan</a>
@@ -691,6 +692,12 @@
                 if (data.user) {
                     if (authEl) {
                         authEl.innerHTML = `<span class="back-link">Signed in as ${escapeHtml(data.user.displayName || 'you')}</span> · <a href="/auth/logout" class="back-link">Log out</a>`;
+                    }
+                    const workspaceEl = document.getElementById('workspace-nav');
+                    if (workspaceEl && (data.user.role === 'researcher' || data.user.role === 'admin')) {
+                        const isAdmin = data.user.role === 'admin';
+                        const href = isAdmin ? '/admin-dashboard.html' : '/admin-research.html';
+                        workspaceEl.innerHTML = `<a href="${href}" class="back-link">Tools</a>`;
                     }
                     return;
                 }

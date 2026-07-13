@@ -90,8 +90,38 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS meta (
     key TEXT PRIMARY KEY,
     value TEXT
+  );
+  -- A Researcher request is workflow, not authorization — it never IS the user's role,
+  -- it only ever causes a role change when an admin approves it (see routes/admin.js).
+  -- status: 'pending' | 'approved' | 'declined' | 'withdrawn'. decision_note is
+  -- admin-internal only, never returned to the requesting user (see routes/researcher.js).
+  CREATE TABLE IF NOT EXISTS researcher_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    note TEXT,
+    requested_at TEXT NOT NULL,
+    reviewed_at TEXT,
+    reviewed_by INTEGER,
+    decision_note TEXT
   )
 `);
+
+// At most one pending request per user — makes repeated "volunteer" clicks harmless
+// at the database level, not just in application logic (see routes/researcher.js).
+db.exec(`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_researcher_requests_pending_user
+    ON researcher_requests(user_id) WHERE status = 'pending';
+`);
+
+// Sticky per-account flag: the Researcher welcome message is shown at most once ever,
+// regardless of later role changes — simpler than tying it to a specific request row,
+// and avoids needing a general notification system for a single one-time message.
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN researcher_welcome_seen INTEGER NOT NULL DEFAULT 0`);
+} catch {
+  // Column already exists, ignore
+}
 
 // Deletes expired scan sessions, expired Passport sessions, and stale
 // (never-completed) OAuth handshakes. Run once at startup (below) and again

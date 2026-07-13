@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckMyARM Admin — Dashboard</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            letter-spacing: -0.5px;
+        }
+
+        .logo img {
+            height: 28px;
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        .logo span {
+            color: #f1f5f9;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .nav-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .nav-links a:hover {
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-msg {
+            color: #64748b;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .count-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: border-color 0.15s;
+        }
+
+        .count-card:hover {
+            border-color: #3b82f6;
+        }
+
+        .count-value {
+            font-size: 2rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            color: #f1f5f9;
+        }
+
+        .count-value.attention {
+            color: #f59e0b;
+        }
+
+        .count-label {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .notes-input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+            margin-bottom: 0.75rem;
+        }
+
+        .notes-input::placeholder {
+            color: #475569;
+        }
+
+        .action-btn {
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 0.4rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        #secret-form {
+            display: none;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-direction: column;
+        }
+
+        #secret-error {
+            color: #ef4444;
+            font-size: 0.8rem;
+            display: none;
+        }
+
+        footer {
+            text-align: center;
+            color: #475569;
+            font-size: 0.8rem;
+            padding: 2rem 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMyARM<span>Admin</span></div>
+        <div class="nav-links" id="nav-links">
+            <a href="/admin-users.html">Users</a>
+            <a href="/admin-research.html">Unknown apps</a>
+            <a href="/admin-revisit.html">Revisit stale apps</a>
+            <a href="/">← Back to scanner</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <p class="subtitle">A work-queue overview, not analytics — each count links to where you'd act on it.</p>
+
+        <form id="secret-form">
+            <div style="display:flex; gap:0.5rem;">
+                <input type="password" id="secret-input" class="notes-input" style="margin-bottom:0;"
+                    placeholder="Admin secret" autocomplete="off" />
+                <button type="submit" class="action-btn" style="white-space:nowrap;">Unlock</button>
+            </div>
+            <p id="secret-error"></p>
+        </form>
+
+        <div id="content" class="status-msg">Loading…</div>
+    </div>
+
+    <footer>CheckMyARM Admin — internal tool, not for public use.</footer>
+
+    <script>
+        const SECRET_KEY = 'ngpcx_admin_secret';
+
+        function getSecret() {
+            return localStorage.getItem(SECRET_KEY) || '';
+        }
+
+        function clearSecret() {
+            localStorage.removeItem(SECRET_KEY);
+        }
+
+        function showSecretForm(message) {
+            const form = document.getElementById('secret-form');
+            const error = document.getElementById('secret-error');
+            form.style.display = 'flex';
+            if (message) {
+                error.textContent = message;
+                error.style.display = 'block';
+            } else {
+                error.style.display = 'none';
+            }
+        }
+
+        function hideSecretForm() {
+            document.getElementById('secret-form').style.display = 'none';
+        }
+
+        async function adminFetch(path, options = {}) {
+            const secret = getSecret();
+            const res = await fetch(path, {
+                ...options,
+                headers: { ...(options.headers || {}), 'x-admin-secret': secret },
+            });
+            if (res.status === 401 || res.status === 403) {
+                clearSecret();
+                throw new Error('UNAUTHORIZED');
+            }
+            return res;
+        }
+
+        const CARDS = [
+            { key: 'pendingResearcherRequests', label: 'Pending Researcher requests', href: '/admin-users.html', attention: true },
+            { key: 'unknownApps', label: 'Unknown applications', href: '/admin-research.html' },
+            { key: 'communityFindingsNeedingAttention', label: 'Community findings needing attention', href: '/admin-revisit.html', attention: true },
+            { key: 'staleEntries', label: 'Stale entries', href: '/admin-revisit.html' },
+            { key: 'authenticatedUsers', label: 'Authenticated users', href: '/admin-users.html' },
+        ];
+
+        function renderCounts(counts) {
+            const content = document.getElementById('content');
+            content.className = '';
+            content.innerHTML = `<div class="grid">${CARDS.map((c) => {
+                const value = counts[c.key] ?? 0;
+                const attentionClass = c.attention && value > 0 ? ' attention' : '';
+                return `
+                    <a class="count-card" href="${c.href}">
+                        <div class="count-value${attentionClass}">${value}</div>
+                        <div class="count-label">${c.label}</div>
+                    </a>`;
+            }).join('')}</div>`;
+        }
+
+        async function load() {
+            try {
+                const res = await adminFetch('/api/admin/dashboard-counts');
+                if (!res.ok) throw new Error(`Request failed (${res.status})`);
+                const data = await res.json();
+                hideSecretForm();
+                renderCounts(data);
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    document.getElementById('content').innerHTML = '';
+                    showSecretForm(getSecret() ? 'Incorrect secret — try again.' : null);
+                } else {
+                    document.getElementById('content').innerHTML =
+                        `<p class="status-msg">${err.message}</p>`;
+                }
+            }
+        }
+
+        document.getElementById('secret-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('secret-input');
+            const value = input.value.trim();
+            if (!value) return;
+            localStorage.setItem(SECRET_KEY, value);
+            input.value = '';
+            load();
+        });
+
+        load();
+    </script>
+</body>
+
+</html>

@@ -89,6 +89,9 @@ app.use('/api/admin', adminRoute);
 const communityRoute = require('./routes/community');
 app.use('/api/community', communityRoute);
 
+const researcherRoute = require('./routes/researcher');
+app.use('/api/researcher', researcherRoute);
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'NGPCX server is running' });

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckMyARM Admin — Users</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            letter-spacing: -0.5px;
+        }
+
+        .logo img {
+            height: 28px;
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        .logo span {
+            color: #f1f5f9;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .nav-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .nav-links a:hover {
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 0.25rem;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin: 2.5rem 0 0.25rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-msg,
+        .empty {
+            color: #64748b;
+            padding: 1.5rem 0;
+            text-align: center;
+        }
+
+        .request-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .request-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .request-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .request-meta {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
+        .request-stats {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .request-note {
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            margin-top: 0.6rem;
+            padding: 0.6rem 0.75rem;
+            background: #0f172a;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .expand-link {
+            color: #3b82f6;
+            font-size: 0.82rem;
+            cursor: pointer;
+            margin-top: 0.6rem;
+            display: inline-block;
+        }
+
+        .submissions-list {
+            margin-top: 0.6rem;
+            font-size: 0.82rem;
+            color: #94a3b8;
+        }
+
+        .submissions-list div {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .decision-note {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+            margin-top: 0.75rem;
+        }
+
+        .decision-note::placeholder {
+            color: #475569;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .action-btn {
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 0.4rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            border-color: #3b82f6;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .action-btn.approve {
+            color: #10b981;
+        }
+
+        .action-btn.decline {
+            color: #ef4444;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            text-align: left;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+            padding: 0.6rem 0.6rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        td {
+            padding: 0.65rem 0.6rem;
+            border-bottom: 1px solid #1e293b;
+            color: #e2e8f0;
+            vertical-align: middle;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        .role-select {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #f1f5f9;
+            padding: 0.3rem 0.5rem;
+            font-size: 0.82rem;
+        }
+
+        .disabled-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            margin-left: 0.4rem;
+        }
+
+        .request-status-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(100, 116, 139, 0.15);
+            color: #94a3b8;
+        }
+
+        .row-status {
+            color: #64748b;
+            font-size: 0.78rem;
+        }
+
+        .row-status.error {
+            color: #ef4444;
+        }
+
+        #secret-form {
+            display: none;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-direction: column;
+        }
+
+        #secret-error {
+            color: #ef4444;
+            font-size: 0.8rem;
+            display: none;
+        }
+
+        .notes-input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+
+        footer {
+            text-align: center;
+            color: #475569;
+            font-size: 0.8rem;
+            padding: 2rem 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMyARM<span>Admin</span></div>
+        <div class="nav-links">
+            <a href="/admin-dashboard.html">Dashboard</a>
+            <a href="/admin-research.html">Unknown apps</a>
+            <a href="/admin-revisit.html">Revisit stale apps</a>
+            <a href="/">← Back to scanner</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Users</h1>
+        <p class="subtitle">Researcher volunteers awaiting review, and everyone with a CheckMyARM account.</p>
+
+        <form id="secret-form">
+            <div style="display:flex; gap:0.5rem;">
+                <input type="password" id="secret-input" class="notes-input" style="margin-bottom:0;"
+                    placeholder="Admin secret" autocomplete="off" />
+                <button type="submit" class="action-btn" style="white-space:nowrap;">Unlock</button>
+            </div>
+            <p id="secret-error"></p>
+        </form>
+
+        <h2>Researcher Volunteers</h2>
+        <div id="requests" class="status-msg">Loading…</div>
+
+        <h2>Users</h2>
+        <div id="users" class="status-msg">Loading…</div>
+    </div>
+
+    <footer>CheckMyARM Admin — internal tool, not for public use.</footer>
+
+    <script>
+        const SECRET_KEY = 'ngpcx_admin_secret';
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function getSecret() {
+            return localStorage.getItem(SECRET_KEY) || '';
+        }
+
+        function clearSecret() {
+            localStorage.removeItem(SECRET_KEY);
+        }
+
+        function showSecretForm(message) {
+            const form = document.getElementById('secret-form');
+            const error = document.getElementById('secret-error');
+            form.style.display = 'flex';
+            if (message) {
+                error.textContent = message;
+                error.style.display = 'block';
+            } else {
+                error.style.display = 'none';
+            }
+        }
+
+        function hideSecretForm() {
+            document.getElementById('secret-form').style.display = 'none';
+        }
+
+        async function adminFetch(path, options = {}) {
+            const secret = getSecret();
+            const res = await fetch(path, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}), 'x-admin-secret': secret },
+            });
+            if (res.status === 401 || res.status === 403) {
+                clearSecret();
+                throw new Error('UNAUTHORIZED');
+            }
+            return res;
+        }
+
+        const PROVIDER_LABELS = { google: 'Google', github: 'GitHub' };
+
+        // ---------------- Researcher Volunteers ----------------
+
+        function renderRequests(requests) {
+            const el = document.getElementById('requests');
+            el.className = '';
+
+            if (!requests.length) {
+                el.innerHTML = '<p class="empty">No pending Researcher requests right now.</p>';
+                return;
+            }
+
+            el.innerHTML = requests.map((r) => {
+                const name = escapeHtml(r.display_name || 'Unnamed');
+                const provider = PROVIDER_LABELS[r.provider] || escapeHtml(r.provider);
+                const note = r.note ? `<div class="request-note">${escapeHtml(r.note)}</div>` : '';
+                return `
+        <div class="request-card" data-request-id="${r.request_id}" data-user-id="${r.user_id}">
+          <div class="request-head">
+            <span class="request-name">${name} <span class="request-meta">(${provider})</span></span>
+            <span class="request-meta">requested ${escapeHtml(r.requested_at)}</span>
+          </div>
+          <div class="request-stats">
+            ${r.active_submissions} active submissions · ${r.superseded_submissions} superseded ·
+            account created ${escapeHtml(r.account_created_at)}
+          </div>
+          ${note}
+          <span class="expand-link" data-action="expand">View community submissions →</span>
+          <div class="submissions-list" style="display:none;"></div>
+          <textarea class="decision-note" placeholder="Internal note (optional — never shown to the volunteer)"></textarea>
+          <div class="actions">
+            <button class="action-btn approve" data-action="approve">Approve</button>
+            <button class="action-btn decline" data-action="decline">Decline</button>
+            <span class="row-status"></span>
+          </div>
+        </div>`;
+            }).join('');
+
+            el.querySelectorAll('.request-card').forEach((card) => {
+                const userId = card.dataset.userId;
+                const requestId = card.dataset.requestId;
+
+                card.querySelector('[data-action="expand"]').addEventListener('click', async (e) => {
+                    const list = card.querySelector('.submissions-list');
+                    if (list.style.display !== 'none') {
+                        list.style.display = 'none';
+                        e.target.textContent = 'View community submissions →';
+                        return;
+                    }
+                    e.target.textContent = 'Loading…';
+                    try {
+                        const res = await adminFetch(`/api/admin/users/${userId}/submissions`);
+                        const data = await res.json();
+                        list.innerHTML = data.submissions.length
+                            ? data.submissions.map((s) => `<div>${escapeHtml(s.app_name)} — ${escapeHtml(s.arm_support)} (${escapeHtml(s.state)})</div>`).join('')
+                            : '<div>No submissions.</div>';
+                        list.style.display = 'block';
+                        e.target.textContent = 'Hide community submissions';
+                    } catch {
+                        e.target.textContent = 'Failed to load — try again';
+                    }
+                });
+
+                card.querySelector('[data-action="approve"]').addEventListener('click', () => decideRequest(card, requestId, 'approve'));
+                card.querySelector('[data-action="decline"]').addEventListener('click', () => decideRequest(card, requestId, 'decline'));
+            });
+        }
+
+        async function decideRequest(card, requestId, action) {
+            const buttons = card.querySelectorAll('.action-btn');
+            const status = card.querySelector('.row-status');
+            buttons.forEach((b) => (b.disabled = true));
+            status.className = 'row-status';
+            status.textContent = 'Saving…';
+
+            const decisionNote = card.querySelector('.decision-note').value.trim();
+
+            try {
+                const res = await adminFetch(`/api/admin/researcher-requests/${requestId}/${action}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ decisionNote: decisionNote || undefined }),
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `Request failed (${res.status})`);
+                }
+                card.remove();
+                loadUsers();
+                if (!document.querySelector('.request-card')) {
+                    document.getElementById('requests').innerHTML = '<p class="empty">No pending Researcher requests right now.</p>';
+                }
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    showSecretForm('Incorrect secret — try again.');
+                    buttons.forEach((b) => (b.disabled = false));
+                    return;
+                }
+                status.className = 'row-status error';
+                status.textContent = err.message;
+                buttons.forEach((b) => (b.disabled = false));
+            }
+        }
+
+        async function loadRequests() {
+            try {
+                const res = await adminFetch('/api/admin/researcher-requests');
+                if (!res.ok) throw new Error(`Request failed (${res.status})`);
+                const data = await res.json();
+                hideSecretForm();
+                renderRequests(data.requests);
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    document.getElementById('requests').innerHTML = '';
+                    showSecretForm(getSecret() ? 'Incorrect secret — try again.' : null);
+                } else {
+                    document.getElementById('requests').innerHTML = `<p class="status-msg">${escapeHtml(err.message)}</p>`;
+                }
+            }
+        }
+
+        // ---------------- Users table ----------------
+
+        const REQUEST_STATUS_LABELS = {
+            pending: 'Pending',
+            approved: 'Approved',
+            declined: 'Declined',
+            withdrawn: 'Withdrawn',
+        };
+
+        function renderUsers(users) {
+            const el = document.getElementById('users');
+            el.className = '';
+
+            if (!users.length) {
+                el.innerHTML = '<p class="empty">No users yet.</p>';
+                return;
+            }
+
+            const rows = users.map((u) => {
+                const name = escapeHtml(u.display_name || 'Unnamed');
+                const provider = PROVIDER_LABELS[u.provider] || escapeHtml(u.provider);
+                const disabledBadge = u.disabled ? '<span class="disabled-badge">Disabled</span>' : '';
+                const requestBadge = u.request_status
+                    ? `<span class="request-status-badge">${REQUEST_STATUS_LABELS[u.request_status] || escapeHtml(u.request_status)}</span>`
+                    : '—';
+                const roleOptions = ['user', 'researcher', 'admin']
+                    .map((r) => `<option value="${r}" ${r === u.role ? 'selected' : ''}>${r}</option>`).join('');
+                return `
+        <tr data-user-id="${u.id}" data-current-role="${u.role}">
+          <td>${name}${disabledBadge}</td>
+          <td>${provider}</td>
+          <td>
+            <select class="role-select">${roleOptions}</select>
+            <button class="action-btn" data-action="apply-role" disabled>Apply</button>
+          </td>
+          <td>${u.active_submissions}</td>
+          <td>${u.superseded_submissions}</td>
+          <td>${u.total_submissions}</td>
+          <td>${escapeHtml(u.created_at)}</td>
+          <td>${requestBadge}</td>
+          <td><span class="row-status"></span></td>
+        </tr>`;
+            }).join('');
+
+            el.innerHTML = `
+                <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th><th>Provider</th><th>Role</th><th>Active</th><th>Superseded</th>
+                            <th>Total</th><th>Created</th><th>Request</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                </div>`;
+
+            el.querySelectorAll('tr[data-user-id]').forEach((row) => {
+                const select = row.querySelector('.role-select');
+                const applyBtn = row.querySelector('[data-action="apply-role"]');
+                select.addEventListener('change', () => {
+                    applyBtn.disabled = select.value === row.dataset.currentRole;
+                });
+                applyBtn.addEventListener('click', () => applyRole(row, false));
+            });
+        }
+
+        async function applyRole(row, confirmSelf) {
+            const userId = row.dataset.userId;
+            const select = row.querySelector('.role-select');
+            const applyBtn = row.querySelector('[data-action="apply-role"]');
+            const status = row.querySelector('.row-status');
+            const role = select.value;
+
+            applyBtn.disabled = true;
+            select.disabled = true;
+            status.className = 'row-status';
+            status.textContent = 'Saving…';
+
+            try {
+                const res = await adminFetch(`/api/admin/users/${userId}/role`, {
+                    method: 'POST',
+                    body: JSON.stringify({ role, confirmSelf: confirmSelf || undefined }),
+                });
+                const data = await res.json().catch(() => ({}));
+
+                if (res.status === 400 && data.needsConfirmation) {
+                    select.disabled = false;
+                    const ok = confirm("You're changing your own role. This can immediately affect your own access. Continue?");
+                    if (ok) return applyRole(row, true);
+                    applyBtn.disabled = false;
+                    status.textContent = '';
+                    return;
+                }
+
+                if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+
+                row.dataset.currentRole = role;
+                status.textContent = 'Saved';
+                select.disabled = false;
+                setTimeout(() => { status.textContent = ''; }, 2500);
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    showSecretForm('Incorrect secret — try again.');
+                    return;
+                }
+                status.className = 'row-status error';
+                status.textContent = err.message;
+                select.disabled = false;
+                applyBtn.disabled = false;
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const res = await adminFetch('/api/admin/users');
+                if (!res.ok) throw new Error(`Request failed (${res.status})`);
+                const data = await res.json();
+                hideSecretForm();
+                renderUsers(data.users);
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    document.getElementById('users').innerHTML = '';
+                    showSecretForm(getSecret() ? 'Incorrect secret — try again.' : null);
+                } else {
+                    document.getElementById('users').innerHTML = `<p class="status-msg">${escapeHtml(err.message)}</p>`;
+                }
+            }
+        }
+
+        document.getElementById('secret-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('secret-input');
+            const value = input.value.trim();
+            if (!value) return;
+            localStorage.setItem(SECRET_KEY, value);
+            input.value = '';
+            loadRequests();
+            loadUsers();
+        });
+
+        loadRequests();
+        loadUsers();
+    </script>
+</body>
+
+</html>

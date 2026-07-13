@@ -233,7 +233,7 @@
 <body>
     <nav>
         <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMyARM<span>Admin</span></div>
-        <div class="nav-links">
+        <div class="nav-links" id="nav-links">
             <a href="/admin-research.html">Unknown apps</a>
             <a href="/about.html">About</a>
             <a href="/">← Back to scanner</a>
@@ -262,6 +262,7 @@
 
     <script>
         const SECRET_KEY = 'ngpcx_admin_secret';
+        let isAdmin = false;
 
         function escapeHtml(str) {
             if (str === null || str === undefined) return '';
@@ -373,7 +374,7 @@
             <button class="action-btn emulated" data-status="x64-emulated">x64 Emulated</button>
             <button class="action-btn emulated" data-status="x86-emulated">x86 Emulated</button>
             <button class="action-btn unsupported" data-status="unsupported">Unsupported</button>
-            <button class="action-btn delete" data-action="delete">Delete</button>
+            ${isAdmin ? '<button class="action-btn delete" data-action="delete">Delete</button>' : ''}
           </div>
         </div>`;
             }).join('');
@@ -384,7 +385,8 @@
                 card.querySelectorAll('button.action-btn[data-status]').forEach((btn) => {
                     btn.addEventListener('click', () => resolveApp(card, name, btn.dataset.status));
                 });
-                card.querySelector('button.action-btn.delete').addEventListener('click', () => deleteApp(card, id, name));
+                const deleteBtn = card.querySelector('button.action-btn.delete');
+                if (deleteBtn) deleteBtn.addEventListener('click', () => deleteApp(card, id, name));
             });
         }
 
@@ -493,12 +495,36 @@
             loadApps();
         });
 
-        if (getSecret()) {
-            loadApps();
-        } else {
-            document.getElementById('list').innerHTML = '';
-            showSecretForm();
+        // A signed-in Admin or Researcher is already authorized via their session
+        // cookie (fetch sends it automatically, same-origin) — no admin secret needed.
+        // So always attempt to load first; the 401 fallback in loadApps() shows the
+        // secret form only if that session-based attempt (or a stored secret) fails.
+        async function loadWorkspaceNav() {
+            try {
+                const res = await fetch('/api/auth-status');
+                const data = await res.json();
+                if (!data.user) return;
+                isAdmin = data.user.role === 'admin';
+                if (isAdmin) {
+                    const navLinks = document.getElementById('nav-links');
+                    const dashboard = document.createElement('a');
+                    dashboard.href = '/admin-dashboard.html';
+                    dashboard.textContent = 'Dashboard';
+                    navLinks.prepend(dashboard);
+                    const users = document.createElement('a');
+                    users.href = '/admin-users.html';
+                    users.textContent = 'Users';
+                    navLinks.prepend(users);
+                }
+            } catch {
+                // best-effort — page still works via the secret form either way
+            }
         }
+
+        // Sequenced (not fire-and-forget) so isAdmin is known before the first
+        // renderApps() call — otherwise an Admin's Delete button could be briefly
+        // missing on first paint.
+        loadWorkspaceNav().then(loadApps);
     </script>
 </body>
 
