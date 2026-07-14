@@ -468,8 +468,7 @@
                 <p style="color:#64748b; font-size:0.8rem; margin-top:0.3rem;">
                     CheckMyARM is free and we intend to keep it that way — with no ads. If it saved you some
                     research, consider <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
-                        style="color:#3b82f6;">buying us a coffee</a> or using our affiliate links when you buy your
-                    next laptop.
+                        style="color:#3b82f6;">buying us a coffee</a>.
                 </p>
             </div>
             <div class="gauge-wrap">
@@ -937,7 +936,12 @@
           <tbody>${rows}</tbody>
         </table>
         <p style="font-size:0.8rem; color:#475569; margin-top:0.5rem;">
-          Covers common peripheral classes (printers, cameras, media, card readers, biometric readers). "Likely native" reflects standard USB device classes with built-in Windows drivers — vendor companion apps for extra features, and biometric/smart-card readers, may still need a closer look. Some devices, including generic storage and virtual system devices, aren't evaluated.
+          Devices are checked differently than apps — this looks at driver availability, not the
+          Native/Emulated/Unsupported verdicts above. Covers common peripheral classes (printers, cameras, media,
+          card readers, biometric readers). "Likely native" reflects standard USB device classes with built-in
+          Windows drivers — vendor companion apps for extra features, and biometric/smart-card readers, may still
+          need a closer look. Some devices, including generic storage and virtual system devices, aren't
+          evaluated.
         </p>
       `;
         }
@@ -993,7 +997,7 @@
                     bar.style.background = confidenceColor;
                 }
                 if (label) {
-                    label.textContent = `${confidenceLabel} — ${known} of ${total} apps matched`;
+                    label.textContent = `${confidenceLabel} — verdict confirmed for ${known} of ${total} apps`;
                     label.style.color = confidenceColor;
                 }
             }, 400);
