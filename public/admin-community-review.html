@@ -421,6 +421,13 @@
             return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
+        // Same search-link pattern as admin-research.html/admin-revisit.html — Community
+        // Review reviewers should have the same one-click path to check compatibility
+        // that direct-resolution research already offers, not a degraded version of it.
+        function buildAppSearchUrl(name) {
+            return 'https://www.google.com/search?q=' + encodeURIComponent(`${name} ARM64 Windows compatibility`);
+        }
+
         function getSecret() {
             return localStorage.getItem(SECRET_KEY) || '';
         }
@@ -547,6 +554,7 @@
           <div class="app-current">${current}</div>
           <div class="actions">
             <button class="action-btn" data-action="expand">Review →</button>
+            <a href="${buildAppSearchUrl(item.app_name)}" target="_blank" rel="noopener" class="action-btn">Check →</a>
           </div>
           <div class="detail" style="display:none;"></div>
         </div>`;
@@ -613,10 +621,12 @@
 
         function renderCatalog(data) {
             const catalog = data.catalog;
+            const checkLink = `<a href="${buildAppSearchUrl(data.app_name)}" target="_blank" rel="noopener" class="action-btn" style="text-transform:none; letter-spacing:normal; margin-bottom:0.6rem; display:inline-block;">Check →</a>`;
             if (!catalog) {
                 return `
                 <div class="evidence-section">
                     <h3>Catalog</h3>
+                    <div>${checkLink}</div>
                     <p class="app-meta">Not yet in the catalog${data.unknownQueued ? ' — still sitting in the Unknown apps queue.' : '.'}</p>
                 </div>`;
             }
@@ -624,6 +634,7 @@
             return `
             <div class="evidence-section">
                 <h3>Catalog</h3>
+                <div>${checkLink}</div>
                 <span class="status-badge ${escapeHtml(catalog.arm_support)}">${STATUS_LABELS[catalog.arm_support] || escapeHtml(catalog.arm_support)}</span>
                 <span class="app-meta">· source: ${escapeHtml(catalog.source || 'unknown')} · confidence: ${catalog.confidence != null ? Math.round(catalog.confidence * 100) + '%' : '—'} · matched ${catalog.times_matched || 0}×</span>
                 ${notes}
