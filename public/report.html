@@ -322,6 +322,27 @@
             font-size: 0.95rem;
         }
 
+        /* Compatibility Notes — deliberately visually distinct from the Source/
+           Confidence metadata line below it, since this is the one piece of text in
+           the row most likely to actually affect a purchase or deployment decision. */
+        .compat-note {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 8px;
+            padding: 0.6rem 0.85rem;
+            margin-bottom: 0.75rem;
+            color: #e2e8f0;
+        }
+
+        .compat-note strong {
+            color: #93c5fd;
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
         footer {
             border-top: 1px solid #1e293b;
             padding: 2rem;
@@ -502,7 +523,7 @@
             </div>
             <div class="summary-card unknown">
                 <div class="summary-count" id="count-unknown">0</div>
-                <div class="summary-label">Unclassified</div>
+                <div class="summary-label">Unknown</div>
             </div>
         </div>
 
@@ -761,7 +782,7 @@
                 native: '✓ Native ARM64',
                 emulated: '⚡ Emulated',
                 unsupported: '✗ Unsupported',
-                unknown: '? Unclassified',
+                unknown: '? Unknown',
                 system: '⚙ System Component'
             };
 
@@ -805,13 +826,17 @@
             </div>
         `;
 
+                const compatNote = notes
+                    ? `<div class="compat-note"><strong>Compatibility Notes</strong>${notes}</div>`
+                    : '';
+
                 const detailRow = `
         <tr class="detail-row" id="${detailId}" style="display:none;">
           <td colspan="${colCount}" style="background:#0f172a; font-size:0.85rem; color:#94a3b8; padding:0.75rem 1rem;">
+            ${compatNote}
             <strong style="color:#94a3b8;">Source:</strong> ${source}
             &nbsp;·&nbsp;
             <strong style="color:#94a3b8;">Confidence:</strong> ${confidence}
-            ${notes ? `<br><strong style="color:#94a3b8;">Notes:</strong> ${notes}` : ''}
             ${sourceUrl ? `<br><a href="${sourceUrl}" target="_blank" rel="noopener" style="color:#3b82f6;">View source →</a>` : ''}
             ${findingsBlock}
           </td>

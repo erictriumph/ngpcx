@@ -116,7 +116,7 @@ function classifyApps(apps) {
     }
   }
 
-  // Calculate readiness score. Unclassified apps count as presumed-emulated
+  // Calculate readiness score. Unknown apps count as presumed-emulated
   // (same 60-point weight as confirmed Emulated) rather than being excluded —
   // Windows on ARM runs ordinary x86/x64 apps under emulation by default, so
   // true incompatibility is the rare case, not "no data either way." The

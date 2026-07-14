@@ -353,7 +353,7 @@
                 const confidence = (app.confidence !== null && app.confidence !== undefined)
                     ? Math.round(app.confidence * 100) + '%'
                     : '—';
-                const notes = app.notes ? `<p class="app-notes">${escapeHtml(app.notes)}</p>` : '';
+                const notes = app.notes ? `<p class="app-notes"><strong>Compatibility Notes:</strong> ${escapeHtml(app.notes)}</p>` : '';
                 const flaggedBadge = app.flagged ? '<span class="flagged-badge">⚠ community disagrees</span>' : '';
                 return `
         <div class="app-card" data-name="${name}" data-id="${escapeHtml(app.id)}">
@@ -367,7 +367,7 @@
             ${buildSubmissionSummary(app.submissions)}
           </div>
           ${notes}
-          <input type="text" class="notes-input" placeholder="Notes (optional)" />
+          <input type="text" class="notes-input" placeholder="Compatibility Notes (optional) — include only limitations, exceptions, or workarounds that could materially affect a purchase or deployment decision." />
           <div class="actions">
             <a href="${buildAppSearchUrl(app.name)}" target="_blank" rel="noopener" class="action-btn">Check →</a>
             <button class="action-btn native" data-status="native">Native</button>

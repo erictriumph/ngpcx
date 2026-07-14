@@ -22,9 +22,14 @@ function mergeApp(entry) {
     const id = existingId || entry.id;
 
     try {
+        // architectures is left NULL on insert — no source here actually determines a
+        // per-app binary architecture, so writing a hardcoded 'arm64' guess was
+        // misleading. Missing data is preferable to data that looks authoritative but
+        // isn't. Nothing currently reads this column; it's reserved for real detection
+        // if that's ever built.
         db.prepare(`
       INSERT INTO apps (id, name, publisher, type, arm_support, architectures, source, source_url, notes, confidence, last_updated)
-      VALUES (?, ?, ?, ?, ?, 'arm64', ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         arm_support = CASE 
           WHEN excluded.arm_support != 'unknown' AND excluded.confidence >= confidence 
