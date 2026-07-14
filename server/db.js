@@ -104,6 +104,57 @@ db.exec(`
     reviewed_at TEXT,
     reviewed_by INTEGER,
     decision_note TEXT
+  );
+
+  -- A Researcher Recommendation is additive evaluation of community evidence — it never
+  -- overwrites a community_submissions row and never touches the apps catalog by itself.
+  -- Only a second trusted person's Confirm/Revise action (see admin.js Community Review
+  -- section) applies it to the catalog, via the same resolveAppCatalog() path direct
+  -- admin/researcher resolutions already use. status: 'pending' | 'confirmed' | 'rejected'.
+  -- created_by/reviewed_by are nullable (and paired with a *_label) for the same reason
+  -- reviewed_by is nullable on researcher_requests: the legacy shared-secret auth path
+  -- never populates req.user, so there's no user id to attribute the action to.
+  -- evidence_snapshot: a small JSON fingerprint of community evidence at proposal time
+  -- (distinct verdicts present, catalog/community agreement, a hash of note content, and
+  -- a submission count) — NOT a copy of the evidence itself. Recomputed and compared
+  -- live at Confirm/Revise time to detect whether material evidence has changed since
+  -- proposal (see computeEvidenceFingerprint()/compareEvidenceFingerprints() in admin.js).
+  -- Deliberately excludes contributor identity and note text — a hash can't be reversed
+  -- back into the original notes.
+  CREATE TABLE IF NOT EXISTS researcher_recommendations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    app_name TEXT NOT NULL,
+    normalized_name TEXT NOT NULL,
+    proposed_arm_support TEXT NOT NULL,
+    proposed_notes TEXT,
+    rationale TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_by INTEGER,
+    created_by_label TEXT,
+    created_at TEXT NOT NULL,
+    reviewed_by INTEGER,
+    reviewed_by_label TEXT,
+    reviewed_at TEXT,
+    review_note TEXT,
+    evidence_snapshot TEXT
+  );
+
+  -- Append-only accountability trail for catalog-changing research actions (direct
+  -- admin/researcher resolutions, confirmed/revised recommendations) plus the
+  -- non-catalog-changing recommendation lifecycle events (proposed/rejected/left
+  -- unresolved), so a future Research Activity page has real history to show. No UI
+  -- reads this yet — Phase 1 of Community Review only captures it cleanly.
+  CREATE TABLE IF NOT EXISTS research_activity_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    app_name TEXT NOT NULL,
+    actor_id INTEGER,
+    actor_label TEXT,
+    action TEXT NOT NULL,
+    previous_arm_support TEXT,
+    new_arm_support TEXT,
+    previous_notes TEXT,
+    new_notes TEXT,
+    created_at TEXT NOT NULL
   )
 `);
 
@@ -112,6 +163,14 @@ db.exec(`
 db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_researcher_requests_pending_user
     ON researcher_requests(user_id) WHERE status = 'pending';
+`);
+
+// At most one pending recommendation per app — keeps the confirmation workflow
+// lightweight (no need to reconcile multiple simultaneous proposals for the same app)
+// and structurally prevents pile-up, mirroring the researcher_requests pattern above.
+db.exec(`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_recommendation_pending_app
+    ON researcher_recommendations(normalized_name) WHERE status = 'pending';
 `);
 
 // Sticky per-account flag: the Researcher welcome message is shown at most once ever,
@@ -213,6 +272,16 @@ try {
 
 try {
   db.exec(`ALTER TABLE unknown_apps ADD COLUMN last_lookup_attempt TEXT`);
+} catch {
+  // Column already exists, ignore
+}
+
+// researcher_recommendations predates evidence_snapshot (added for the stale-evidence
+// confirmation guard, see admin.js) — this ALTER covers any DB where the table was
+// created before that column existed; the CREATE TABLE above already includes it for
+// a fresh DB, so this is a no-op there.
+try {
+  db.exec(`ALTER TABLE researcher_recommendations ADD COLUMN evidence_snapshot TEXT`);
 } catch {
   // Column already exists, ignore
 }

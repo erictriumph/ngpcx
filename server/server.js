@@ -71,7 +71,7 @@ app.get('/api/auth-status', (req, res) => {
       google: enabled && !!process.env.GOOGLE_CLIENT_ID,
       github: enabled && !!process.env.GITHUB_CLIENT_ID,
     },
-    user: req.user ? { displayName: req.user.display_name, role: req.user.role } : null,
+    user: req.user ? { id: req.user.id, displayName: req.user.display_name, role: req.user.role } : null,
   });
 });
 

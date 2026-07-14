@@ -180,6 +180,7 @@
         <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMyARM<span>Admin</span></div>
         <div class="nav-links" id="nav-links">
             <a href="/admin-users.html">Users</a>
+            <a href="/admin-community-review.html">Community Review</a>
             <a href="/admin-research.html">Unknown apps</a>
             <a href="/admin-revisit.html">Revisit stale apps</a>
             <a href="/">← Back to scanner</a>
@@ -246,6 +247,7 @@
 
         const CARDS = [
             { key: 'pendingResearcherRequests', label: 'Pending Researcher requests', href: '/admin-users.html', attention: true },
+            { key: 'communityReviewApps', label: 'Applications awaiting review', href: '/admin-community-review.html', secondaryKey: 'communityReviewConflicts', secondaryLabel: 'conflicts' },
             { key: 'unknownApps', label: 'Unknown applications', href: '/admin-research.html' },
             { key: 'communityFindingsNeedingAttention', label: 'Community findings needing attention', href: '/admin-revisit.html', attention: true },
             { key: 'staleEntries', label: 'Stale entries', href: '/admin-revisit.html' },
@@ -258,10 +260,14 @@
             content.innerHTML = `<div class="grid">${CARDS.map((c) => {
                 const value = counts[c.key] ?? 0;
                 const attentionClass = c.attention && value > 0 ? ' attention' : '';
+                const secondary = c.secondaryKey && counts[c.secondaryKey] > 0
+                    ? `<div class="count-label" style="color:#ef4444;">${counts[c.secondaryKey]} ${c.secondaryLabel}</div>`
+                    : '';
                 return `
                     <a class="count-card" href="${c.href}">
                         <div class="count-value${attentionClass}">${value}</div>
                         <div class="count-label">${c.label}</div>
+                        ${secondary}
                     </a>`;
             }).join('')}</div>`;
         }

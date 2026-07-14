@@ -126,6 +126,111 @@
             text-align: center;
         }
 
+        .edit-toggle-btn {
+            background: transparent;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            cursor: pointer;
+        }
+
+        .edit-toggle-btn:hover {
+            border-color: #3b82f6;
+            color: #f1f5f9;
+        }
+
+        .edit-row td {
+            background: #1e293b;
+            padding: 1rem 0.75rem;
+        }
+
+        .edit-status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .edit-notes {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+            margin-top: 0.6rem;
+        }
+
+        .edit-notes::placeholder {
+            color: #475569;
+        }
+
+        .edit-status-btn {
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 0.4rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .edit-status-btn:hover {
+            border-color: #3b82f6;
+        }
+
+        .edit-status-btn.selected {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+        }
+
+        .edit-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .edit-save-btn {
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.45rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .edit-save-btn:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+
+        .edit-cancel-btn {
+            background: transparent;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            border-radius: 8px;
+            padding: 0.45rem 1rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .edit-status-msg {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
+        .edit-status-msg.error {
+            color: #ef4444;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -333,8 +438,20 @@
             updateStatsGridVisibility();
         }
 
+        // Kept so edit-row handlers can look up the current value of the row they're
+        // acting on without re-parsing the DOM — refreshed on every load()/reload.
+        let currentSubmissions = [];
+
+        // Superseded rows are historical (a since-authenticated identity's submission
+        // is now canonical) — editing one would just reactivate a stale anonymous
+        // claim, so editing is deliberately not offered for that state only.
+        function canEdit(state) {
+            return state !== 'Superseded';
+        }
+
         function renderSubmissions(submissions) {
             const content = document.getElementById('content');
+            currentSubmissions = submissions || [];
             renderStats(submissions);
 
             if (!submissions || submissions.length === 0) {
@@ -347,20 +464,47 @@
                 return;
             }
 
-            const rows = submissions.map((s) => {
+            const rows = submissions.map((s, idx) => {
                 const app = escapeHtml(s.app_name);
                 const yours = escapeHtml(STATUS_LABELS[s.submitted_status] || s.submitted_status);
                 const current = s.current_status
                     ? escapeHtml(STATUS_LABELS[s.current_status] || s.current_status)
                     : '—';
                 const state = escapeHtml(s.state);
+                const editable = canEdit(s.state);
+                const editCell = editable
+                    ? `<button class="edit-toggle-btn" data-idx="${idx}">Edit</button>`
+                    : '';
+
+                const editRow = editable ? `
+                    <tr class="edit-row" id="edit-row-${idx}" style="display:none;">
+                        <td colspan="5">
+                            <div class="edit-status-row" data-idx="${idx}">
+                                ${['native', 'x64-emulated', 'x86-emulated', 'unsupported'].map((status) => `
+                                    <button type="button" class="edit-status-btn${status === s.submitted_status ? ' selected' : ''}"
+                                        data-idx="${idx}" data-status="${status}">${escapeHtml(STATUS_LABELS[status])}</button>
+                                `).join('')}
+                            </div>
+                            <input type="text" class="edit-notes" data-idx="${idx}" placeholder="Notes (optional)"
+                                value="${escapeHtml(s.notes || '')}" />
+                            <div class="edit-actions">
+                                <button type="button" class="edit-save-btn" data-idx="${idx}">Save</button>
+                                <button type="button" class="edit-cancel-btn" data-idx="${idx}">Cancel</button>
+                                <span class="edit-status-msg" id="edit-status-msg-${idx}"></span>
+                            </div>
+                        </td>
+                    </tr>
+                ` : '';
+
                 return `
                     <tr>
                         <td>${app}</td>
                         <td>${yours}</td>
                         <td>${current}</td>
                         <td><span class="state-badge state-${state}">${state}</span></td>
+                        <td>${editCell}</td>
                     </tr>
+                    ${editRow}
                 `;
             }).join('');
 
@@ -372,11 +516,74 @@
                             <th>Your answer</th>
                             <th>Current status</th>
                             <th>State</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>${rows}</tbody>
                 </table>
             `;
+
+            content.querySelectorAll('.edit-toggle-btn').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const idx = btn.dataset.idx;
+                    const row = document.getElementById(`edit-row-${idx}`);
+                    row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+                });
+            });
+
+            content.querySelectorAll('.edit-status-btn').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const idx = btn.dataset.idx;
+                    content.querySelectorAll(`.edit-status-btn[data-idx="${idx}"]`).forEach((b) => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                });
+            });
+
+            content.querySelectorAll('.edit-cancel-btn').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const idx = btn.dataset.idx;
+                    document.getElementById(`edit-row-${idx}`).style.display = 'none';
+                });
+            });
+
+            content.querySelectorAll('.edit-save-btn').forEach((btn) => {
+                btn.addEventListener('click', () => saveEdit(btn.dataset.idx));
+            });
+        }
+
+        async function saveEdit(idx) {
+            const editRow = document.getElementById(`edit-row-${idx}`);
+            const selected = editRow.querySelector('.edit-status-btn.selected');
+            const statusMsg = document.getElementById(`edit-status-msg-${idx}`);
+            const saveBtn = editRow.querySelector('.edit-save-btn');
+
+            if (!selected) {
+                statusMsg.className = 'edit-status-msg error';
+                statusMsg.textContent = 'Choose a status first.';
+                return;
+            }
+
+            const appName = currentSubmissions[idx].app_name;
+            const notes = editRow.querySelector('.edit-notes').value.trim();
+
+            saveBtn.disabled = true;
+            statusMsg.className = 'edit-status-msg';
+            statusMsg.textContent = 'Saving…';
+
+            try {
+                const res = await fetch('/api/community/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ app_name: appName, arm_support: selected.dataset.status, notes: notes || undefined }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+                await load();
+            } catch (err) {
+                statusMsg.className = 'edit-status-msg error';
+                statusMsg.textContent = err.message;
+                saveBtn.disabled = false;
+            }
         }
 
         async function load() {

@@ -150,6 +150,55 @@ router.post('/submit', (req, res) => {
   res.json({ success: true, autoAccepted });
 });
 
+// POST /api/community/update — { app_name, arm_support, notes? }
+// Edits an EXISTING submission from My Submissions, where there's no live scan session
+// to re-validate against — the original session may well have expired (24h) by the time
+// someone comes back to change their mind. Deliberately narrower than /submit: it can
+// only update a row that already exists for the caller's identity, never creates one —
+// the anti-abuse "was this app actually in your scan" proof was already satisfied once,
+// at the original /submit time, and doesn't need re-proving just to edit your own answer.
+// Never provisions a new anonymous cookie either (same as /mine below) — with no prior
+// identity there's nothing to edit, full stop.
+router.post('/update', (req, res) => {
+  const { app_name, arm_support, notes } = req.body;
+
+  if (!app_name) {
+    return res.status(400).json({ error: 'app_name is required' });
+  }
+  if (!VALID_STATUSES.includes(arm_support)) {
+    return res.status(400).json({ error: `arm_support must be one of: ${VALID_STATUSES.join(', ')}` });
+  }
+
+  if (isRateLimited(req.ip)) {
+    return res.status(429).json({ error: 'Too many submissions — try again later.' });
+  }
+
+  const userId = req.user ? req.user.id : null;
+  const anonymousId = userId ? null : (req.cookies && req.cookies[ANON_COOKIE_NAME]);
+
+  if (!userId && !anonymousId) {
+    return res.status(404).json({ error: 'No existing submission found for this app.' });
+  }
+
+  const targetNorm = normalize(app_name);
+  const existing = userId
+    ? db.prepare(`SELECT id, arm_support FROM community_submissions WHERE user_id = ? AND normalized_name = ?`).get(userId, targetNorm)
+    : db.prepare(`SELECT id, arm_support FROM community_submissions WHERE anonymous_id = ? AND normalized_name = ?`).get(anonymousId, targetNorm);
+
+  if (!existing) {
+    return res.status(404).json({ error: 'No existing submission found for this app.' });
+  }
+
+  db.prepare(`
+    UPDATE community_submissions SET arm_support = ?, notes = ?, state = 'active', created_at = datetime('now')
+    WHERE id = ?
+  `).run(arm_support, notes || null, existing.id);
+
+  const autoAccepted = tryAutoAccept(app_name, targetNorm);
+
+  res.json({ success: true, updated: true, previous: existing.arm_support, autoAccepted });
+});
+
 // GET /api/community/mine — the caller's own submissions (anonymous cookie or logged-in
 // user), with a derived display state. Read-only: never provisions a new anonymous cookie
 // (a GET with no identity yet simply has nothing to show).

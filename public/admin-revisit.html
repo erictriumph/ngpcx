@@ -505,8 +505,15 @@
                 const data = await res.json();
                 if (!data.user) return;
                 isAdmin = data.user.role === 'admin';
+                const isResearcherOrAdmin = isAdmin || data.user.role === 'researcher';
+                const navLinks = document.getElementById('nav-links');
+                if (isResearcherOrAdmin) {
+                    const review = document.createElement('a');
+                    review.href = '/admin-community-review.html';
+                    review.textContent = 'Community Review';
+                    navLinks.prepend(review);
+                }
                 if (isAdmin) {
-                    const navLinks = document.getElementById('nav-links');
                     const dashboard = document.createElement('a');
                     dashboard.href = '/admin-dashboard.html';
                     dashboard.textContent = 'Dashboard';

@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckMyARM Admin — Community Review</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            letter-spacing: -0.5px;
+        }
+
+        .logo img {
+            height: 28px;
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        .logo span {
+            color: #f1f5f9;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .nav-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .nav-links a:hover {
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 940px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            max-width: 640px;
+            line-height: 1.5;
+        }
+
+        .empty,
+        .status-msg {
+            color: #64748b;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .app-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .app-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .app-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .app-meta {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
+        .app-current {
+            margin-bottom: 0.85rem;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            margin-left: 0.4rem;
+        }
+
+        .badge.conflict {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .badge.unknown-evidence {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        .badge.has-notes {
+            background: rgba(148, 163, 184, 0.15);
+            color: #94a3b8;
+        }
+
+        .badge.pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+        }
+
+        .status-badge.x64-emulated,
+        .status-badge.x86-emulated {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .status-badge.unsupported {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .status-badge.native {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .action-btn {
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 0.4rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            border-color: #3b82f6;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .action-btn.native {
+            color: #10b981;
+        }
+
+        .action-btn.emulated {
+            color: #f59e0b;
+        }
+
+        .action-btn.unsupported {
+            color: #ef4444;
+        }
+
+        .action-btn.confirm {
+            color: #10b981;
+            border-color: #14532d;
+        }
+
+        .action-btn.reject {
+            color: #ef4444;
+            border-color: #7f1d1d;
+        }
+
+        .notes-input,
+        .rationale-input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+            margin-bottom: 0.75rem;
+        }
+
+        .notes-input::placeholder,
+        .rationale-input::placeholder {
+            color: #475569;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .detail {
+            border-top: 1px solid #334155;
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+
+        .evidence-section {
+            margin-bottom: 1.25rem;
+        }
+
+        .evidence-section h3 {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+            margin-bottom: 0.6rem;
+        }
+
+        .catalog-notes {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 0.6rem 0.85rem;
+            font-size: 0.82rem;
+            color: #cbd5e1;
+            margin-top: 0.5rem;
+        }
+
+        .findings-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .finding-row {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 0.6rem 0.85rem;
+            font-size: 0.82rem;
+        }
+
+        .finding-row-head {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .contributor-tag {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        .finding-date {
+            color: #475569;
+            font-size: 0.72rem;
+            margin-left: auto;
+        }
+
+        .finding-note {
+            color: #cbd5e1;
+            margin-top: 0.4rem;
+        }
+
+        .recommendation-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .recommendation-card.pending {
+            border-color: #f59e0b;
+        }
+
+        .recommendation-card.confirmed {
+            border-color: #14532d;
+        }
+
+        .recommendation-card.rejected {
+            border-color: #7f1d1d;
+            opacity: 0.8;
+        }
+
+        .recommendation-head {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.4rem;
+        }
+
+        .recommendation-meta {
+            color: #64748b;
+            font-size: 0.78rem;
+        }
+
+        .rationale-text {
+            color: #94a3b8;
+            font-style: italic;
+            margin-top: 0.4rem;
+        }
+
+        .self-note {
+            color: #64748b;
+            font-size: 0.78rem;
+            margin-top: 0.5rem;
+        }
+
+        .evidence-change-banner {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: #fbbf24;
+        }
+
+        .revise-form {
+            margin-top: 0.75rem;
+            display: none;
+        }
+
+        footer {
+            text-align: center;
+            color: #475569;
+            font-size: 0.8rem;
+            padding: 2rem 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMyARM<span>Admin</span></div>
+        <div class="nav-links" id="nav-links">
+            <a href="/admin-research.html">Unknown apps</a>
+            <a href="/admin-revisit.html">Revisit stale apps</a>
+            <a href="/">← Back to scanner</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Community Review</h1>
+        <p class="subtitle">Applications with community evidence worth a Researcher's attention — conflicting
+            findings, Unknown apps with real reports, and community/catalog disagreements first. Propose a
+            recommendation from the evidence; a second Researcher or Admin confirms before it reaches the catalog.
+        </p>
+
+        <form id="secret-form" style="display:none; gap:0.5rem; margin-bottom:2rem;">
+            <div style="display:flex; gap:0.5rem;">
+                <input type="password" id="secret-input" class="notes-input" style="margin-bottom:0;"
+                    placeholder="Admin secret" autocomplete="off" />
+                <button type="submit" class="action-btn" style="white-space:nowrap;">Unlock</button>
+            </div>
+            <p id="secret-error" class="app-meta" style="color:#ef4444; margin-top:0.5rem; display:none;"></p>
+        </form>
+
+        <div id="list" class="status-msg">Loading…</div>
+    </div>
+
+    <footer>CheckMyARM Admin — internal tool, not for public use.</footer>
+
+    <script>
+        const SECRET_KEY = 'ngpcx_admin_secret';
+        let currentUserId = null;
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function getSecret() {
+            return localStorage.getItem(SECRET_KEY) || '';
+        }
+
+        function clearSecret() {
+            localStorage.removeItem(SECRET_KEY);
+        }
+
+        function showSecretForm(message) {
+            const form = document.getElementById('secret-form');
+            const error = document.getElementById('secret-error');
+            form.style.display = 'flex';
+            form.style.flexDirection = 'column';
+            if (message) {
+                error.textContent = message;
+                error.style.display = 'block';
+            } else {
+                error.style.display = 'none';
+            }
+        }
+
+        function hideSecretForm() {
+            document.getElementById('secret-form').style.display = 'none';
+        }
+
+        async function adminFetch(path, options = {}) {
+            const secret = getSecret();
+            const res = await fetch(path, {
+                ...options,
+                headers: { ...(options.headers || {}), 'x-admin-secret': secret },
+            });
+            if (res.status === 401) {
+                clearSecret();
+                throw new Error('UNAUTHORIZED');
+            }
+            return res;
+        }
+
+        const STATUS_LABELS = {
+            native: 'Native ARM64',
+            'x64-emulated': 'x64 Emulated',
+            'x86-emulated': 'x86 Emulated',
+            unsupported: 'Unsupported',
+        };
+
+        const SUBMISSION_STATUS_LABELS = {
+            native: 'native',
+            'x64-emulated': 'x64 emulated',
+            'x86-emulated': 'x86 emulated',
+            unsupported: 'unsupported',
+        };
+
+        function buildSubmissionSummary(submissions) {
+            if (!submissions || submissions.total === 0) return '';
+            const parts = Object.entries(submissions.breakdown)
+                .map(([status, b]) => `${b.count} ${SUBMISSION_STATUS_LABELS[status] || status}${b.authenticated ? ` (${b.authenticated} verified)` : ''}`)
+                .join(', ');
+            return `community: ${escapeHtml(parts)}`;
+        }
+
+        function buildPriorityBadges(item) {
+            const badges = [];
+            if (item.conflict) badges.push('<span class="badge conflict">⚠ conflict</span>');
+            if (item.unknownWithEvidence) badges.push('<span class="badge unknown-evidence">Unknown + evidence</span>');
+            if (item.hasNotes) badges.push('<span class="badge has-notes">has notes</span>');
+            if (item.pendingRecommendationId) badges.push('<span class="badge pending">recommendation pending</span>');
+            return badges.join('');
+        }
+
+// Shared by the initial queue render and refreshCard()'s post-action patch, so a
+        // card's header badges/catalog line never go stale after a confirm/revise/reject
+        // without needing a full list reload (which would collapse every open card).
+        function renderCardHeadAndCurrent(item) {
+            const name = escapeHtml(item.app_name);
+            const catalogLine = item.catalog
+                ? `<span class="status-badge ${escapeHtml(item.catalog.arm_support)}">${STATUS_LABELS[item.catalog.arm_support] || escapeHtml(item.catalog.arm_support)}</span>
+                   <span class="app-meta">· source: ${escapeHtml(item.catalog.source || 'unknown')} · confidence: ${item.catalog.confidence != null ? Math.round(item.catalog.confidence * 100) + '%' : '—'}</span>`
+                : '<span class="app-meta">Not yet in the catalog' + (item.unknownQueued ? ' · still in Unknown apps queue' : '') + '</span>';
+
+            return {
+                head: `<span class="app-name">${name}${buildPriorityBadges(item)}</span><span class="app-meta">${buildSubmissionSummary(item.submissions)}</span>`,
+                current: catalogLine
+            };
+        }
+
+        // Reconstructs a queue-item-shaped object from the evidence detail endpoint's
+        // response, so refreshCard() can reuse the exact same rendering function instead
+        // of a second, divergent implementation.
+        function detailToQueueItem(data) {
+            const breakdown = {};
+            for (const f of data.findings) {
+                if (!breakdown[f.arm_support]) breakdown[f.arm_support] = { count: 0, authenticated: 0 };
+                breakdown[f.arm_support].count++;
+                if (f.contributor === 'Authenticated Contributor') breakdown[f.arm_support].authenticated++;
+            }
+            const pendingRec = data.recommendations.find((r) => r.status === 'pending');
+            return {
+                app_name: data.app_name,
+                normalized_name: data.normalized_name,
+                catalog: data.catalog,
+                unknownQueued: data.unknownQueued,
+                submissions: { breakdown, total: data.findings.length },
+                hasNotes: data.findings.some((f) => f.notes),
+                conflict: data.conflict,
+                unknownWithEvidence: data.unknownQueued,
+                pendingRecommendationId: pendingRec ? pendingRec.id : null,
+            };
+        }
+
+        function renderQueue(items) {
+            const list = document.getElementById('list');
+            list.className = '';
+
+            if (!items || items.length === 0) {
+                list.innerHTML = '<p class="empty">No applications with community evidence right now.</p>';
+                return;
+            }
+
+            list.innerHTML = items.map((item) => {
+                const { head, current } = renderCardHeadAndCurrent(item);
+                return `
+        <div class="app-card" data-normalized="${escapeHtml(item.normalized_name)}">
+          <div class="app-card-head">${head}</div>
+          <div class="app-current">${current}</div>
+          <div class="actions">
+            <button class="action-btn" data-action="expand">Review →</button>
+          </div>
+          <div class="detail" style="display:none;"></div>
+        </div>`;
+            }).join('');
+
+            list.querySelectorAll('.app-card').forEach((card) => {
+                const btn = card.querySelector('button[data-action="expand"]');
+                btn.addEventListener('click', () => toggleDetail(card, btn));
+            });
+        }
+
+        async function toggleDetail(card, btn) {
+            const detail = card.querySelector('.detail');
+            if (detail.style.display === 'block') {
+                detail.style.display = 'none';
+                btn.textContent = 'Review →';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Loading…';
+            try {
+                const res = await adminFetch(`/api/admin/community-review/app/${encodeURIComponent(card.dataset.normalized)}`);
+                if (!res.ok) throw new Error(`Request failed (${res.status})`);
+                const data = await res.json();
+                detail.innerHTML = renderDetail(data);
+                wireDetail(card, detail, data);
+                detail.style.display = 'block';
+                btn.textContent = 'Hide';
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    showSecretForm('Incorrect secret — try again.');
+                } else {
+                    detail.innerHTML = `<p class="app-meta" style="color:#ef4444;">Failed to load: ${escapeHtml(err.message)}</p>`;
+                    detail.style.display = 'block';
+                    btn.textContent = 'Hide';
+                }
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function renderFindings(data) {
+            const rows = data.findings.map((f) => {
+                const tagClass = f.contributor === 'Authenticated Contributor' ? 'authenticated' : 'anonymous';
+                const note = f.notes ? `<div class="finding-note">${escapeHtml(f.notes)}</div>` : '';
+                return `
+                <li class="finding-row">
+                    <div class="finding-row-head">
+                        <span class="contributor-tag ${tagClass}">${escapeHtml(f.contributor)}</span>
+                        <span class="status-badge ${escapeHtml(f.arm_support)}">${STATUS_LABELS[f.arm_support] || escapeHtml(f.arm_support)}</span>
+                        <span class="finding-date">${escapeHtml(f.created_at)}</span>
+                    </div>
+                    ${note}
+                </li>`;
+            }).join('');
+
+            return `
+            <div class="evidence-section">
+                <h3>Community Findings — ${data.authenticatedCount} authenticated, ${data.anonymousCount} anonymous${data.conflict ? ' · <span style="color:#ef4444;">conflict</span>' : ''}</h3>
+                <ul class="findings-list">${rows}</ul>
+            </div>`;
+        }
+
+        function renderCatalog(data) {
+            const catalog = data.catalog;
+            if (!catalog) {
+                return `
+                <div class="evidence-section">
+                    <h3>Catalog</h3>
+                    <p class="app-meta">Not yet in the catalog${data.unknownQueued ? ' — still sitting in the Unknown apps queue.' : '.'}</p>
+                </div>`;
+            }
+            const notes = catalog.notes ? `<div class="catalog-notes"><strong>Compatibility Notes:</strong> ${escapeHtml(catalog.notes)}</div>` : '';
+            return `
+            <div class="evidence-section">
+                <h3>Catalog</h3>
+                <span class="status-badge ${escapeHtml(catalog.arm_support)}">${STATUS_LABELS[catalog.arm_support] || escapeHtml(catalog.arm_support)}</span>
+                <span class="app-meta">· source: ${escapeHtml(catalog.source || 'unknown')} · confidence: ${catalog.confidence != null ? Math.round(catalog.confidence * 100) + '%' : '—'} · matched ${catalog.times_matched || 0}×</span>
+                ${notes}
+            </div>`;
+        }
+
+        function recommendationStatusLabel(rec) {
+            if (rec.status === 'pending') return 'Pending Confirmation';
+            if (rec.status === 'confirmed') return 'Confirmed';
+            if (rec.status === 'rejected') return 'Rejected';
+            return rec.status;
+        }
+
+        function renderRecommendations(data) {
+            const cards = data.recommendations.map((rec) => {
+                const isSelf = currentUserId != null && rec.created_by === currentUserId;
+                const rationale = rec.rationale ? `<div class="rationale-text">"${escapeHtml(rec.rationale)}"</div>` : '';
+                const reviewMeta = rec.reviewed_at
+                    ? `<div class="recommendation-meta">Last reviewed by ${escapeHtml(rec.reviewed_by_display || 'a reviewer')} on ${escapeHtml(rec.reviewed_at)}${rec.review_note ? ` — "${escapeHtml(rec.review_note)}"` : ''}</div>`
+                    : '';
+
+                let actions = '';
+                if (rec.status === 'pending') {
+                    if (isSelf) {
+                        actions = '<p class="self-note">You proposed this recommendation — a second Researcher or Admin must confirm, revise, reject, or leave it unresolved.</p>';
+                    } else {
+                        actions = `
+                        <div class="actions" style="margin-top:0.6rem;">
+                            <button class="action-btn confirm" data-rec-action="confirm" data-rec-id="${rec.id}">Confirm</button>
+                            <button class="action-btn" data-rec-action="show-revise" data-rec-id="${rec.id}">Revise</button>
+                            <button class="action-btn reject" data-rec-action="reject" data-rec-id="${rec.id}">Reject</button>
+                            <button class="action-btn" data-rec-action="unresolved" data-rec-id="${rec.id}">Leave Unresolved</button>
+                        </div>
+                        <div class="revise-form" id="revise-form-${rec.id}">
+                            <div class="actions" style="margin:0.6rem 0;">
+                                <button class="action-btn native" data-revise-status="native">Native</button>
+                                <button class="action-btn emulated" data-revise-status="x64-emulated">x64 Emulated</button>
+                                <button class="action-btn emulated" data-revise-status="x86-emulated">x86 Emulated</button>
+                                <button class="action-btn unsupported" data-revise-status="unsupported">Unsupported</button>
+                            </div>
+                            <input type="text" class="notes-input" id="revise-notes-${rec.id}" placeholder="Compatibility Notes (optional)" value="${escapeHtml(rec.proposed_notes || '')}" />
+                            <div class="actions">
+                                <button class="action-btn confirm" data-rec-action="submit-revise" data-rec-id="${rec.id}">Apply revised recommendation</button>
+                            </div>
+                        </div>`;
+                    }
+                }
+
+                return `
+                <div class="recommendation-card ${rec.status}">
+                    <div class="recommendation-head">
+                        <span class="status-badge ${escapeHtml(rec.proposed_arm_support)}">${STATUS_LABELS[rec.proposed_arm_support] || escapeHtml(rec.proposed_arm_support)}</span>
+                        <span class="badge ${rec.status === 'pending' ? 'pending' : rec.status === 'confirmed' ? 'unknown-evidence' : 'conflict'}">${recommendationStatusLabel(rec)}</span>
+                    </div>
+                    <div class="recommendation-meta">Proposed by ${escapeHtml(rec.created_by_display || 'a Researcher')} on ${escapeHtml(rec.created_at)}</div>
+                    ${rec.proposed_notes ? `<div class="catalog-notes"><strong>Proposed Compatibility Notes:</strong> ${escapeHtml(rec.proposed_notes)}</div>` : ''}
+                    ${rationale}
+                    ${reviewMeta}
+                    ${actions}
+                </div>`;
+            }).join('');
+
+            const hasPending = data.recommendations.some((r) => r.status === 'pending');
+            const proposeForm = hasPending ? '' : `
+                <div id="propose-form" style="display:none; margin-top:0.75rem;">
+                    <div class="actions" style="margin-bottom:0.6rem;">
+                        <button class="action-btn native" data-propose-status="native">Native</button>
+                        <button class="action-btn emulated" data-propose-status="x64-emulated">x64 Emulated</button>
+                        <button class="action-btn emulated" data-propose-status="x86-emulated">x86 Emulated</button>
+                        <button class="action-btn unsupported" data-propose-status="unsupported">Unsupported</button>
+                    </div>
+                    <input type="text" class="notes-input" id="propose-notes" placeholder="Compatibility Notes (optional)" />
+                    <textarea class="rationale-input" id="propose-rationale" rows="2" placeholder="Internal rationale (optional) — why this verdict, for the second reviewer"></textarea>
+                    <div class="actions">
+                        <button class="action-btn confirm" id="submit-propose">Submit recommendation</button>
+                    </div>
+                    <p class="app-meta" id="propose-status-msg" style="margin-top:0.5rem;"></p>
+                </div>
+                <button class="action-btn" id="show-propose-form" style="margin-top:0.75rem;">Propose a Recommendation</button>`;
+
+            return `
+            <div class="evidence-section">
+                <h3>Researcher Recommendations</h3>
+                ${cards || '<p class="app-meta">No recommendations yet.</p>'}
+                ${proposeForm}
+            </div>`;
+        }
+
+        function renderDetail(data) {
+            return renderCatalog(data) + renderFindings(data) + renderRecommendations(data);
+        }
+
+        async function postJson(path, body) {
+            const res = await adminFetch(path, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body || {}),
+            });
+            if (!res.ok) {
+                const errBody = await res.json().catch(() => ({}));
+                const err = new Error(errBody.error || `Request failed (${res.status})`);
+                err.body = errBody;
+                err.status = res.status;
+                throw err;
+            }
+            return res.json();
+        }
+
+        // Shown when Confirm/Revise is blocked because community evidence materially
+        // changed since the recommendation was proposed. Refreshes the card's evidence
+        // first (so the reviewer sees current findings, not stale ones) and only then
+        // offers the explicit acknowledgment action — never a blind "retry".
+        async function showEvidenceChangeBanner(card, err, onAcknowledge) {
+            await refreshCard(card);
+            const detail = card.querySelector('.detail');
+            const banner = document.createElement('div');
+            banner.className = 'evidence-change-banner';
+            banner.innerHTML = `
+                <strong>Evidence changed since this recommendation was proposed.</strong>
+                <div style="margin-top:0.35rem;">${escapeHtml(err.body.summary || 'The community evidence for this app has changed.')}</div>
+                <div class="actions" style="margin-top:0.6rem;">
+                    <button class="action-btn confirm" data-ack-evidence-btn>Acknowledge updated evidence &amp; proceed</button>
+                </div>`;
+            detail.prepend(banner);
+            // Scoped to this banner instance, not document.getElementById — a reviewer
+            // could in principle have two different cards' evidence-change banners open
+            // at once, and IDs aren't guaranteed unique across them.
+            banner.querySelector('[data-ack-evidence-btn]').addEventListener('click', async () => {
+                banner.querySelector('button').disabled = true;
+                try {
+                    await onAcknowledge();
+                    await refreshCard(card);
+                } catch (ackErr) {
+                    if (ackErr.message === 'UNAUTHORIZED') {
+                        showSecretForm('Incorrect secret — try again.');
+                        return;
+                    }
+                    alert('Failed: ' + ackErr.message);
+                    banner.querySelector('button').disabled = false;
+                }
+            });
+        }
+
+        function wireDetail(card, detail, data) {
+            const normalizedName = card.dataset.normalized;
+
+            const showProposeBtn = detail.querySelector('#show-propose-form');
+            if (showProposeBtn) {
+                showProposeBtn.addEventListener('click', () => {
+                    document.getElementById('propose-form').style.display = 'block';
+                    showProposeBtn.style.display = 'none';
+                });
+            }
+
+            let selectedProposeStatus = null;
+            detail.querySelectorAll('button[data-propose-status]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    selectedProposeStatus = btn.dataset.proposeStatus;
+                    detail.querySelectorAll('button[data-propose-status]').forEach((b) => b.style.outline = '');
+                    btn.style.outline = '2px solid #3b82f6';
+                });
+            });
+
+            const submitPropose = detail.querySelector('#submit-propose');
+            if (submitPropose) {
+                submitPropose.addEventListener('click', async () => {
+                    const msg = document.getElementById('propose-status-msg');
+                    if (!selectedProposeStatus) {
+                        msg.textContent = 'Pick a proposed compatibility status first.';
+                        msg.style.color = '#ef4444';
+                        return;
+                    }
+                    submitPropose.disabled = true;
+                    try {
+                        await postJson(`/api/admin/community-review/app/${encodeURIComponent(normalizedName)}/recommend`, {
+                            app_name: data.app_name,
+                            proposed_arm_support: selectedProposeStatus,
+                            proposed_notes: document.getElementById('propose-notes').value.trim() || undefined,
+                            rationale: document.getElementById('propose-rationale').value.trim() || undefined,
+                        });
+                        await refreshCard(card);
+                    } catch (err) {
+                        if (err.message === 'UNAUTHORIZED') {
+                            showSecretForm('Incorrect secret — try again.');
+                            return;
+                        }
+                        msg.textContent = 'Failed: ' + err.message;
+                        msg.style.color = '#ef4444';
+                        submitPropose.disabled = false;
+                    }
+                });
+            }
+
+            detail.querySelectorAll('button[data-rec-action]').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    const recId = btn.dataset.recId;
+                    const action = btn.dataset.recAction;
+
+                    if (action === 'show-revise') {
+                        document.getElementById(`revise-form-${recId}`).style.display = 'block';
+                        btn.style.display = 'none';
+                        return;
+                    }
+
+                    if (action === 'submit-revise') {
+                        const form = document.getElementById(`revise-form-${recId}`);
+                        const statusBtn = form.querySelector('button[data-revise-status].active');
+                        if (!statusBtn) {
+                            alert('Pick a revised compatibility status first.');
+                            return;
+                        }
+                        const revisePayload = {
+                            proposed_arm_support: statusBtn.dataset.reviseStatus,
+                            proposed_notes: document.getElementById(`revise-notes-${recId}`).value.trim() || undefined,
+                        };
+                        btn.disabled = true;
+                        try {
+                            await postJson(`/api/admin/community-review/recommendations/${recId}/revise`, revisePayload);
+                            await refreshCard(card);
+                        } catch (err) {
+                            if (err.message === 'UNAUTHORIZED') {
+                                showSecretForm('Incorrect secret — try again.');
+                                return;
+                            }
+                            if (err.body && err.body.evidenceChanged) {
+                                await showEvidenceChangeBanner(card, err, () =>
+                                    postJson(`/api/admin/community-review/recommendations/${recId}/revise`, {
+                                        ...revisePayload, acknowledgeEvidenceChange: true,
+                                    })
+                                );
+                                return;
+                            }
+                            alert('Failed: ' + err.message);
+                            btn.disabled = false;
+                        }
+                        return;
+                    }
+
+                    if (['confirm', 'reject', 'unresolved'].includes(action)) {
+                        let reviewNote;
+                        if (action === 'reject') {
+                            reviewNote = prompt('Optional note for this rejection:') || undefined;
+                        } else if (action === 'unresolved') {
+                            reviewNote = prompt('Optional note on why this is left unresolved:') || undefined;
+                        }
+                        btn.disabled = true;
+                        try {
+                            await postJson(`/api/admin/community-review/recommendations/${recId}/${action}`, { reviewNote });
+                            await refreshCard(card);
+                        } catch (err) {
+                            if (err.message === 'UNAUTHORIZED') {
+                                showSecretForm('Incorrect secret — try again.');
+                                return;
+                            }
+                            // Only Confirm ever applies a recommendation to the catalog, so
+                            // only Confirm can be blocked by a stale-evidence conflict —
+                            // Reject/Unresolved never touch the catalog and don't get this.
+                            if (action === 'confirm' && err.body && err.body.evidenceChanged) {
+                                await showEvidenceChangeBanner(card, err, () =>
+                                    postJson(`/api/admin/community-review/recommendations/${recId}/confirm`, {
+                                        reviewNote, acknowledgeEvidenceChange: true,
+                                    })
+                                );
+                                return;
+                            }
+                            alert('Failed: ' + err.message);
+                            btn.disabled = false;
+                        }
+                    }
+                });
+            });
+
+            detail.querySelectorAll('button[data-revise-status]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const form = btn.closest('.revise-form');
+                    form.querySelectorAll('button[data-revise-status]').forEach((b) => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    btn.style.outline = '2px solid #3b82f6';
+                    form.querySelectorAll('button[data-revise-status]').forEach((b) => {
+                        if (b !== btn) b.style.outline = '';
+                    });
+                });
+            });
+        }
+
+async function refreshCard(card) {
+            const btn = card.querySelector('button[data-action="expand"]');
+            const detail = card.querySelector('.detail');
+            try {
+                const res = await adminFetch(`/api/admin/community-review/app/${encodeURIComponent(card.dataset.normalized)}`);
+                const data = await res.json();
+                detail.innerHTML = renderDetail(data);
+                wireDetail(card, detail, data);
+
+                // Patch the collapsed header/catalog line in place too — a confirm/revise
+                // can change the catalog verdict and a propose/confirm/reject/unresolved
+                // can change the pending-recommendation badge, and neither should require
+                // re-fetching+re-rendering the whole queue (which would collapse every
+                // other open card).
+                const { head, current } = renderCardHeadAndCurrent(detailToQueueItem(data));
+                card.querySelector('.app-card-head').innerHTML = head;
+                card.querySelector('.app-current').innerHTML = current;
+            } catch {
+                // best-effort refresh; the queue reload below is the real source of truth
+            }
+            loadQueue(true);
+        }
+
+        async function loadQueue(silent) {
+            if (!silent) document.getElementById('list').innerHTML = '<p class="status-msg">Loading…</p>';
+            try {
+                const res = await adminFetch('/api/admin/community-review/queue');
+                if (!res.ok) throw new Error(`Request failed (${res.status})`);
+                const data = await res.json();
+                hideSecretForm();
+                if (!silent) renderQueue(data.items);
+            } catch (err) {
+                if (err.message === 'UNAUTHORIZED') {
+                    document.getElementById('list').innerHTML = '';
+                    showSecretForm(getSecret() ? 'Incorrect secret — try again.' : null);
+                } else if (!silent) {
+                    document.getElementById('list').innerHTML = `<p class="status-msg">${escapeHtml(err.message)}</p>`;
+                }
+            }
+        }
+
+        document.getElementById('secret-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('secret-input');
+            const value = input.value.trim();
+            if (!value) return;
+            localStorage.setItem(SECRET_KEY, value);
+            input.value = '';
+            loadQueue();
+        });
+
+        // Same session-cookie-first pattern as the other admin/research pages — a
+        // signed-in Researcher or Admin never needs the secret form. Also captures the
+        // caller's own user id so the recommendation UI can grey out self-review.
+        async function loadWorkspaceNav() {
+            try {
+                const res = await fetch('/api/auth-status');
+                const data = await res.json();
+                if (!data.user) return;
+                currentUserId = data.user.id ?? null;
+                const isAdmin = data.user.role === 'admin';
+                if (isAdmin) {
+                    const navLinks = document.getElementById('nav-links');
+                    const dashboard = document.createElement('a');
+                    dashboard.href = '/admin-dashboard.html';
+                    dashboard.textContent = 'Dashboard';
+                    navLinks.prepend(dashboard);
+                    const users = document.createElement('a');
+                    users.href = '/admin-users.html';
+                    users.textContent = 'Users';
+                    navLinks.prepend(users);
+                }
+            } catch {
+                // best-effort — page still works via the secret form either way
+            }
+        }
+
+        loadWorkspaceNav().then(() => loadQueue());
+    </script>
+</body>
+
+</html>
