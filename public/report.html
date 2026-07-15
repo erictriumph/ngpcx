@@ -911,16 +911,23 @@
             return entry;
         }
 
-        // If a decision reverts to the untouched default, drop it entirely rather than
-        // keeping a no-op entry — keeps the export file free of entries that don't
-        // actually say anything.
-        function clearDecisionIfEmpty(app) {
+        // Every app in the report gets an entry — a research_note default if the user
+        // never touches it — so Export always reflects the FULL report, not just the
+        // apps someone happened to click on. A user re-importing expects to rebuild
+        // their whole workspace, not just the handful of apps they annotated; only
+        // catalog data (score/confidence/arm_support) stays out of the export, per the
+        // original "personal additions only" scope — the app list itself is fair game,
+        // since re-classifying it is exactly what import needs to reconstruct the
+        // report. No-ops if an entry already exists (never overwrites real data).
+        function ensureDecisionEntry(app) {
             const key = decisionKey(app);
-            const entry = personalDecisions.get(key);
-            if (!entry) return;
-            if (entry.decision === 'research_note' && !entry.critical_to_me && !entry.note) {
-                personalDecisions.delete(key);
-            }
+            if (personalDecisions.has(key)) return;
+            personalDecisions.set(key, {
+                app_name: app.name, app_id: app.id || null,
+                decision: 'research_note', verified_status: undefined,
+                critical_to_me: false, note: '',
+                researched_at: new Date().toISOString(),
+            });
         }
 
         // Validates one imported/carried-forward entry against the known enums before
@@ -1019,7 +1026,6 @@
                             verified_status: btn.dataset.decision === 'personally_verified' ? (current && current.verified_status) : undefined,
                         });
                     }
-                    clearDecisionIfEmpty(app);
                     refreshUI();
                     updateSynthesis();
                 });
@@ -1035,7 +1041,6 @@
 
             criticalCheckbox.addEventListener('change', () => {
                 setDecision(app, { critical_to_me: criticalCheckbox.checked });
-                clearDecisionIfEmpty(app);
                 refreshUI();
                 updateSynthesis();
             });
@@ -1045,7 +1050,6 @@
                 clearTimeout(noteDebounce);
                 noteDebounce = setTimeout(() => {
                     setDecision(app, { note: noteInput.value.trim() });
-                    clearDecisionIfEmpty(app);
                     updateSynthesis();
                 }, 400);
             });
@@ -1232,6 +1236,7 @@
             if (!currentResults) return;
             ['native', 'emulated', 'unsupported', 'unknown'].forEach((type) => {
                 (currentResults[type] || []).forEach((app, idx) => {
+                    ensureDecisionEntry(app);
                     const decisionBlock = document.getElementById(`decision-${type}-${idx}`);
                     if (decisionBlock) wireDecisionBlock(decisionBlock, app, type, idx);
                     updateVerifiedBadge(app, type, idx);
@@ -1269,7 +1274,7 @@
         document.getElementById('export-btn').addEventListener('click', exportPersonalNotes);
 
         document.getElementById('rescan-btn').addEventListener('click', () => {
-            if (personalDecisions.size > 0 && !confirm('Rescan will replace your current app list with a fresh scan. Your personal notes will carry forward for apps that still match. Continue?')) return;
+            if (!confirm('Rescan will replace your current app list with a fresh scan. Your personal notes will carry forward for apps that still match. Continue?')) return;
             const entries = Array.from(personalDecisions.values()).map((e) => ({
                 app_name: e.app_name,
                 app_id: e.app_id || undefined,
