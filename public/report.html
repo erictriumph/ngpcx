@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CheckMyARM — Your ARM Readiness Report</title>
+    <title>CheckMyARM — Your ARM Readiness Workspace</title>
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
@@ -430,6 +430,152 @@
             opacity: 0.5;
             cursor: default;
         }
+
+        .findings-btn.suggested {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+
+        /* Personal decision layer — session-only, never sent to the server except via
+           the existing "Share your Findings" pathway the user explicitly clicks. */
+        .decision-block {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #1e293b;
+        }
+
+        .decision-btn,
+        .verified-status-btn {
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 0.3rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .decision-btn:hover,
+        .verified-status-btn:hover {
+            border-color: #3b82f6;
+        }
+
+        .decision-btn.selected,
+        .verified-status-btn.selected {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+        }
+
+        .critical-label {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+            font-size: 0.78rem;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .decision-note {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.8rem;
+            font-family: inherit;
+            margin-top: 0.5rem;
+        }
+
+        .decision-note::placeholder {
+            color: #475569;
+        }
+
+        .decision-status-msg {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.4rem;
+        }
+
+        .verified-badge {
+            margin-left: 0.5rem;
+            font-size: 0.72rem;
+            color: #10b981;
+        }
+
+        .action-btn {
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: #cbd5e1;
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            border-color: #3b82f6;
+            color: #f1f5f9;
+        }
+
+        .workspace-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .recommendation-explanation {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            max-width: 720px;
+        }
+
+        /* Print — a plain readable snapshot, not a load-bearing export mechanism.
+           Hides nav/buttons/inputs; keeps the already-selected decision state visible
+           via its distinct border/background rather than hiding it along with every
+           other control. */
+        @media print {
+
+            nav,
+            footer,
+            .workspace-actions,
+            .refresh-banner,
+            .findings-signin-hint {
+                display: none !important;
+            }
+
+            body {
+                background: #fff;
+                color: #111;
+            }
+
+            .report {
+                display: block !important;
+            }
+
+            .detail-row {
+                display: table-row !important;
+            }
+
+            button,
+            input,
+            a.badge.check {
+                display: none !important;
+            }
+
+            .decision-btn.selected,
+            .verified-status-btn.selected {
+                display: inline-block !important;
+                border: 2px solid #333 !important;
+                color: #111 !important;
+                background: #eee !important;
+            }
+        }
     </style>
 </head>
 
@@ -460,7 +606,11 @@
 
         <div class="report-header">
             <div style="max-width: 480px;">
-                <h1>Your ARM Readiness Report</h1>
+                <h1>Your ARM Readiness Workspace</h1>
+                <p style="color:#94a3b8; font-size:0.9rem; margin-top:0.4rem; line-height:1.5;">
+                    Built to replace your browser tabs, bookmarks, spreadsheets, sticky notes, and manual
+                    compatibility checklist — not just replace a one-time report.
+                </p>
                 <p id="scan-time"></p>
                 <p id="scan-level-display"
                     style="color:#94a3b8; font-size:0.95rem; font-weight:600; margin-top:0.6rem;"></p>
@@ -472,6 +622,7 @@
                 </p>
             </div>
             <div class="gauge-wrap">
+                <div id="readiness-label" style="font-size:1.05rem; font-weight:800; margin-bottom:0.4rem;"></div>
                 <svg width="120" height="120" viewBox="0 0 120 120" id="gauge-svg">
                     <circle cx="60" cy="60" r="45" stroke="#1e293b" stroke-width="10" fill="none" />
                     <circle cx="60" cy="60" r="45" stroke="#3b82f6" stroke-width="10" fill="none"
@@ -486,7 +637,7 @@
                 </svg>
                 <div
                     style="font-size:0.7rem; color:#475569; text-transform:uppercase; letter-spacing:0.05em; margin-top:0.5rem;">
-                    Data Confidence</div>
+                    Recommendation Confidence</div>
                 <div id="confidence-bar-wrap"
                     style="width:120px; height:6px; background:#1e293b; border-radius:3px; margin:0.5rem auto 0.3rem auto; overflow:hidden;">
                     <div id="confidence-bar"
@@ -496,6 +647,14 @@
                 <div id="confidence-label"
                     style="font-size:0.75rem; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;"></div>
             </div>
+        </div>
+
+        <p class="recommendation-explanation" id="recommendation-explanation"></p>
+
+        <div class="workspace-actions">
+            <button class="action-btn" id="export-btn">⬇ Export My Notes</button>
+            <button class="action-btn" id="rescan-btn">↻ Rescan</button>
+            <button class="action-btn" id="print-btn">🖨 Print</button>
         </div>
 
         <!-- ARM WARNING -->
@@ -695,6 +854,439 @@
             }
         }
 
+        // ---------------------------------------------------------------------------
+        // Assessment Workspace: personal decision layer + recommendation synthesis.
+        // NO server-side persistence, ever — this Map lives only in this tab's memory
+        // (mirrored into sessionStorage purely so an accidental reload doesn't wipe it,
+        // never a new data-collection surface). Continuity across visits is entirely
+        // client-side export/import; turning a decision into a community contribution
+        // still requires the user to click the pre-existing "Share your Findings"
+        // buttons themselves — nothing here ever calls a write endpoint automatically.
+        // ---------------------------------------------------------------------------
+
+        const DECISION_VALUES = ['personally_verified', 'no_longer_use', 'waiting_for_vendor', 'doesnt_matter', 'research_note'];
+        const VERIFIED_STATUS_VALUES = ['native', 'x64-emulated', 'x86-emulated', 'unsupported'];
+        // Bumped by hand alongside releases — no build step exists to auto-inject this.
+        const CMA_VERSION = '1.0.0';
+        const CARRY_FORWARD_KEY = 'ngpcx_carry_forward_v1';
+        const DOESNT_MATTER_WEIGHT = 0.25;
+        const CRITICAL_WEIGHT_MULTIPLIER = 2;
+
+        // Same normalization used project-wide (scan.js classifyApps, merge.js
+        // findExistingId) — reused verbatim rather than reinvented.
+        function normalizeAppName(name) {
+            return (name || '').toLowerCase().replace(/[\s\-_.]/g, '');
+        }
+
+        // id first (stable across renames), normalized name otherwise — matches the
+        // same precedence classifyApps() itself uses when matching against the catalog.
+        function decisionKey(app) {
+            return (app.id && String(app.id).trim()) || normalizeAppName(app.name);
+        }
+
+        const personalDecisions = new Map();
+
+        function getDecision(app) {
+            return personalDecisions.get(decisionKey(app)) || null;
+        }
+
+        // Only ever called from direct user interaction — always refreshes
+        // researched_at, since that's a genuinely new decision/edit. Import/carry-
+        // forward seeding writes into the Map directly (see consumeCarryForward),
+        // bypassing this function so the original researched_at is preserved.
+        function setDecision(app, patch) {
+            const key = decisionKey(app);
+            const existing = personalDecisions.get(key) || {
+                app_name: app.name, app_id: app.id || null,
+                decision: 'research_note', verified_status: undefined,
+                critical_to_me: false, note: '',
+            };
+            const entry = {
+                ...existing, ...patch,
+                app_name: app.name, app_id: app.id || null,
+                researched_at: new Date().toISOString(),
+            };
+            if (entry.decision !== 'personally_verified') delete entry.verified_status;
+            personalDecisions.set(key, entry);
+            return entry;
+        }
+
+        // If a decision reverts to the untouched default, drop it entirely rather than
+        // keeping a no-op entry — keeps the export file free of entries that don't
+        // actually say anything.
+        function clearDecisionIfEmpty(app) {
+            const key = decisionKey(app);
+            const entry = personalDecisions.get(key);
+            if (!entry) return;
+            if (entry.decision === 'research_note' && !entry.critical_to_me && !entry.note) {
+                personalDecisions.delete(key);
+            }
+        }
+
+        // Validates one imported/carried-forward entry against the known enums before
+        // it can ever reach the synthesis math or the DOM. Unrecognized decision/status
+        // values fall back to a safe no-op rather than propagating a bad value into the
+        // whole page's headline numbers.
+        function sanitizeImportedEntry(raw) {
+            if (!raw || typeof raw !== 'object' || typeof raw.app_name !== 'string' || !raw.app_name.trim()) return null;
+            const decision = DECISION_VALUES.includes(raw.decision) ? raw.decision : 'research_note';
+            const hasValidStatus = decision === 'personally_verified' && VERIFIED_STATUS_VALUES.includes(raw.verified_status);
+            const safeDecision = (decision === 'personally_verified' && !hasValidStatus) ? 'research_note' : decision;
+            return {
+                app_name: raw.app_name.trim(),
+                app_id: typeof raw.app_id === 'string' && raw.app_id.trim() ? raw.app_id.trim() : null,
+                decision: safeDecision,
+                verified_status: hasValidStatus ? raw.verified_status : undefined,
+                critical_to_me: raw.critical_to_me === true,
+                note: typeof raw.note === 'string' ? raw.note.slice(0, 2000) : '',
+                researched_at: (typeof raw.researched_at === 'string' && !isNaN(Date.parse(raw.researched_at)))
+                    ? raw.researched_at : new Date().toISOString(),
+            };
+        }
+
+        // Consumed exactly once, gated on an explicit ?carryForward=1 flag — not just
+        // "a stash happens to exist" — so an abandoned rescan or a leftover stash from
+        // an earlier tab can never silently reattach to an unrelated later session.
+        function consumeCarryForward() {
+            if (params.get('carryForward') !== '1') return;
+            const raw = sessionStorage.getItem(CARRY_FORWARD_KEY);
+            sessionStorage.removeItem(CARRY_FORWARD_KEY);
+            if (!raw) return;
+            try {
+                const stash = JSON.parse(raw);
+                if (!stash || !Array.isArray(stash.entries)) return;
+                const seen = new Set();
+                for (const rawEntry of stash.entries) {
+                    const entry = sanitizeImportedEntry(rawEntry);
+                    if (!entry) continue;
+                    const key = entry.app_id || normalizeAppName(entry.app_name);
+                    if (seen.has(key)) continue; // duplicate within the file — keep the first
+                    seen.add(key);
+                    personalDecisions.set(key, entry);
+                }
+            } catch (err) {
+                // corrupt stash — ignore rather than crash the report
+            }
+        }
+
+        function wireDecisionBlock(block, app, type, idx) {
+            const decisionBtns = block.querySelectorAll('.decision-btn');
+            const verifiedRow = block.querySelector('.verified-status-row');
+            const verifiedBtns = block.querySelectorAll('.verified-status-btn');
+            const criticalCheckbox = block.querySelector('.critical-checkbox');
+            const noteInput = block.querySelector('.decision-note');
+            const statusMsg = block.querySelector('.decision-status-msg');
+            const findingsBlock = block.closest('td')?.querySelector('.findings-block');
+
+            function suggestFindingsButton(status) {
+                if (!findingsBlock) return;
+                findingsBlock.querySelectorAll('.findings-btn[data-status]').forEach((b) => {
+                    b.classList.toggle('suggested', !!status && b.dataset.status === status);
+                });
+            }
+
+            function refreshUI() {
+                const current = getDecision(app);
+                decisionBtns.forEach((b) => b.classList.toggle('selected', !!current && current.decision === b.dataset.decision));
+                const showVerified = !!current && current.decision === 'personally_verified';
+                verifiedRow.style.display = showVerified ? 'flex' : 'none';
+                verifiedBtns.forEach((b) => b.classList.toggle('selected', showVerified && current.verified_status === b.dataset.status));
+                criticalCheckbox.checked = !!(current && current.critical_to_me);
+                if (noteInput && document.activeElement !== noteInput) {
+                    noteInput.value = (current && current.note) || '';
+                }
+                suggestFindingsButton(showVerified ? current.verified_status : null);
+                if (showVerified && current.verified_status) {
+                    statusMsg.textContent = 'Matches your personal verdict — click the highlighted button below to share it with the community.';
+                } else {
+                    statusMsg.textContent = '';
+                }
+                // Keep the visible-row badge live on every UI refresh, not just the
+                // once-per-render reattachment pass — otherwise it goes stale the
+                // instant a decision changes without a full renderReport() call.
+                updateVerifiedBadge(app, type, idx);
+            }
+
+            decisionBtns.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const current = getDecision(app);
+                    const already = current && current.decision === btn.dataset.decision;
+                    if (already) {
+                        setDecision(app, { decision: 'research_note', verified_status: undefined });
+                    } else {
+                        setDecision(app, {
+                            decision: btn.dataset.decision,
+                            verified_status: btn.dataset.decision === 'personally_verified' ? (current && current.verified_status) : undefined,
+                        });
+                    }
+                    clearDecisionIfEmpty(app);
+                    refreshUI();
+                    updateSynthesis();
+                });
+            });
+
+            verifiedBtns.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    setDecision(app, { decision: 'personally_verified', verified_status: btn.dataset.status });
+                    refreshUI();
+                    updateSynthesis();
+                });
+            });
+
+            criticalCheckbox.addEventListener('change', () => {
+                setDecision(app, { critical_to_me: criticalCheckbox.checked });
+                clearDecisionIfEmpty(app);
+                refreshUI();
+                updateSynthesis();
+            });
+
+            let noteDebounce;
+            noteInput.addEventListener('input', () => {
+                clearTimeout(noteDebounce);
+                noteDebounce = setTimeout(() => {
+                    setDecision(app, { note: noteInput.value.trim() });
+                    clearDecisionIfEmpty(app);
+                    updateSynthesis();
+                }, 400);
+            });
+
+            refreshUI();
+        }
+
+        function readinessLabelFor(score) {
+            if (score >= 80) return { label: 'Good Fit', color: '#10b981' };
+            if (score >= 50) return { label: 'Workable with Caveats', color: '#f59e0b' };
+            return { label: 'Not Recommended Yet', color: '#ef4444' };
+        }
+
+        const CONFIDENCE_TIERS = ['Very Limited Data', 'Limited Data', 'Moderate Confidence', 'High Confidence'];
+        function confidenceTierIndex(pct) {
+            if (pct >= 80) return 3;
+            if (pct >= 50) return 2;
+            if (pct >= 25) return 1;
+            return 0;
+        }
+
+        // Weighted, decision-adjusted synthesis. Reuses the exact score-formula SHAPE
+        // classifyApps() already uses (native=100, (emulated+unknown)=60,
+        // unsupported=-20, weighted average), generalized from raw bucket counts to
+        // per-app weighted contributions — not a new algorithm invented from scratch.
+        // Entirely client-side: this is the one place personal (never-persisted)
+        // decision state and catalog readiness data actually meet.
+        function computeSynthesis(results) {
+            const allApps = [];
+            ['native', 'emulated', 'unsupported', 'unknown'].forEach((bucket) => {
+                (results[bucket] || []).forEach((app) => allApps.push({ app, bucket }));
+            });
+
+            let weightedNumerator = 0;
+            let weightedTotal = 0;
+            let knownWeighted = 0;
+            let excludedCount = 0;
+            let unresolvedCount = 0;
+            let unresolvedCriticalCount = 0;
+            let verifiedCount = 0;
+            let waitingCount = 0;
+
+            for (const { app, bucket } of allApps) {
+                const decision = getDecision(app);
+                const decisionValue = decision ? decision.decision : null;
+
+                if (decisionValue === 'no_longer_use') {
+                    excludedCount++;
+                    continue;
+                }
+
+                let weight = 1.0;
+                if (decisionValue === 'doesnt_matter') weight *= DOESNT_MATTER_WEIGHT;
+                if (decision && decision.critical_to_me) weight *= CRITICAL_WEIGHT_MULTIPLIER;
+
+                let effectiveBucket = bucket;
+                let isKnown = bucket !== 'unknown';
+                if (decisionValue === 'personally_verified' && decision.verified_status) {
+                    effectiveBucket = decision.verified_status === 'native' ? 'native'
+                        : decision.verified_status === 'unsupported' ? 'unsupported'
+                            : 'emulated'; // x64/x86-emulated both map to the same weight bucket
+                    isKnown = true;
+                    verifiedCount++;
+                }
+
+                if (decisionValue === 'waiting_for_vendor') waitingCount++;
+
+                const points = effectiveBucket === 'native' ? 100
+                    : effectiveBucket === 'unsupported' ? -20
+                        : 60; // emulated + unknown, matches classifyApps() exactly
+
+                weightedNumerator += points * weight;
+                weightedTotal += weight;
+                if (isKnown) {
+                    knownWeighted += weight;
+                } else {
+                    unresolvedCount++;
+                    if (decision && decision.critical_to_me) unresolvedCriticalCount++;
+                }
+            }
+
+            if (weightedTotal === 0) {
+                return { empty: true, excludedCount };
+            }
+
+            const score = Math.round((weightedNumerator / (weightedTotal * 100)) * 100);
+            const readiness = readinessLabelFor(score);
+
+            const confidencePct = Math.round((knownWeighted / weightedTotal) * 100);
+            let tierIdx = confidenceTierIndex(confidencePct);
+            // A worried buyer's confidence should depend more on the apps they said
+            // matter most — a simple, explainable rule, not another weighted term.
+            if (unresolvedCriticalCount > 0 && tierIdx > 0) tierIdx -= 1;
+            const confidenceLabel = CONFIDENCE_TIERS[tierIdx];
+            const confidenceColor = tierIdx >= 3 ? '#10b981' : tierIdx >= 2 ? '#f59e0b' : '#ef4444';
+
+            // Explanation is template-filled from the same counts that drove the numbers
+            // above — never free-form generation — so the "why" is always traceable.
+            const parts = [];
+            const nativeCount = (results.native || []).length;
+            const countedTotal = allApps.length - excludedCount;
+            parts.push(`${nativeCount} of ${countedTotal} app${countedTotal === 1 ? '' : 's'} run${countedTotal === 1 ? 's' : ''} natively${verifiedCount > 0 ? `, including ${verifiedCount} you personally verified` : ''}`);
+            if (unresolvedCount > 0) {
+                parts.push(`${unresolvedCount} unresolved app${unresolvedCount === 1 ? '' : 's'}${unresolvedCriticalCount > 0 ? ` (${unresolvedCriticalCount} marked critical)` : ''} ${unresolvedCount === 1 ? 'is' : 'are'} holding back a higher confidence rating`);
+            }
+            if (waitingCount > 0) {
+                parts.push(`${waitingCount} waiting on vendor update${waitingCount === 1 ? '' : 's'}`);
+            }
+            // Excluding apps must never silently inflate confidence without disclosure —
+            // otherwise this could read as gaming its own metric instead of reflecting
+            // genuine completeness.
+            if (excludedCount > 0) {
+                parts.push(`${excludedCount} excluded because you said you no longer use ${excludedCount === 1 ? 'it' : 'them'}`);
+            }
+            const explanation = `${readiness.label}, ${confidenceLabel} — ${parts.join('; ')}.`;
+
+            return { empty: false, score, readiness, confidenceLabel, confidenceColor, explanation };
+        }
+
+        function updateSynthesis() {
+            if (!currentResults) return;
+            const synthesis = computeSynthesis(currentResults);
+            const readinessEl = document.getElementById('readiness-label');
+            const explanationEl = document.getElementById('recommendation-explanation');
+            const confLabelEl = document.getElementById('confidence-label');
+            const confBarEl = document.getElementById('confidence-bar');
+
+            if (synthesis.empty) {
+                if (readinessEl) { readinessEl.textContent = 'Nothing to Assess'; readinessEl.style.color = '#64748b'; }
+                if (explanationEl) explanationEl.textContent = 'You\'ve marked every app as no longer used — nothing left to assess. Adjust your decisions above to see a recommendation.';
+                if (confLabelEl) { confLabelEl.textContent = ''; }
+                if (confBarEl) confBarEl.style.width = '0%';
+                return;
+            }
+
+            if (readinessEl) {
+                readinessEl.textContent = synthesis.readiness.label;
+                readinessEl.style.color = synthesis.readiness.color;
+            }
+            if (explanationEl) explanationEl.textContent = synthesis.explanation;
+            if (confLabelEl) {
+                confLabelEl.textContent = synthesis.confidenceLabel;
+                confLabelEl.style.color = synthesis.confidenceColor;
+            }
+            if (confBarEl) {
+                const pctForBar = synthesis.confidenceLabel === 'High Confidence' ? 100
+                    : synthesis.confidenceLabel === 'Moderate Confidence' ? 66
+                        : synthesis.confidenceLabel === 'Limited Data' ? 33 : 10;
+                confBarEl.style.width = pctForBar + '%';
+                confBarEl.style.background = synthesis.confidenceColor;
+            }
+        }
+
+        // Reattachment pass, called at the end of every renderReport() — mirrors the
+        // exact pattern applyMySubmissions() already uses, so personal decisions
+        // survive Refresh/Rescan/import re-renders regardless of how bucket membership
+        // or row index shifts, since everything here is keyed by app id/name, not by
+        // DOM position.
+        // Visible-row badge for personally_verified overrides — the row stays in its
+        // original bucket/table, but the synthesis math treats it differently, so that
+        // override must be visible without expanding the detail row. Called both from
+        // the initial reattachment pass AND live from wireDecisionBlock()'s handlers —
+        // it must never depend only on the once-per-render pass, or the badge goes
+        // stale the moment a decision changes without a full re-render.
+        function updateVerifiedBadge(app, type, idx) {
+            const current = getDecision(app);
+            const row = document.getElementById(`row-${type}-${idx}`);
+            const firstCell = row && row.querySelector('td');
+            if (!firstCell) return;
+            let badge = firstCell.querySelector('.verified-badge');
+            if (current && current.decision === 'personally_verified' && current.verified_status) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'verified-badge';
+                    firstCell.appendChild(badge);
+                }
+                badge.textContent = `✓ You verified: ${SUBMISSION_LABELS[current.verified_status] || current.verified_status}`;
+            } else if (badge) {
+                badge.remove();
+            }
+        }
+
+        function applyPersonalDecisions() {
+            if (!currentResults) return;
+            ['native', 'emulated', 'unsupported', 'unknown'].forEach((type) => {
+                (currentResults[type] || []).forEach((app, idx) => {
+                    const decisionBlock = document.getElementById(`decision-${type}-${idx}`);
+                    if (decisionBlock) wireDecisionBlock(decisionBlock, app, type, idx);
+                    updateVerifiedBadge(app, type, idx);
+                });
+            });
+            updateSynthesis();
+        }
+
+        function exportPersonalNotes() {
+            const entries = Array.from(personalDecisions.values()).map((e) => ({
+                app_name: e.app_name,
+                app_id: e.app_id || undefined,
+                decision: e.decision,
+                verified_status: e.decision === 'personally_verified' ? e.verified_status : undefined,
+                critical_to_me: e.critical_to_me || undefined,
+                note: e.note || undefined,
+                researched_at: e.researched_at,
+            }));
+            const payload = {
+                format_version: 1,
+                cma_version: CMA_VERSION,
+                scanner_version: null,
+                exported_at: new Date().toISOString(),
+                entries,
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `checkmyarm-notes-${new Date().toISOString().slice(0, 10)}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('export-btn').addEventListener('click', exportPersonalNotes);
+
+        document.getElementById('rescan-btn').addEventListener('click', () => {
+            if (personalDecisions.size > 0 && !confirm('Rescan will replace your current app list with a fresh scan. Your personal notes will carry forward for apps that still match. Continue?')) return;
+            const entries = Array.from(personalDecisions.values()).map((e) => ({
+                app_name: e.app_name,
+                app_id: e.app_id || undefined,
+                decision: e.decision,
+                verified_status: e.decision === 'personally_verified' ? e.verified_status : undefined,
+                critical_to_me: e.critical_to_me || undefined,
+                note: e.note || undefined,
+                researched_at: e.researched_at,
+            }));
+            sessionStorage.setItem(CARRY_FORWARD_KEY, JSON.stringify({ entries, source: 'rescan' }));
+            window.location.href = '/?rescan=1';
+        });
+
+        document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+        consumeCarryForward();
+
         // Populates the nav sign-in/account indicator and, when OAuth is enabled and
         // the visitor isn't signed in, the "sign in to have your contribution carry
         // more weight" hint on each findings block. Login is entirely optional — if
@@ -816,12 +1408,42 @@
               <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.4rem;">Share your Findings — ${findingsIntro}</div>
               <input type="text" class="findings-notes" placeholder="Notes (optional)" />
               <div class="findings-actions">
-                <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'native')">Native</button>
-                <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'x64-emulated')">x64 Emulated</button>
-                <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'x86-emulated')">x86 Emulated</button>
-                <button class="findings-btn" onclick="submitFinding(this, '${type}', ${idx}, 'unsupported')">Unsupported</button>
+                <button class="findings-btn" data-status="native" onclick="submitFinding(this, '${type}', ${idx}, 'native')">Native</button>
+                <button class="findings-btn" data-status="x64-emulated" onclick="submitFinding(this, '${type}', ${idx}, 'x64-emulated')">x64 Emulated</button>
+                <button class="findings-btn" data-status="x86-emulated" onclick="submitFinding(this, '${type}', ${idx}, 'x86-emulated')">x86 Emulated</button>
+                <button class="findings-btn" data-status="unsupported" onclick="submitFinding(this, '${type}', ${idx}, 'unsupported')">Unsupported</button>
               </div>
               <div class="findings-signin-hint" style="display:none; font-size:0.75rem; color:#64748b; margin-top:0.4rem;"></div>
+            </div>
+        `;
+
+                // Personal-decision layer — session-only, never written to the server.
+                // "Share this with the community" isn't a separate submit action: picking a
+                // verified status here just highlights the matching button in the findings
+                // block above (via .suggested), so any actual submission still goes through
+                // the user explicitly clicking that pre-existing button themselves.
+                const decisionId = `decision-${type}-${idx}`;
+                const decisionBlock = type === 'system' ? '' : `
+            <div class="decision-block" id="${decisionId}">
+              <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.4rem;">Your Assessment — how does this factor into your decision?</div>
+              <div class="findings-actions">
+                <button class="decision-btn" data-decision="personally_verified">I verified this</button>
+                <button class="decision-btn" data-decision="waiting_for_vendor">Waiting on vendor</button>
+                <button class="decision-btn" data-decision="doesnt_matter">Doesn't matter to me</button>
+                <button class="decision-btn" data-decision="no_longer_use">I no longer use this</button>
+              </div>
+              <div class="verified-status-row findings-actions" style="display:none; margin-top:0.5rem;">
+                <span style="font-size:0.75rem; color:#64748b; align-self:center;">Verified as:</span>
+                <button class="verified-status-btn" data-status="native">Native</button>
+                <button class="verified-status-btn" data-status="x64-emulated">x64 Emulated</button>
+                <button class="verified-status-btn" data-status="x86-emulated">x86 Emulated</button>
+                <button class="verified-status-btn" data-status="unsupported">Unsupported</button>
+              </div>
+              <label class="critical-label">
+                <input type="checkbox" class="critical-checkbox" /> Critical to my decision
+              </label>
+              <input type="text" class="decision-note" placeholder="Personal note (optional — stays on your device)" />
+              <div class="decision-status-msg"></div>
             </div>
         `;
 
@@ -837,13 +1459,14 @@
             &nbsp;·&nbsp;
             <strong style="color:#94a3b8;">Confidence:</strong> ${confidence}
             ${sourceUrl ? `<br><a href="${sourceUrl}" target="_blank" rel="noopener" style="color:#3b82f6;">View source →</a>` : ''}
+            ${decisionBlock}
             ${findingsBlock}
           </td>
         </tr>
       `;
 
                 return `
-        <tr>
+        <tr id="row-${type}-${idx}">
           <td>
             <button onclick="toggleAppDetail('${detailId}', this)" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:0.75rem;padding:0;margin-right:0.5rem;">▶</button>${name}
           </td>
@@ -965,42 +1588,11 @@
                 }
             }
 
-            // Score
+            // Score — the raw catalog gauge stays exactly as before, untouched by
+            // personal decisions. The new Readiness label + Recommendation Confidence
+            // (computed in applyPersonalDecisions() -> updateSynthesis(), called below
+            // once the tables exist) are the weighted, decision-aware outputs.
             animateScore(results.score || 0);
-
-            // Confidence indicator
-            const total = (results.native?.length || 0) +
-                (results.emulated?.length || 0) +
-                (results.unsupported?.length || 0) +
-                (results.unknown?.length || 0);
-            const known = (results.native?.length || 0) +
-                (results.emulated?.length || 0) +
-                (results.unsupported?.length || 0);
-            const confidencePct = total === 0 ? 0 : Math.round((known / total) * 100);
-
-            const confidenceLabel =
-                confidencePct >= 80 ? 'High Confidence' :
-                    confidencePct >= 50 ? 'Moderate Confidence' :
-                        confidencePct >= 25 ? 'Limited Data' :
-                            'Very Limited Data';
-
-            const confidenceColor =
-                confidencePct >= 80 ? '#10b981' :
-                    confidencePct >= 50 ? '#f59e0b' :
-                        '#ef4444';
-
-            setTimeout(() => {
-                const bar = document.getElementById('confidence-bar');
-                const label = document.getElementById('confidence-label');
-                if (bar) {
-                    bar.style.width = confidencePct + '%';
-                    bar.style.background = confidenceColor;
-                }
-                if (label) {
-                    label.textContent = `${confidenceLabel} — verdict confirmed for ${known} of ${total} apps`;
-                    label.style.color = confidenceColor;
-                }
-            }, 400);
 
             // Scan time
             if (results.lastScanned) {
@@ -1078,6 +1670,7 @@
             document.getElementById('devices-section').innerHTML = buildDeviceTable(results.devices);
 
             applyMySubmissions();
+            applyPersonalDecisions();
             loadAuthStatus();
             renderRefreshBanner(results);
 

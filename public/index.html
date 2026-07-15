@@ -308,6 +308,8 @@
     <div style="display:flex; align-items:center; gap:1.25rem;">
       <span id="auth-status" style="font-size:0.9rem;"></span>
       <span id="workspace-nav" style="font-size:0.9rem;"></span>
+      <a href="#" id="continue-session-link" style="color:#64748b; text-decoration:none; font-size:0.9rem;">Continue a Session</a>
+      <input type="file" id="import-file-input" accept="application/json" style="display:none;">
       <a href="/my-submissions.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">My Submissions</a>
       <a href="/why.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">Why</a>
       <a href="/about.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">About</a>
@@ -358,6 +360,12 @@
       </div>
 
     </div>
+
+    <p style="text-align:center; color:#64748b; font-size:0.85rem;">
+      Already started? <a href="#" id="continue-session-link-hero"
+        style="color:#3b82f6; text-decoration:none;">Continue your session</a> by importing your saved notes —
+      nothing is stored on our end, so this is the only way to pick up where you left off.
+    </p>
   </div>
 
   <!-- HOW IT WORKS -->
@@ -458,6 +466,17 @@
     const btn = document.getElementById('run-scan-btn');
     let pollInterval = null;
 
+    // Assessment Workspace continuity — see report.html for the full design rationale.
+    // Nothing here touches the server except the two calls import already needs
+    // (create a session, classify the imported app list) — both pre-existing,
+    // unchanged endpoints. Carry-forward state lives only in sessionStorage.
+    const CARRY_FORWARD_KEY = 'ngpcx_carry_forward_v1';
+
+    function reportUrlFor(sessionId, scanLevel) {
+      const hasCarryForward = !!sessionStorage.getItem(CARRY_FORWARD_KEY);
+      return '/report.html?session=' + sessionId + '&level=' + scanLevel + (hasCarryForward ? '&carryForward=1' : '');
+    }
+
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
 
@@ -499,7 +518,7 @@
           });
           console.log('localhost connected!');
           clearInterval(pollInterval);
-          window.location.href = '/report.html?session=' + sessionId + '&level=' + scanLevel;
+          window.location.href = reportUrlFor(sessionId, scanLevel);
           return;
         } catch (e) {
           console.log('localhost failed:', e.message);
@@ -512,12 +531,95 @@
           console.log('session status:', data.status);
           if (data.status === 'complete') {
             clearInterval(pollInterval);
-            window.location.href = '/report.html?session=' + sessionId + '&level=' + scanLevel;
+            window.location.href = reportUrlFor(sessionId, scanLevel);
           }
         } catch (e) {
           console.log('session poll failed:', e.message);
         }
       }, 1000);
+    });
+
+    // Small heads-up banner when arriving here from a workspace Rescan action — the
+    // user still has to click Run Scan themselves (no auto-triggered download without
+    // a fresh gesture), this just sets expectations.
+    if (new URLSearchParams(window.location.search).get('rescan') === '1' && sessionStorage.getItem(CARRY_FORWARD_KEY)) {
+      const hero = document.querySelector('.hero');
+      const note = document.createElement('div');
+      note.style.cssText = 'max-width:420px; margin:1rem auto 0 auto; padding:0.75rem 1rem; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; color:#93c5fd; font-size:0.85rem; text-align:center;';
+      note.textContent = 'Continuing your workspace — your personal notes will carry forward once this scan completes.';
+      hero.insertBefore(note, hero.firstChild);
+    }
+
+    // Import: parses the uploaded export file, validates it defensively (report.html
+    // re-validates again before use — never trust a single validation pass on
+    // user-supplied file content), extracts just {name, id} pairs, and routes them
+    // through the exact same POST /api/session + POST /api/scan pair a real scan
+    // already uses — no new server endpoint, so the community-submission anti-abuse
+    // check (raw_apps must contain the app name) is satisfied automatically for any
+    // imported app, same as it would be for a physically scanned one.
+    function normalizeAppNameForImport(name) {
+      return (name || '').toLowerCase().replace(/[\s\-_.]/g, '');
+    }
+
+    async function handleImportFile(file) {
+      const navLink = document.getElementById('continue-session-link');
+      const originalText = navLink.textContent;
+      navLink.style.pointerEvents = 'none';
+      navLink.textContent = 'Reading file…';
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.entries) || parsed.entries.length === 0) {
+          throw new Error('This doesn\'t look like a CheckMyARM export file, or it has no saved notes.');
+        }
+
+        const seen = new Set();
+        const validEntries = [];
+        for (const raw of parsed.entries) {
+          if (!raw || typeof raw !== 'object' || typeof raw.app_name !== 'string' || !raw.app_name.trim()) continue;
+          const key = (typeof raw.app_id === 'string' && raw.app_id.trim()) || normalizeAppNameForImport(raw.app_name);
+          if (seen.has(key)) continue; // duplicate within the file — keep the first
+          seen.add(key);
+          validEntries.push(raw); // report.html re-validates decision/verified_status/note before use
+        }
+        if (validEntries.length === 0) throw new Error('No valid entries found in that file.');
+
+        navLink.textContent = 'Starting…';
+        const sessionRes = await fetch('/api/session', { method: 'POST' });
+        const sessionData = await sessionRes.json();
+        const newSessionId = sessionData.session_id;
+
+        const apps = validEntries.map((entry) => {
+          const id = typeof entry.app_id === 'string' && entry.app_id.trim() ? entry.app_id.trim() : undefined;
+          return id ? { name: entry.app_name, id } : { name: entry.app_name };
+        });
+        await fetch('/api/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apps, session_id: newSessionId, scan_mode: 'imported' }),
+        });
+
+        sessionStorage.setItem(CARRY_FORWARD_KEY, JSON.stringify({ entries: validEntries, source: 'import' }));
+        window.location.href = '/report.html?session=' + newSessionId + '&level=imported&carryForward=1';
+      } catch (err) {
+        alert('Import failed: ' + err.message);
+        navLink.style.pointerEvents = '';
+        navLink.textContent = originalText;
+      }
+    }
+
+    const importFileInput = document.getElementById('import-file-input');
+    function openImportPicker(e) {
+      e.preventDefault();
+      importFileInput.click();
+    }
+    document.getElementById('continue-session-link').addEventListener('click', openImportPicker);
+    const heroContinueLink = document.getElementById('continue-session-link-hero');
+    if (heroContinueLink) heroContinueLink.addEventListener('click', openImportPicker);
+    importFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleImportFile(file);
+      e.target.value = ''; // allow re-selecting the same file later
     });
 
     function showWaitingMessage() {
