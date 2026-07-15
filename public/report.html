@@ -652,7 +652,7 @@
         <p class="recommendation-explanation" id="recommendation-explanation"></p>
 
         <div class="workspace-actions">
-            <button class="action-btn" id="export-btn">⬇ Export My Notes</button>
+            <button class="action-btn" id="export-btn">⬇ Export Workspace</button>
             <button class="action-btn" id="rescan-btn">↻ Rescan</button>
             <button class="action-btn" id="print-btn">🖨 Print</button>
         </div>
@@ -718,7 +718,7 @@
     </div>
 
     <footer>
-        CheckMyARM — ARM Readiness Scanner. Data sourced from Winget, vendor sites, and community reports.
+        CheckMyARM — ARM Readiness Workspace. Data sourced from Winget, vendor sites, and community reports.
         Free, no ads — <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
             style="color:#3b82f6;">buy us a coffee</a> if it helped. ·
         <a href="/privacy.html" style="color:#64748b;">Privacy</a>
@@ -1266,7 +1266,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `checkmyarm-notes-${new Date().toISOString().slice(0, 10)}.json`;
+            link.download = `checkmyarm-workspace-${new Date().toISOString().slice(0, 10)}.json`;
             link.click();
             URL.revokeObjectURL(url);
         }
@@ -1274,7 +1274,7 @@
         document.getElementById('export-btn').addEventListener('click', exportPersonalNotes);
 
         document.getElementById('rescan-btn').addEventListener('click', () => {
-            if (!confirm('Rescan will replace your current app list with a fresh scan. Your personal notes will carry forward for apps that still match. Continue?')) return;
+            if (!confirm('Rescan will replace your current app list with a fresh scan. Your Workspace notes will carry forward for apps that still match. Continue?')) return;
             const entries = Array.from(personalDecisions.values()).map((e) => ({
                 app_name: e.app_name,
                 app_id: e.app_id || undefined,
