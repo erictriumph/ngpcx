@@ -26,10 +26,18 @@ struct AppEntry {
     version: Option<String>,
     recently_used: bool,
     publisher: Option<String>,
-    // Which collector found this app ("winget" | "arp") — free at construction
-    // time, previously discarded. Lets the server weight winget's exact-ID
-    // matches higher than ARP's fuzzy DisplayName matches if it ever needs to.
+    // Which collector found this app ("winget" | "arp" | "running-process" |
+    // "appx") — free at construction time, previously discarded for the
+    // original two sources. Lets the server weight winget's exact-ID matches
+    // higher than ARP's fuzzy DisplayName matches if it ever needs to.
     discovery_source: String,
+    // --- Guidance Signals ---
+    // Relevance evidence for a future Workspace to weigh, not a compatibility
+    // or recommendation determination on their own — this scanner pass only
+    // collects and forwards them; nothing here changes classifyApps()'s score.
+    is_running: bool,
+    is_startup: bool,
+    has_start_menu_entry: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -83,6 +91,14 @@ struct ScanPayload {
     // addition (additive fields stay compatible via serde's Option handling).
     payload_version: u32,
     scanner_version: String,
+    // Guidance Signals (new this pass) — apps observed running or AppX-packaged
+    // that don't match anything already in `apps` (via the same fuzzy
+    // name-containment check used for ARP merging). Deliberately kept separate
+    // from `apps` rather than merged in: the server never feeds these into
+    // classifyApps(), so they cannot affect the readiness score, by
+    // construction rather than by convention.
+    unlisted_apps: Vec<AppEntry>,
+    appx_apps: Vec<AppEntry>,
 }
 
 // ─────────────────────────────────────────
@@ -700,6 +716,9 @@ fn get_installed_apps(
                         recently_used,
                         publisher: publisher_hint,
                         discovery_source: "winget".to_string(),
+                        is_running: false,
+                        is_startup: false,
+                        has_start_menu_entry: false,
                     });
                 }
             }
@@ -866,11 +885,272 @@ fn merge_arp_into_apps(
             recently_used: days_ago.is_some() || is_running,
             publisher: arp_app.publisher,
             discovery_source: "arp".to_string(),
+            is_running: false,
+            is_startup: false,
+            has_start_menu_entry: false,
         });
         added += 1;
     }
 
     println!("  ARP added {} apps not found via winget", added);
+}
+
+// ─────────────────────────────────────────
+//  Guidance Signals — running apps, startup apps, launchability, AppX
+//
+//  Everything in this section is corroborating relevance evidence for a
+//  future Workspace, not a compatibility or recommendation determination.
+//  Privacy design, applied consistently across all four collectors below:
+//  never capture full file paths (can reveal personal folder/username
+//  structure) or window title text (can reveal document names, browser tab
+//  content, conversation previews) — only vendor- or OS-authored labels
+//  (process Description/Company, registry value names, shortcut filenames,
+//  AppX package metadata), the same tier of information ARP/winget already
+//  send today.
+// ─────────────────────────────────────────
+
+fn normalized_names(apps: &[AppEntry]) -> Vec<String> {
+    apps.iter().map(|a| normalize_name(&a.name)).collect()
+}
+
+// Reuses the exact fuzzy substring-containment dedup already established for
+// ARP merging — same tradeoffs already accepted, not a new matching strategy.
+fn filter_unlisted(candidates: Vec<AppEntry>, known_normalized: &[String]) -> Vec<AppEntry> {
+    candidates
+        .into_iter()
+        .filter(|c| {
+            let cn = normalize_name(&c.name);
+            !cn.is_empty()
+                && !known_normalized
+                    .iter()
+                    .any(|k| k.contains(cn.as_str()) || cn.contains(k.as_str()))
+        })
+        .collect()
+}
+
+// Applies all three Guidance Signals to a list of already-constructed
+// AppEntry rows in one pass, so the matching logic lives in exactly one
+// place regardless of which list (main apps, unlisted, AppX) it runs
+// against.
+fn apply_signals(
+    apps: &mut [AppEntry],
+    running: &HashSet<String>,
+    startup_names: &[String],
+    start_menu_names: &[String],
+) {
+    for app in apps.iter_mut() {
+        if !app.is_running {
+            let name_lower = app.name.to_lowercase();
+            let id_lower = app.id.as_deref().unwrap_or("").to_lowercase();
+            app.is_running =
+                is_process_running(&name_lower, running) || is_process_running(&id_lower, running);
+        }
+
+        let norm = normalize_name(&app.name);
+        if norm.is_empty() {
+            continue;
+        }
+
+        app.is_startup = startup_names.iter().any(|s| {
+            let sn = normalize_name(s);
+            !sn.is_empty() && (sn.contains(norm.as_str()) || norm.contains(sn.as_str()))
+        });
+        app.has_start_menu_entry = start_menu_names.iter().any(|s| {
+            let sn = normalize_name(s);
+            !sn.is_empty() && (sn.contains(norm.as_str()) || norm.contains(sn.as_str()))
+        });
+    }
+}
+
+// WS1: apps with a visible foreground window right now — the strongest cheap
+// signal that a process is a real, interactive application rather than a
+// background service/helper. This is also how portable/sideloaded software
+// (no installer, no ARP/winget registration) gets discovered at all: if it's
+// not already in `apps`, this is the only source that can ever see it.
+//
+// MainWindowTitle is used purely as a PowerShell-side filter — it is never
+// selected into the object returned to Rust, so its content (which can
+// contain document names, browser tab titles, etc.) never leaves the
+// machine. We want to know an app is running, not what someone is doing
+// in it.
+fn get_running_gui_apps() -> Vec<AppEntry> {
+    let ps_script = r#"
+Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object {
+    [PSCustomObject]@{
+        ProcessName = $_.ProcessName
+        Description = $_.Description
+        Company = $_.Company
+    }
+} | ConvertTo-Json
+"#;
+
+    let json = match run_powershell_json(ps_script, "running application scan") {
+        Some(v) => v,
+        None => return vec![],
+    };
+
+    let mut seen = HashSet::new();
+    let mut apps = Vec::new();
+
+    for item in json_as_items(&json) {
+        let process_name = item["ProcessName"].as_str().unwrap_or("").to_string();
+        if process_name.is_empty() || process_name.eq_ignore_ascii_case("ngpcx-scanner") {
+            continue; // skip malformed rows and this scanner's own console window
+        }
+        if !seen.insert(process_name.clone()) {
+            continue; // one exe can own several windows (e.g. a browser's tabs)
+        }
+
+        let description = item["Description"]
+            .as_str()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
+        let company = item["Company"]
+            .as_str()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
+        let name = description.unwrap_or_else(|| process_name.clone());
+
+        apps.push(AppEntry {
+            name,
+            id: None,
+            version: None,
+            recently_used: true,
+            publisher: company,
+            discovery_source: "running-process".to_string(),
+            is_running: true,
+            is_startup: false,
+            has_start_menu_entry: false,
+        });
+    }
+
+    apps
+}
+
+// WS2: Run-key value NAMES only — deliberately not the command strings those
+// values hold, which are full file paths. Value names are vendor-authored
+// labels (e.g. "OneDriveSetup", "Discord"), the same privacy tier as an ARP
+// DisplayName. Known, accepted limitation shared with every tool that reads
+// these keys: entries can go stale if a vendor's uninstaller doesn't clean
+// up after itself, so this is corroborating evidence, not a live guarantee.
+fn get_startup_names() -> Vec<String> {
+    let ps_script = r#"
+$keys = @(
+    'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run',
+    'HKLM:\Software\Microsoft\Windows\CurrentVersion\Run',
+    'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Run'
+)
+$names = foreach ($key in $keys) {
+    (Get-Item -Path $key -ErrorAction SilentlyContinue).Property
+}
+$names | Sort-Object -Unique | ForEach-Object { [PSCustomObject]@{ Name = $_ } } | ConvertTo-Json
+"#;
+
+    let json = match run_powershell_json(ps_script, "startup app scan") {
+        Some(v) => v,
+        None => return vec![],
+    };
+
+    json_as_items(&json)
+        .into_iter()
+        .filter_map(|item| item["Name"].as_str().map(|s| s.to_string()))
+        .collect()
+}
+
+// WS3: Start Menu shortcut base filenames only — never resolves what the
+// shortcut actually points at, so this is purely "does a launch entry exist
+// with roughly this name," not a claim about the target executable.
+// Deliberately scoped to Start Menu (both all-users and current-user), not
+// the Desktop — Start Menu entries are installer-created and reasonably
+// curated; Desktop icons are much noisier and user-arranged.
+fn get_start_menu_names() -> Vec<String> {
+    let ps_script = r#"
+$paths = @(
+    (Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs'),
+    (Join-Path $env:AppData 'Microsoft\Windows\Start Menu\Programs')
+) | Where-Object { Test-Path $_ }
+
+Get-ChildItem -Path $paths -Filter *.lnk -Recurse -ErrorAction SilentlyContinue |
+    Select-Object -ExpandProperty BaseName -Unique |
+    ForEach-Object { [PSCustomObject]@{ Name = $_ } } |
+    ConvertTo-Json
+"#;
+
+    let json = match run_powershell_json(ps_script, "Start Menu scan") {
+        Some(v) => v,
+        None => return vec![],
+    };
+
+    json_as_items(&json)
+        .into_iter()
+        .filter_map(|item| item["Name"].as_str().map(|s| s.to_string()))
+        .collect()
+}
+
+// WS4: AppX/MSIX packages, filtered using Get-AppxPackage's own authoritative
+// flags — no hardcoded name-pattern list. IsFramework/IsResourcePackage/
+// IsBundle removes runtime/language/bundle-wrapper noise; SignatureKind
+// removes deep OS-shell plumbing (verified against a real machine: packages
+// like CredDialogHost, ShellExperienceHost, PinningConfirmationDialog, and
+// dozens like them all carry SignatureKind 'System' and nothing a user would
+// call "an app" was found in that group). SignatureKind 'None' is
+// deliberately kept, not excluded — that's where PWA-installed web apps
+// (Plex, Home Assistant, etc.) showed up on real data, and excluding it
+// would have silently dropped genuine user software. What remains still
+// mixes genuinely user-installed apps with Windows-bundled inbox ones
+// (Calculator, Photos) and a residue of component sub-packages (PowerToys'
+// individual context-menu shims, WinAppRuntime version-pinned packages) that
+// don't carry any of these flags — accepted as a known, documented
+// imprecision rather than over-built into name-pattern guessing.
+fn get_appx_apps() -> Vec<AppEntry> {
+    let ps_script = r#"
+Get-AppxPackage | Where-Object {
+    -not $_.IsFramework -and -not $_.IsResourcePackage -and -not $_.IsBundle -and $_.SignatureKind -ne 'System'
+} | ForEach-Object {
+    [PSCustomObject]@{
+        Name = $_.Name
+        Publisher = $_.Publisher
+        Version = $_.Version
+    }
+} | ConvertTo-Json
+"#;
+
+    let json = match run_powershell_json(ps_script, "AppX package scan") {
+        Some(v) => v,
+        None => return vec![],
+    };
+
+    let mut apps = Vec::new();
+
+    for item in json_as_items(&json) {
+        let name = match item["Name"].as_str() {
+            Some(n) if !n.trim().is_empty() => n.to_string(),
+            _ => continue,
+        };
+        let version = item["Version"].as_str().map(|s| s.to_string());
+        // AppX Publisher is a distinguished name, e.g.
+        // "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, ...".
+        // Extract just the CN value for readability.
+        let publisher = item["Publisher"].as_str().and_then(|raw| {
+            raw.split(',')
+                .find(|part| part.trim_start().starts_with("CN="))
+                .map(|cn| cn.trim().trim_start_matches("CN=").trim().to_string())
+        });
+
+        apps.push(AppEntry {
+            name,
+            id: None,
+            version,
+            recently_used: false, // presence-based signal, not a recency claim
+            publisher,
+            discovery_source: "appx".to_string(),
+            is_running: false,
+            is_startup: false,
+            has_start_menu_entry: false,
+        });
+    }
+
+    apps
 }
 
 // ─────────────────────────────────────────
@@ -1077,6 +1357,22 @@ fn main() {
     merge_arp_into_apps(&mut apps, arp_apps, &mode, &recent, &running);
     println!("  {} total apps after ARP merge", apps.len());
 
+    println!("\nLooking for additional Guidance Signals (running apps, startup apps, Start Menu, AppX)...");
+    let known_normalized = normalized_names(&apps);
+    let mut appx_apps = filter_unlisted(get_appx_apps(), &known_normalized);
+    println!("  Found {} AppX/Store package(s) not already in the inventory", appx_apps.len());
+
+    let mut combined_known = known_normalized;
+    combined_known.extend(normalized_names(&appx_apps));
+    let mut unlisted_apps = filter_unlisted(get_running_gui_apps(), &combined_known);
+    println!("  Found {} running app(s) not already in the inventory", unlisted_apps.len());
+
+    let startup_names = get_startup_names();
+    let start_menu_names = get_start_menu_names();
+    apply_signals(&mut apps, &running, &startup_names, &start_menu_names);
+    apply_signals(&mut appx_apps, &running, &startup_names, &start_menu_names);
+    apply_signals(&mut unlisted_apps, &running, &startup_names, &start_menu_names);
+
     println!("\nScanning connected devices...");
     let mut devices = get_devices(&mode);
     println!("  Found {} relevant device(s)", devices.len());
@@ -1095,6 +1391,8 @@ fn main() {
         devices,
         payload_version: 1,
         scanner_version: env!("CARGO_PKG_VERSION").to_string(),
+        unlisted_apps,
+        appx_apps,
     };
 
     match send_to_server(&payload, &base_url) {

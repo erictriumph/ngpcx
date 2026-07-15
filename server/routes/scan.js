@@ -200,6 +200,14 @@ router.post('/scan', (req, res) => {
     // change, which is expected and harmless.
     scanner_version: req.body.scanner_version || null,
     payload_version: req.body.payload_version || null,
+    // Guidance Signals (apps observed running or AppX-packaged that aren't
+    // already in `apps`) — pure passthrough, deliberately never passed through
+    // classifyApps(). They must never affect `score` or the classified
+    // buckets above; keeping them out of that function entirely guarantees it
+    // by construction rather than by trusting every future call site to
+    // remember not to include them.
+    unlisted_apps: req.body.unlisted_apps || [],
+    appx_apps: req.body.appx_apps || [],
     lastScanned: new Date().toISOString()
   };
 
