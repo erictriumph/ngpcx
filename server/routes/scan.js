@@ -27,6 +27,18 @@ function isSystemComponent(name, publisher) {
   return SYSTEM_COMPONENT_PATTERNS.some((p) => nameLower.includes(p));
 }
 
+// Merges a matched DB catalog row with the scanner's raw observation for this
+// scan. `app` is spread over `entry` so scanner-observed fields (version,
+// recently_used, discovery_source, etc.) always reflect this scan — except
+// publisher, which the DB entry wins when present: the scanner's `publisher`
+// is often just a coarse hint derived from a winget package ID's vendor
+// segment (used to unblock isSystemComponent()'s Microsoft-gate below), and
+// should never overwrite a real catalog publisher for an app the DB already
+// has better data on.
+function mergeEntryWithApp(entry, app) {
+  return { ...entry, ...app, publisher: entry.publisher || app.publisher };
+}
+
 function trackUnknownApp(name) {
   if (!name) return;
   try {
@@ -84,7 +96,7 @@ function classifyApps(apps) {
 
     // Admin-confirmed system components override the heuristic
     if (entry && entry.type === 'system') {
-      systemComponents.push({ ...entry, ...app });
+      systemComponents.push(mergeEntryWithApp(entry, app));
       continue;
     }
 
@@ -102,17 +114,17 @@ function classifyApps(apps) {
 
     switch (entry.arm_support) {
       case 'native':
-        native.push({ ...entry, ...app });
+        native.push(mergeEntryWithApp(entry, app));
         break;
       case 'x64-emulated':
       case 'x86-emulated':
-        emulated.push({ ...entry, ...app });
+        emulated.push(mergeEntryWithApp(entry, app));
         break;
       case 'unsupported':
-        unsupported.push({ ...entry, ...app });
+        unsupported.push(mergeEntryWithApp(entry, app));
         break;
       default:
-        unknown.push({ ...entry, ...app });
+        unknown.push(mergeEntryWithApp(entry, app));
     }
   }
 
@@ -183,6 +195,11 @@ router.post('/scan', (req, res) => {
     scan_mode: scan_mode || 'unknown',
     system: system || null,
     devices: req.body.devices || [],
+    // Passed through for future debugging/report logic — not interpreted or
+    // acted on anywhere today. Absent/null for scanner builds older than this
+    // change, which is expected and harmless.
+    scanner_version: req.body.scanner_version || null,
+    payload_version: req.body.payload_version || null,
     lastScanned: new Date().toISOString()
   };
 

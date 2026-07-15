@@ -26,6 +26,10 @@ struct AppEntry {
     version: Option<String>,
     recently_used: bool,
     publisher: Option<String>,
+    // Which collector found this app ("winget" | "arp") — free at construction
+    // time, previously discarded. Lets the server weight winget's exact-ID
+    // matches higher than ARP's fuzzy DisplayName matches if it ever needs to.
+    discovery_source: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -43,7 +47,25 @@ struct DeviceEntry {
     class: String,
     hardware_id: Option<String>,
     days_ago: Option<f64>,
+    // Only ever populated by get_printers() (network vs. local printer, via
+    // port-name check) — always false for get_devices() rows. A Net-class
+    // USB-Ethernet/WiFi adapter is already unambiguously labeled via `class`,
+    // so this field is intentionally not wired up for non-printer devices;
+    // it's not a bug, just a printer-specific field with a generic name.
     is_network: bool,
+    // Free on the base Get-PnpDevice object (no extra per-device API call) —
+    // populated in both Quick and Standard/Full. None for printers (not
+    // sourced from Get-PnpDevice).
+    manufacturer: Option<String>,
+    // Driver service/INF name — also free on the base object. Populated
+    // alongside manufacturer.
+    driver_service: Option<String>,
+    // Requires a Get-PnpDeviceProperty call, so only collected in
+    // Standard/Full mode (matches the existing arrival/removal-date cost
+    // tier) — Quick stays presence-only by design. "Microsoft" here is
+    // corroborating evidence a device relies on Windows' inbox driver stack;
+    // a vendor name means it doesn't. None when not looked up.
+    driver_provider: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -53,7 +75,14 @@ struct ScanPayload {
     session_id: Option<String>,
     system: SystemInfo,
     apps: Vec<AppEntry>,
-    devices: Vec<DeviceEntry>, // ADD THIS LINE
+    devices: Vec<DeviceEntry>,
+    // Added now, before more scanner generations ship without one — lets the
+    // server eventually distinguish "old scanner, known shape" from
+    // "malformed payload" instead of relying on optional-field tolerance
+    // forever. Bump only on an actual breaking shape change, not every field
+    // addition (additive fields stay compatible via serde's Option handling).
+    payload_version: u32,
+    scanner_version: String,
 }
 
 // ─────────────────────────────────────────
@@ -257,6 +286,51 @@ fn standard_threshold_days(class: &str) -> f64 {
 }
 
 // ─────────────────────────────────────────
+//  Shared PowerShell run/parse helpers
+// ─────────────────────────────────────────
+
+// Runs a PowerShell script expected to emit ConvertTo-Json output, returning
+// None (with a logged reason) on process failure, empty output, or malformed
+// JSON. `context` is only used for the log message, so each caller keeps its
+// own distinct, useful error text instead of one generic one.
+fn run_powershell_json(script: &str, context: &str) -> Option<serde_json::Value> {
+    let output = Command::new("powershell")
+        .args(["-NoProfile", "-Command", script])
+        .output();
+
+    let output = match output {
+        Ok(o) => o,
+        Err(e) => {
+            eprintln!("  Failed to run {}: {}", context, e);
+            return None;
+        }
+    };
+
+    let json_text = String::from_utf8_lossy(&output.stdout);
+    if json_text.trim().is_empty() {
+        return None;
+    }
+
+    match serde_json::from_str(&json_text) {
+        Ok(v) => Some(v),
+        Err(e) => {
+            eprintln!("  Failed to parse {} JSON: {}", context, e);
+            None
+        }
+    }
+}
+
+// ConvertTo-Json emits a bare object (not an array) when PowerShell only
+// found one result — this normalizes both shapes to a uniform item list.
+fn json_as_items(json: &serde_json::Value) -> Vec<&serde_json::Value> {
+    if json.is_array() {
+        json.as_array().unwrap().iter().collect()
+    } else {
+        vec![json]
+    }
+}
+
+// ─────────────────────────────────────────
 //  Connected/Recent Devices
 // ─────────────────────────────────────────
 
@@ -287,6 +361,9 @@ Get-PnpDevice -PresentOnly:$true | Where-Object {
         VidPid = $vidPid
         IsPresent = $true
         DaysAgo = $null
+        Manufacturer = $_.Manufacturer
+        Service = $_.Service
+        DriverProvider = $null
     }
 } | ConvertTo-Json
 "#
@@ -304,6 +381,7 @@ Get-PnpDevice | Where-Object {
     $isPresent = $present -contains $_.InstanceId
     $arrival = (Get-PnpDeviceProperty -InstanceId $_.InstanceId -KeyName 'DEVPKEY_Device_LastArrivalDate' -ErrorAction SilentlyContinue).Data
     $removal = (Get-PnpDeviceProperty -InstanceId $_.InstanceId -KeyName 'DEVPKEY_Device_LastRemovalDate' -ErrorAction SilentlyContinue).Data
+    $driverProvider = (Get-PnpDeviceProperty -InstanceId $_.InstanceId -KeyName 'DEVPKEY_Device_DriverProvider' -ErrorAction SilentlyContinue).Data
 
     $arrivalDaysAgo = if ($arrival) { [math]::Round(((Get-Date) - $arrival).TotalDays, 1) } else { $null }
     $removalDaysAgo = if ($removal) { [math]::Round(((Get-Date) - $removal).TotalDays, 1) } else { $null }
@@ -315,45 +393,34 @@ Get-PnpDevice | Where-Object {
         VidPid = $vidPid
         IsPresent = $isPresent
         DaysAgo = $recency
+        Manufacturer = $_.Manufacturer
+        Service = $_.Service
+        DriverProvider = $driverProvider
     }
 } | ConvertTo-Json
 "#
     };
 
-    let output = Command::new("powershell")
-        .args(["-NoProfile", "-Command", ps_script])
-        .output();
-
-    let output = match output {
-        Ok(o) => o,
-        Err(e) => {
-            eprintln!("  Failed to run device scan: {}", e);
-            return vec![];
-        }
+    let json = match run_powershell_json(ps_script, "device scan") {
+        Some(v) => v,
+        None => return vec![],
     };
 
-    let json_text = String::from_utf8_lossy(&output.stdout);
-    if json_text.trim().is_empty() {
-        return vec![];
-    }
-
-    let json: serde_json::Value = match serde_json::from_str(&json_text) {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!("  Failed to parse device JSON: {}", e);
-            return vec![];
-        }
-    };
-
-    let items: Vec<&serde_json::Value> = if json.is_array() {
-        json.as_array().unwrap().iter().collect()
-    } else {
-        vec![&json]
-    };
+    let items = json_as_items(&json);
 
     // Group raw rows by VID/PID first, so we can pick the best
-    // representative name per physical device before filtering by tier.
-    let mut grouped: HashMap<String, Vec<(String, String, bool, Option<f64>)>> = HashMap::new();
+    // representative row per physical device before filtering by tier.
+    struct RawDeviceRow {
+        name: String,
+        class: String,
+        is_present: bool,
+        days_ago: Option<f64>,
+        manufacturer: Option<String>,
+        service: Option<String>,
+        driver_provider: Option<String>,
+    }
+
+    let mut grouped: HashMap<String, Vec<RawDeviceRow>> = HashMap::new();
 
     for item in items {
         let name = item["Name"]
@@ -364,15 +431,23 @@ Get-PnpDevice | Where-Object {
         let vid_pid = item["VidPid"].as_str().unwrap_or("").to_string();
         let is_present = item["IsPresent"].as_bool().unwrap_or(false);
         let days_ago = item["DaysAgo"].as_f64();
+        let manufacturer = item["Manufacturer"].as_str().map(|s| s.to_string());
+        let service = item["Service"].as_str().map(|s| s.to_string());
+        let driver_provider = item["DriverProvider"].as_str().map(|s| s.to_string());
 
         if vid_pid.is_empty() {
             continue;
         }
 
-        grouped
-            .entry(vid_pid)
-            .or_insert_with(Vec::new)
-            .push((name, class, is_present, days_ago));
+        grouped.entry(vid_pid).or_insert_with(Vec::new).push(RawDeviceRow {
+            name,
+            class,
+            is_present,
+            days_ago,
+            manufacturer,
+            service,
+            driver_provider,
+        });
     }
 
     fn is_generic_name(name: &str) -> bool {
@@ -395,10 +470,13 @@ Get-PnpDevice | Where-Object {
         // Prefer a row with a non-generic name for display/search purposes.
         let best = rows
             .iter()
-            .find(|(name, _, _, _)| !is_generic_name(name))
+            .find(|r| !is_generic_name(&r.name))
             .unwrap_or(&rows[0]);
 
-        let name = best.0.clone();
+        let name = best.name.clone();
+        let manufacturer = best.manufacturer.clone();
+        let driver_service = best.service.clone();
+        let driver_provider = best.driver_provider.clone();
 
         // For classification, use the most conservative class seen across
         // ALL interfaces of this device — a composite device that includes
@@ -407,14 +485,14 @@ Get-PnpDevice | Where-Object {
         // interface elsewhere.
         let class = rows
             .iter()
-            .map(|(_, c, _, _)| c.clone())
+            .map(|r| r.class.clone())
             .find(|c| review_classes.contains(&c.as_str()))
-            .unwrap_or_else(|| best.1.clone());
+            .unwrap_or_else(|| best.class.clone());
 
-        let is_present = rows.iter().any(|(_, _, present, _)| *present);
+        let is_present = rows.iter().any(|r| r.is_present);
         let days_ago =
             rows.iter()
-                .filter_map(|(_, _, _, d)| *d)
+                .filter_map(|r| r.days_ago)
                 .fold(None, |acc: Option<f64>, d| match acc {
                     None => Some(d),
                     Some(a) => Some(a.min(d)),
@@ -433,6 +511,9 @@ Get-PnpDevice | Where-Object {
                 hardware_id: Some(vid_pid),
                 days_ago,
                 is_network: false,
+                manufacturer,
+                driver_service,
+                driver_provider,
             });
         }
     }
@@ -455,36 +536,12 @@ Get-Printer | Where-Object {
 } | ConvertTo-Json
 "#;
 
-    let output = Command::new("powershell")
-        .args(["-NoProfile", "-Command", ps_script])
-        .output();
-
-    let output = match output {
-        Ok(o) => o,
-        Err(e) => {
-            eprintln!("  Failed to run printer scan: {}", e);
-            return vec![];
-        }
+    let json = match run_powershell_json(ps_script, "printer scan") {
+        Some(v) => v,
+        None => return vec![],
     };
 
-    let json_text = String::from_utf8_lossy(&output.stdout);
-    if json_text.trim().is_empty() {
-        return vec![];
-    }
-
-    let json: serde_json::Value = match serde_json::from_str(&json_text) {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!("  Failed to parse printer JSON: {}", e);
-            return vec![];
-        }
-    };
-
-    let items: Vec<&serde_json::Value> = if json.is_array() {
-        json.as_array().unwrap().iter().collect()
-    } else {
-        vec![&json]
-    };
+    let items = json_as_items(&json);
 
     let mut printers = Vec::new();
 
@@ -501,6 +558,9 @@ Get-Printer | Where-Object {
             hardware_id: None,
             days_ago: None,
             is_network,
+            manufacturer: None,
+            driver_service: None,
+            driver_provider: None,
         });
     }
 
@@ -615,6 +675,12 @@ fn get_installed_apps(
                                 .replace(".exe", "")
                         };
 
+                    // `winget export`'s JSON has no Publisher field, so this is a coarse
+                    // hint derived from the ID's vendor segment (already split above),
+                    // not a verified publisher — good enough to unblock the server's
+                    // Microsoft-component noise filter, not for display as a fact.
+                    let publisher_hint = parts.first().map(|p| p.to_string());
+
                     // Check recency via Prefetch mtime and live process state
                     let name_lower = name.to_lowercase();
                     let days_ago = find_recency_days(&name_lower, recent)
@@ -632,7 +698,8 @@ fn get_installed_apps(
                         id: Some(id),
                         version: pkg["Version"].as_str().map(|s| s.to_string()),
                         recently_used,
-                        publisher: None,
+                        publisher: publisher_hint,
+                        discovery_source: "winget".to_string(),
                     });
                 }
             }
@@ -721,36 +788,12 @@ Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*, HK
     ConvertTo-Json
 "#;
 
-    let output = Command::new("powershell")
-        .args(["-NoProfile", "-Command", ps_script])
-        .output();
-
-    let output = match output {
-        Ok(o) => o,
-        Err(e) => {
-            eprintln!("  Failed to run ARP scan: {}", e);
-            return vec![];
-        }
+    let json = match run_powershell_json(ps_script, "ARP scan") {
+        Some(v) => v,
+        None => return vec![],
     };
 
-    let json_text = String::from_utf8_lossy(&output.stdout);
-    if json_text.trim().is_empty() {
-        return vec![];
-    }
-
-    let json: serde_json::Value = match serde_json::from_str(&json_text) {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!("  Failed to parse ARP JSON: {}", e);
-            return vec![];
-        }
-    };
-
-    let items: Vec<&serde_json::Value> = if json.is_array() {
-        json.as_array().unwrap().iter().collect()
-    } else {
-        vec![&json]
-    };
+    let items = json_as_items(&json);
 
     let mut apps = Vec::new();
 
@@ -822,6 +865,7 @@ fn merge_arp_into_apps(
             version: arp_app.version,
             recently_used: days_ago.is_some() || is_running,
             publisher: arp_app.publisher,
+            discovery_source: "arp".to_string(),
         });
         added += 1;
     }
@@ -1049,6 +1093,8 @@ fn main() {
         system,
         apps,
         devices,
+        payload_version: 1,
+        scanner_version: env!("CARGO_PKG_VERSION").to_string(),
     };
 
     match send_to_server(&payload, &base_url) {

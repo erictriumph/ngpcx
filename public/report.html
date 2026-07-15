@@ -738,7 +738,10 @@
                 levelNote.style.display = 'block';
             }
         }
-        const GENERIC_DRIVER_CLASSES = ['Camera', 'HIDClass', 'MEDIA'];
+        // MEDIA is deliberately NOT in this list — see isLikelyNative() below.
+        // Camera/HIDClass devices validated cleanly against real hardware
+        // (webcam, HID input), so they stay unconditionally "likely native."
+        const GENERIC_DRIVER_CLASSES = ['Camera', 'HIDClass'];
         const GENERIC_DRIVER_NAME_PATTERNS = /ipp|mopria|universal print|pcl6 class driver|postscript class driver|microsoft.*class driver/i;
 
         function escapeHtml(str) {
@@ -1512,12 +1515,22 @@
         const DEVICE_LINK_STYLE = 'badge';
 
         function isLikelyNative(device) {
+            if (device.class === 'MEDIA') {
+                // MEDIA covers both plain USB Audio Class devices (mic/headset —
+                // genuinely Windows-inbox-driven) and professional audio
+                // interfaces (often vendor ASIO drivers) — the class alone can't
+                // tell these apart, so require corroborating evidence
+                // (driver_provider, only collected in Standard/Full mode) before
+                // claiming native. No evidence available (Quick mode, or the
+                // lookup failed) means "Check", not an optimistic guess.
+                return !!device.driver_provider && device.driver_provider.toLowerCase().includes('microsoft');
+            }
             if (GENERIC_DRIVER_CLASSES.includes(device.class)) return true;
             return GENERIC_DRIVER_NAME_PATTERNS.test(device.name);
         }
 
         function buildDriverSearchUrl(device) {
-            const query = `${device.name} ARM64 driver`;
+            const query = device.manufacturer ? `${device.manufacturer} ${device.name} ARM64 driver` : `${device.name} ARM64 driver`;
             return 'https://www.google.com/search?q=' + encodeURIComponent(query);
         }
 
@@ -1568,8 +1581,9 @@
           Native/Emulated/Unsupported verdicts above. Covers common peripheral classes (printers, cameras, media,
           card readers, biometric readers). "Likely native" reflects standard USB device classes with built-in
           Windows drivers — vendor companion apps for extra features, and biometric/smart-card readers, may still
-          need a closer look. Some devices, including generic storage and virtual system devices, aren't
-          evaluated.
+          need a closer look. Audio devices (microphones, headsets, and professional audio interfaces alike) show
+          "Check" unless Standard or Full scan confirms a Windows-provided driver, since this class covers both.
+          Some devices, including generic storage and virtual system devices, aren't evaluated.
         </p>
       `;
         }
