@@ -312,6 +312,7 @@
       <input type="file" id="import-file-input" accept="application/json" style="display:none;">
       <a href="/my-submissions.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">My Submissions</a>
       <a href="/why.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">Why</a>
+      <a href="/how-it-thinks.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">How CheckMyARM Thinks</a>
       <a href="/about.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">About</a>
     </div>
   </nav>
@@ -338,17 +339,20 @@
 
       <div class="scan-level" style="text-align:left;">
         <label style="display:block; margin-bottom:0.6rem; cursor:pointer;">
-          <input type="radio" name="scan-level" value="quick" checked> Quick
-          <span style="color:#64748b; font-size:0.85rem;"> — recently used apps</span>
+          <input type="radio" name="scan-level" value="quick" checked> Light Assessment
+          <span style="color:#64748b; font-size:0.85rem;"> — a quick recommendation from what you actually use</span>
         </label>
         <label style="display:block; margin-bottom:0.6rem; cursor:pointer;">
-          <input type="radio" name="scan-level" value="standard"> Standard
-          <span style="color:#64748b; font-size:0.85rem;"> — all installed apps</span>
+          <input type="radio" name="scan-level" value="standard"> Standard Assessment
+          <span style="color:#64748b; font-size:0.85rem;"> — recommended: the best balance of confidence and effort</span>
         </label>
         <label style="display:block; cursor:pointer;">
-          <input type="radio" name="scan-level" value="full"> Full
-          <span style="color:#64748b; font-size:0.85rem;"> — everything, including background system components</span>
+          <input type="radio" name="scan-level" value="full"> Advanced Assessment
+          <span style="color:#64748b; font-size:0.85rem;"> — maximum visibility, every app and device exposed</span>
         </label>
+        <p id="light-device-hint" style="color:#64748b; font-size:0.8rem; margin-top:0.6rem; display:none;">
+          For the best results, connect the devices you normally use before running a Light Assessment.
+        </p>
       </div>
 
       <a href="#" class="scan-button" id="run-scan-btn">Run Scan</a>
@@ -460,10 +464,12 @@
     reports. Free, no ads — <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
       style="color:#3b82f6;">buy us a coffee</a> if it helped. ·
     <a href="/privacy.html" style="color:#64748b;">Privacy</a> ·
-    <a href="/why.html" style="color:#64748b;">Why</a>
+    <a href="/why.html" style="color:#64748b;">Why</a> ·
+    <a href="/how-it-thinks.html" style="color:#64748b;">How CheckMyARM Thinks</a>
     <br>© 2026 CheckMyARM. All rights reserved.
   </footer>
 
+  <script src="/assessment.js"></script>
   <script>
     const btn = document.getElementById('run-scan-btn');
     let pollInterval = null;
@@ -472,12 +478,29 @@
     // Nothing here touches the server except the two calls import already needs
     // (create a session, classify the imported app list) — both pre-existing,
     // unchanged endpoints. Carry-forward state lives only in sessionStorage.
-    const CARRY_FORWARD_KEY = 'ngpcx_carry_forward_v1';
+    // CARRY_FORWARD_KEY and the export/import sanitizers now come from the
+    // shared assessment.js (loaded above) rather than a locally duplicated
+    // copy — sanitizeExportPayload() in particular is real validation logic
+    // that needs to stay in sync with report.html/workspace.html, not drift.
 
     function reportUrlFor(sessionId, scanLevel) {
       const hasCarryForward = !!sessionStorage.getItem(CARRY_FORWARD_KEY);
       return '/report.html?session=' + sessionId + '&level=' + scanLevel + (hasCarryForward ? '&carryForward=1' : '');
     }
+
+    // Only Light gets this hint — deliberately not a per-level checklist
+    // (Standard/Advanced already collect device history themselves), just
+    // the one honest note explaining why Light's device picture is only as
+    // good as what's plugged in at scan time.
+    const lightDeviceHint = document.getElementById('light-device-hint');
+    function updateLightDeviceHint() {
+      const checked = document.querySelector('input[name="scan-level"]:checked');
+      if (lightDeviceHint) lightDeviceHint.style.display = (checked && checked.value === 'quick') ? 'block' : 'none';
+    }
+    document.querySelectorAll('input[name="scan-level"]').forEach((radio) => {
+      radio.addEventListener('change', updateLightDeviceHint);
+    });
+    updateLightDeviceHint();
 
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -552,17 +575,18 @@
       hero.insertBefore(note, hero.firstChild);
     }
 
-    // Import: parses the uploaded export file, validates it defensively (report.html
-    // re-validates again before use — never trust a single validation pass on
-    // user-supplied file content), extracts just {name, id} pairs, and routes them
-    // through the exact same POST /api/session + POST /api/scan pair a real scan
-    // already uses — no new server endpoint, so the community-submission anti-abuse
-    // check (raw_apps must contain the app name) is satisfied automatically for any
-    // imported app, same as it would be for a physically scanned one.
-    function normalizeAppNameForImport(name) {
-      return (name || '').toLowerCase().replace(/[\s\-_.]/g, '');
-    }
-
+    // Import: parses the uploaded export file, validates it defensively via
+    // sanitizeExportPayload() (assessment.js) — never trust a single
+    // validation pass on user-supplied file content — then routes the
+    // preserved observation snapshot through the exact same POST /api/session
+    // + POST /api/scan pair a real scan already uses. No new server endpoint:
+    // classifyApps() re-runs against CURRENT catalog state (the whole point —
+    // an old export gets re-evaluated with today's data/formula, not a
+    // replayed stale verdict), and the community-submission anti-abuse check
+    // (raw_apps must contain the app name) is satisfied automatically, same
+    // as for a physically scanned app. Recognizes both the current
+    // three-layer export format and the older decision-only format (see
+    // sanitizeExportPayload's doc comment) — an old saved file still imports.
     async function handleImportFile(file) {
       const navLink = document.getElementById('continue-session-link');
       const originalText = navLink.textContent;
@@ -571,38 +595,43 @@
       try {
         const text = await file.text();
         const parsed = JSON.parse(text);
-        if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.entries) || parsed.entries.length === 0) {
+        const importData = sanitizeExportPayload(parsed);
+        if (!importData) {
           throw new Error('This doesn\'t look like a CheckMyARM export file, or it has no saved notes.');
         }
-
-        const seen = new Set();
-        const validEntries = [];
-        for (const raw of parsed.entries) {
-          if (!raw || typeof raw !== 'object' || typeof raw.app_name !== 'string' || !raw.app_name.trim()) continue;
-          const key = (typeof raw.app_id === 'string' && raw.app_id.trim()) || normalizeAppNameForImport(raw.app_name);
-          if (seen.has(key)) continue; // duplicate within the file — keep the first
-          seen.add(key);
-          validEntries.push(raw); // report.html re-validates decision/verified_status/note before use
-        }
-        if (validEntries.length === 0) throw new Error('No valid entries found in that file.');
 
         navLink.textContent = 'Starting…';
         const sessionRes = await fetch('/api/session', { method: 'POST' });
         const sessionData = await sessionRes.json();
         const newSessionId = sessionData.session_id;
 
-        const apps = validEntries.map((entry) => {
-          const id = typeof entry.app_id === 'string' && entry.app_id.trim() ? entry.app_id.trim() : undefined;
-          return id ? { name: entry.app_name, id } : { name: entry.app_name };
-        });
+        // Preserves the ORIGINAL assessment level (Light/Standard/Advanced)
+        // when the export has one, rather than always forcing the
+        // 'imported' sentinel — otherwise a re-imported Light assessment
+        // would silently stop deprioritizing anything, since that logic
+        // gates strictly on scan_mode === 'quick'. Legacy-format files
+        // (no preserved scan_mode) fall back to the sentinel, unchanged
+        // from before.
         await fetch('/api/scan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ apps, session_id: newSessionId, scan_mode: 'imported' }),
+          body: JSON.stringify({
+            apps: importData.apps,
+            unlisted_apps: importData.unlistedApps,
+            devices: importData.devices,
+            session_id: newSessionId,
+            scan_mode: importData.scanMode || 'imported',
+            scanner_version: importData.scannerVersion || null,
+          }),
         });
 
-        sessionStorage.setItem(CARRY_FORWARD_KEY, JSON.stringify({ entries: validEntries, source: 'import' }));
-        window.location.href = '/report.html?session=' + newSessionId + '&level=imported&carryForward=1';
+        sessionStorage.setItem(CARRY_FORWARD_KEY, JSON.stringify({ entries: importData.entries, source: 'import' }));
+        if (importData.assessmentSnapshot) {
+          sessionStorage.setItem('ngpcx_imported_assessment_snapshot_v1', JSON.stringify(importData.assessmentSnapshot));
+        }
+        // origin=assessment: importing never involves a physical scanner —
+        // Results must never claim one "connected" for this arrival.
+        window.location.href = '/report.html?session=' + newSessionId + '&level=' + encodeURIComponent(importData.scanMode || 'imported') + '&carryForward=1&origin=assessment';
       } catch (err) {
         alert('Import failed: ' + err.message);
         navLink.style.pointerEvents = '';

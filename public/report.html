@@ -4,97 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CheckMyARM — Your ARM Readiness Workspace</title>
+    <title>CheckMyARM — Your ARM Readiness Results</title>
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="/assessment.css">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: system-ui, sans-serif;
-            background: #0f172a;
-            color: #f1f5f9;
-            min-height: 100vh;
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            border-bottom: 1px solid #1e293b;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #3b82f6;
-            letter-spacing: -0.5px;
-        }
-
-        .logo img {
-            height: 28px;
-            width: auto;
-            margin-right: 0.5rem;
-        }
-
-        .logo span {
-            color: #f1f5f9;
-        }
-
-        .back-link {
-            color: #64748b;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .back-link:hover {
-            color: #f1f5f9;
-        }
-
-        /* LOADING */
-        .loading {
-            max-width: 600px;
-            margin: 8rem auto;
-            text-align: center;
-            padding: 0 1rem;
-        }
-
-        .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #1e293b;
-            border-top-color: #3b82f6;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 1.5rem auto;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .loading h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .loading p {
-            color: #64748b;
-            font-size: 0.95rem;
-        }
-
-        /* REPORT */
+        /* REPORT — Results-specific layout only; shared visual language lives
+           in assessment.css. */
         .report {
             max-width: 900px;
             margin: 0 auto;
@@ -122,7 +40,6 @@
             font-size: 0.9rem;
         }
 
-        /* GAUGE */
         .gauge-wrap {
             display: flex;
             flex-direction: column;
@@ -133,222 +50,6 @@
         .gauge-wrap svg {
             display: block;
             margin: 0 auto;
-            margin-top: 0;
-        }
-
-        /* SYSTEM INFO */
-        .system-info {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 1.25rem 1.5rem;
-            margin-bottom: 2rem;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-        }
-
-        .sys-item label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
-            display: block;
-            margin-bottom: 0.2rem;
-        }
-
-        .sys-item span {
-            font-size: 0.95rem;
-            font-weight: 600;
-        }
-
-        /* SUMMARY CARDS */
-        .summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .summary-card {
-            border-radius: 12px;
-            padding: 1.25rem;
-            border: 1px solid;
-            text-align: center;
-        }
-
-        .summary-card.native {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: rgba(16, 185, 129, 0.3);
-        }
-
-        .summary-card.emulated {
-            background: rgba(245, 158, 11, 0.1);
-            border-color: rgba(245, 158, 11, 0.3);
-        }
-
-        .summary-card.unsupported {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: rgba(239, 68, 68, 0.3);
-        }
-
-        .summary-card.unknown {
-            background: rgba(100, 116, 139, 0.1);
-            border-color: rgba(100, 116, 139, 0.3);
-        }
-
-        .summary-card.system {
-            background: rgba(100, 116, 139, 0.05);
-            border-color: rgba(100, 116, 139, 0.2);
-        }
-
-        .system .summary-count {
-            color: #475569;
-        }
-
-        .badge.system {
-            background: rgba(100, 116, 139, 0.15);
-            color: #64748b;
-        }
-
-        .summary-count {
-            font-size: 2.5rem;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 0.4rem;
-        }
-
-        .native .summary-count {
-            color: #10b981;
-        }
-
-        .emulated .summary-count {
-            color: #f59e0b;
-        }
-
-        .unsupported .summary-count {
-            color: #ef4444;
-        }
-
-        .unknown .summary-count {
-            color: #64748b;
-        }
-
-        .summary-label {
-            font-size: 0.85rem;
-            color: #94a3b8;
-        }
-
-        /* APP TABLE */
-        .section-title {
-            font-size: 1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
-            margin: 2rem 0 0.75rem 0;
-        }
-
-        .app-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #1e293b;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid #334155;
-            margin-bottom: 0.5rem;
-        }
-
-        .app-table th {
-            background: #0f172a;
-            padding: 0.75rem 1rem;
-            text-align: left;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
-        }
-
-        .app-table td {
-            padding: 0.75rem 1rem;
-            border-top: 1px solid #334155;
-            font-size: 0.9rem;
-        }
-
-        .app-table tr:hover td {
-            background: #263548;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-
-        .badge.native {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-        }
-
-        .badge.emulated {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-        }
-
-        .badge.unsupported {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-
-        .badge.unknown {
-            background: rgba(100, 116, 139, 0.2);
-            color: #94a3b8;
-        }
-
-        .badge.check {
-            background: rgba(59, 130, 246, 0.2);
-            color: #93c5fd;
-        }
-
-        .arm-warning {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 2rem;
-            color: #93c5fd;
-            font-size: 0.95rem;
-        }
-
-        /* Compatibility Notes — deliberately visually distinct from the Source/
-           Confidence metadata line below it, since this is the one piece of text in
-           the row most likely to actually affect a purchase or deployment decision. */
-        .compat-note {
-            background: rgba(59, 130, 246, 0.08);
-            border: 1px solid rgba(59, 130, 246, 0.25);
-            border-radius: 8px;
-            padding: 0.6rem 0.85rem;
-            margin-bottom: 0.75rem;
-            color: #e2e8f0;
-        }
-
-        .compat-note strong {
-            color: #93c5fd;
-            display: block;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.25rem;
-        }
-
-        footer {
-            border-top: 1px solid #1e293b;
-            padding: 2rem;
-            text-align: center;
-            color: #475569;
-            font-size: 0.85rem;
         }
 
         .refresh-banner {
@@ -390,162 +91,163 @@
             cursor: default;
         }
 
-        .findings-notes {
-            width: 100%;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #f1f5f9;
-            padding: 0.4rem 0.6rem;
-            font-size: 0.8rem;
-            font-family: inherit;
-            margin-bottom: 0.5rem;
-        }
-
-        .findings-notes::placeholder {
-            color: #475569;
-        }
-
-        .findings-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-        }
-
-        .findings-btn {
-            border: 1px solid #334155;
-            background: #0f172a;
-            color: #f1f5f9;
-            padding: 0.3rem 0.7rem;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            cursor: pointer;
-        }
-
-        .findings-btn:hover {
-            border-color: #3b82f6;
-        }
-
-        .findings-btn:disabled {
-            opacity: 0.5;
-            cursor: default;
-        }
-
-        .findings-btn.suggested {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 1px #3b82f6;
-        }
-
-        /* Personal decision layer — session-only, never sent to the server except via
-           the existing "Share your Findings" pathway the user explicitly clicks. */
-        .decision-block {
-            margin-top: 0.75rem;
-            padding-top: 0.75rem;
-            border-top: 1px solid #1e293b;
-        }
-
-        .decision-btn,
-        .verified-status-btn {
-            border: 1px solid #334155;
-            background: #0f172a;
-            color: #f1f5f9;
-            padding: 0.3rem 0.7rem;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            cursor: pointer;
-        }
-
-        .decision-btn:hover,
-        .verified-status-btn:hover {
-            border-color: #3b82f6;
-        }
-
-        .decision-btn.selected,
-        .verified-status-btn.selected {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.15);
-            color: #93c5fd;
-        }
-
-        .critical-label {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            margin-top: 0.5rem;
-            font-size: 0.78rem;
-            color: #94a3b8;
-            cursor: pointer;
-        }
-
-        .decision-note {
-            width: 100%;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #f1f5f9;
-            padding: 0.4rem 0.6rem;
-            font-size: 0.8rem;
-            font-family: inherit;
-            margin-top: 0.5rem;
-        }
-
-        .decision-note::placeholder {
-            color: #475569;
-        }
-
-        .decision-status-msg {
-            font-size: 0.75rem;
-            color: #64748b;
-            margin-top: 0.4rem;
-        }
-
-        .verified-badge {
-            margin-left: 0.5rem;
-            font-size: 0.72rem;
-            color: #10b981;
-        }
-
-        .action-btn {
-            border: 1px solid #334155;
-            background: #1e293b;
-            color: #cbd5e1;
-            padding: 0.45rem 0.9rem;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-
-        .action-btn:hover {
-            border-color: #3b82f6;
-            color: #f1f5f9;
-        }
-
-        .workspace-actions {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
+        /* PRIMARY REASONS — read-only; each links into the Workspace rather
+           than exposing any control here. */
+        .primary-reasons {
             margin-bottom: 1.5rem;
         }
 
-        .recommendation-explanation {
+        .primary-reasons-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.6rem;
+        }
+
+        .reason-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .reason-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 0.7rem 1rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .reason-item:hover {
+            border-color: #3b82f6;
+        }
+
+        .reason-item-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* REDUCTION NARRATIVE — the "already did the work" summary + a
+           preview of what's still open. Preview items link into the
+           corresponding Workspace item but have no other controls —
+           see WORKSPACE.md, The Assessment Loop. */
+        .reduction-summary {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .reduction-summary p {
             color: #cbd5e1;
             font-size: 0.95rem;
-            line-height: 1.5;
-            margin-bottom: 1.5rem;
-            max-width: 720px;
+            line-height: 1.6;
         }
 
-        /* Print — a plain readable snapshot, not a load-bearing export mechanism.
-           Hides nav/buttons/inputs; keeps the already-selected decision state visible
-           via its distinct border/background rather than hiding it along with every
-           other control. */
+        .reduction-summary strong {
+            color: #f1f5f9;
+        }
+
+        .preview-list {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .preview-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 0.55rem 0.85rem;
+            font-size: 0.85rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .preview-item:hover {
+            border-color: #3b82f6;
+        }
+
+        .preview-item-name {
+            color: #e2e8f0;
+        }
+
+        .refine-cta {
+            display: inline-block;
+            margin-top: 1rem;
+            border: 1px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.12);
+            color: #93c5fd;
+            padding: 0.6rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .refine-cta:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        /* DEVICES SUMMARY CARD — deliberately styled distinctly from the four
+           scored buckets (muted neutral, not native/emulated/unsupported/
+           unknown's color-coded treatment) so it reads as "evaluated but not
+           part of the score," not a fifth compatibility category. */
+        .summary-card.devices {
+            background: rgba(100, 116, 139, 0.06);
+            border-color: rgba(100, 116, 139, 0.25);
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            cursor: pointer;
+        }
+
+        .summary-card.devices:hover {
+            border-color: rgba(100, 116, 139, 0.45);
+        }
+
+        .summary-card.devices .summary-count {
+            color: #94a3b8;
+        }
+
+        /* Shared by System Components and Not Currently Prioritized —
+           both collapsed by default, both fully inspectable on request. */
+        .collapsible-details summary::-webkit-details-marker {
+            color: #64748b;
+        }
+
+        .collapsible-details summary:hover {
+            color: #94a3b8;
+        }
+
+        .confidence-meaning {
+            font-size: 0.78rem;
+            color: #64748b;
+            max-width: 260px;
+            text-align: center;
+            margin-top: 0.4rem;
+            line-height: 1.4;
+        }
+
+        /* Print — a plain readable snapshot, ~one page where content allows. */
         @media print {
 
             nav,
             footer,
             .workspace-actions,
-            .refresh-banner,
-            .findings-signin-hint {
+            .refresh-banner {
                 display: none !important;
             }
 
@@ -562,18 +264,24 @@
                 display: table-row !important;
             }
 
-            button,
-            input,
-            a.badge.check {
-                display: none !important;
+            /* A printout can't click through to the Workspace, and both
+               System Components' and Not Currently Prioritized's collapse
+               are on-screen decluttering devices, not information to
+               withhold — so both un-hide for print. */
+            .collapsible-details:not([open]) .app-table,
+            .collapsible-details:not([open]) p {
+                display: table !important;
             }
 
-            .decision-btn.selected,
-            .verified-status-btn.selected {
-                display: inline-block !important;
-                border: 2px solid #333 !important;
-                color: #111 !important;
-                background: #eee !important;
+            .collapsible-details:not([open]) .preview-list {
+                display: flex !important;
+            }
+
+            button,
+            a.badge.check,
+            a.refine-cta,
+            a.workspace-link {
+                display: none !important;
             }
         }
     </style>
@@ -588,16 +296,23 @@
             <span id="workspace-nav"></span>
             <a href="/my-submissions.html" class="back-link">My Submissions</a>
             <a href="/why.html" class="back-link">Why</a>
+            <a href="/how-it-thinks.html" class="back-link">How CheckMyARM Thinks</a>
             <a href="/about.html" class="back-link">About</a>
             <a href="/" class="back-link">← Run another scan</a>
         </div>
     </nav>
 
-    <!-- LOADING STATE -->
+    <!-- LOADING STATE — two distinct stages, never blended (see CLAUDE.md,
+         Assessment Pipeline Staging): "Scanner connected" only appears when
+         a physical scanner genuinely produced this page load; "Preparing
+         Assessment" covers the reasoning stage (classification, evidence
+         synthesis, confidence, recommendation) and is the ONLY stage ever
+         shown for a Recalculate or Import arrival, where no scanner is
+         involved at all. -->
     <div class="loading" id="loading">
         <div class="spinner"></div>
-        <h2>Scanner connected</h2>
-        <p>Running your scan now — this page will update automatically when it's done.</p>
+        <h2 id="loading-heading">Scanner connected</h2>
+        <p id="loading-detail">Running your scan now — this page will update automatically when it's done.</p>
         <p id="loading-level-note" style="color:#64748b; font-size:0.85rem; margin-top:0.5rem; display:none;"></p>
     </div>
 
@@ -606,10 +321,10 @@
 
         <div class="report-header">
             <div style="max-width: 480px;">
-                <h1>Your ARM Readiness Workspace</h1>
+                <h1>Your ARM Readiness Results</h1>
                 <p style="color:#94a3b8; font-size:0.9rem; margin-top:0.4rem; line-height:1.5;">
-                    Built to replace your browser tabs, bookmarks, spreadsheets, sticky notes, and manual
-                    compatibility checklist — not just replace a one-time report.
+                    The current assessment, using everything the scan and compatibility database can honestly
+                    support — no action required to trust what's here.
                 </p>
                 <p id="scan-time"></p>
                 <p id="scan-level-display"
@@ -637,7 +352,7 @@
                 </svg>
                 <div
                     style="font-size:0.7rem; color:#475569; text-transform:uppercase; letter-spacing:0.05em; margin-top:0.5rem;">
-                    Recommendation Confidence</div>
+                    Confidence</div>
                 <div id="confidence-bar-wrap"
                     style="width:120px; height:6px; background:#1e293b; border-radius:3px; margin:0.5rem auto 0.3rem auto; overflow:hidden;">
                     <div id="confidence-bar"
@@ -646,14 +361,26 @@
                 </div>
                 <div id="confidence-label"
                     style="font-size:0.75rem; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;"></div>
+                <p class="confidence-meaning">
+                    Confidence measures how well-supported this recommendation is — not whether it favors or
+                    disfavors Windows on ARM.
+                </p>
             </div>
         </div>
 
+        <div id="historical-comparison" style="display:none;"></div>
+
         <p class="recommendation-explanation" id="recommendation-explanation"></p>
 
+        <!-- PRIMARY REASONS -->
+        <div class="primary-reasons" id="primary-reasons" style="display:none;">
+            <div class="primary-reasons-title">Primary Reasons</div>
+            <div class="reason-list" id="reason-list"></div>
+        </div>
+
         <div class="workspace-actions">
-            <button class="action-btn" id="export-btn">⬇ Export Workspace</button>
-            <button class="action-btn" id="rescan-btn">↻ Rescan</button>
+            <a class="action-btn" id="refine-link" href="#" style="text-decoration:none;">→ Refine Assessment</a>
+            <button class="action-btn" id="export-btn">⬇ Export</button>
             <button class="action-btn" id="print-btn">🖨 Print</button>
         </div>
 
@@ -683,27 +410,36 @@
                 <div class="summary-count" id="count-unknown">0</div>
                 <div class="summary-label">Unknown</div>
             </div>
+            <!-- Devices were evaluated too, but never feed the Readiness Score
+                 (see CLAUDE.md, Device/driver detection) — a distinct card,
+                 not one of the four scored buckets, so it can't be mistaken
+                 for a fifth compatibility category. -->
+            <a href="#devices-section" class="summary-card devices" id="devices-summary-card">
+                <div class="summary-count" id="count-devices">0</div>
+                <div class="summary-label">Device<span id="devices-plural">s</span> Detected</div>
+                <div style="font-size:0.75rem; margin-top:0.5rem;">
+                    <span style="color:#10b981;">✓ <span id="count-devices-native">0</span> likely native</span>
+                    &nbsp;·&nbsp;
+                    <span style="color:#f59e0b;"><span id="count-devices-review">0</span> worth a check</span>
+                </div>
+                <div style="font-size:0.68rem; color:#64748b; margin-top:0.4rem;" id="device-assessment-level"></div>
+                <div style="font-size:0.68rem; color:#64748b;">Not included in Readiness Score</div>
+            </a>
+        </div>
+
+        <!-- REDUCTION NARRATIVE -->
+        <div class="reduction-summary" id="reduction-summary" style="display:none;">
+            <p id="reduction-text"></p>
+            <div class="preview-list" id="preview-list"></div>
+            <a class="refine-cta" id="refine-cta" href="#">Refine Assessment →</a>
         </div>
 
         <!-- BACKGROUND RESEARCH BANNER -->
         <div id="refresh-banner" class="refresh-banner" style="display:none;"></div>
 
-        <!-- DEVICES SUMMARY -->
-        <a href="#devices-section"
-            style="text-decoration:none; display:flex; align-items:center; justify-content:space-between; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:1rem 1.5rem; margin-bottom:2rem; color:#f1f5f9; flex-wrap:wrap; gap:0.75rem;">
-            <div style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
-                <span style="font-size:0.95rem; font-weight:600;">
-                    <span id="count-devices">0</span> device<span id="devices-plural">s</span> detected
-                </span>
-                <span style="font-size:0.85rem; color:#10b981;">
-                    ✓ <span id="count-devices-native">0</span> likely native
-                </span>
-                <span style="font-size:0.85rem; color:#f59e0b;">
-                    <span id="count-devices-review">0</span> worth a check
-                </span>
-            </div>
-            <span style="color:#64748b; font-size:0.85rem;">View details ↓</span>
-        </a>
+        <!-- NOT CURRENTLY PRIORITIZED — Light Assessment only. Read-only,
+             like everything else on Results; promotion happens in Workspace. -->
+        <div id="not-prioritized-section"></div>
 
         <!-- APP TABLES -->
         <div id="native-section"></div>
@@ -718,31 +454,48 @@
     </div>
 
     <footer>
-        CheckMyARM — ARM Readiness Workspace. Data sourced from Winget, vendor sites, and community reports.
+        CheckMyARM — ARM Readiness Report. Data sourced from Winget, vendor sites, and community reports.
         Free, no ads — <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
             style="color:#3b82f6;">buy us a coffee</a> if it helped. ·
         <a href="/privacy.html" style="color:#64748b;">Privacy</a>
         <br>© 2026 CheckMyARM. All rights reserved.
     </footer>
 
+    <script src="/assessment.js"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get('session');
         const scanLevelParam = params.get('level');
         let currentResults = null;
+        let currentPersonalContext = new Map();
+        // Consumed exactly once here (not inside renderReport(), which can
+        // legitimately run more than once per page load on refresh) — a
+        // second consume would find the sessionStorage key already gone and
+        // silently drop the historical comparison after the first render.
+        const importedAssessmentSnapshot = consumeImportedAssessmentSnapshot(params);
 
-        if (scanLevelParam === 'standard' || scanLevelParam === 'full') {
+        // Set by workspace.html (Recalculate, the "Results" link) and by
+        // index.html's import redirect — both routes never involve a
+        // physical scanner, so this page must never claim one "connected."
+        // See CLAUDE.md, Assessment Pipeline Staging.
+        const arrivedViaAssessmentOnly = params.get('origin') === 'assessment';
+        const loadingHeadingEl = document.getElementById('loading-heading');
+        const loadingDetailEl = document.getElementById('loading-detail');
+
+        function showPreparingAssessment() {
+            if (loadingHeadingEl) loadingHeadingEl.textContent = 'Preparing Assessment';
+            if (loadingDetailEl) loadingDetailEl.textContent = 'Applying your evidence and building your recommendation…';
+        }
+
+        if (arrivedViaAssessmentOnly) {
+            showPreparingAssessment();
+        } else if (scanLevelParam === 'standard' || scanLevelParam === 'full') {
             const levelNote = document.getElementById('loading-level-note');
             if (levelNote) {
-                levelNote.textContent = 'Standard/Full scans check device history — this can take a bit longer than Quick.';
+                levelNote.textContent = 'Standard and Advanced Assessments check device history — this can take a bit longer than Light.';
                 levelNote.style.display = 'block';
             }
         }
-        // MEDIA is deliberately NOT in this list — see isLikelyNative() below.
-        // Camera/HIDClass devices validated cleanly against real hardware
-        // (webcam, HID input), so they stay unconditionally "likely native."
-        const GENERIC_DRIVER_CLASSES = ['Camera', 'HIDClass'];
-        const GENERIC_DRIVER_NAME_PATTERNS = /ipp|mopria|universal print|pcl6 class driver|postscript class driver|microsoft.*class driver/i;
 
         function escapeHtml(str) {
             if (str === null || str === undefined) return '';
@@ -757,549 +510,30 @@
             const isHidden = row.style.display === 'none';
             row.style.display = isHidden ? 'table-row' : 'none';
             btn.textContent = isHidden ? '▼' : '▶';
+            btn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
         }
 
-        // type/idx are safe, programmer-generated values (never raw app data) —
-        // the actual app name is looked up from currentResults rather than
-        // embedded in the onclick attribute, avoiding any HTML/JS-attribute
-        // injection risk from app names containing quote characters.
-        async function submitFinding(btn, type, idx, status) {
-            const block = btn.closest('.findings-block');
-            const buttons = block.querySelectorAll('.findings-btn');
-            buttons.forEach((b) => (b.disabled = true));
-
-            const app = currentResults && currentResults[type] && currentResults[type][idx];
-            const appName = app ? app.name : null;
-            if (!appName || !sessionId) {
-                block.innerHTML = '<span style="color:#ef4444; font-size:0.8rem;">Unable to submit — missing app or session info.</span>';
-                return;
-            }
-
-            const notesInput = block.querySelector('.findings-notes');
-            const notes = notesInput ? notesInput.value.trim() : '';
-
-            try {
-                const res = await fetch('/api/community/submit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        session_id: sessionId,
-                        app_name: appName,
-                        arm_support: status,
-                        notes: notes || undefined,
-                    }),
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) {
-                    throw new Error(data.error || `Request failed (${res.status})`);
-                }
-                block.innerHTML = data.updated
-                    ? '<span style="color:#10b981; font-size:0.8rem;">✓ Updated — thanks for the correction.</span>'
-                    : '<span style="color:#10b981; font-size:0.8rem;">✓ Thanks — your findings were shared.</span>';
-            } catch (err) {
-                buttons.forEach((b) => (b.disabled = false));
-                let errorEl = block.querySelector('.findings-error');
-                if (!errorEl) {
-                    errorEl = document.createElement('div');
-                    errorEl.className = 'findings-error';
-                    errorEl.style.cssText = 'color:#ef4444; font-size:0.75rem; margin-top:0.4rem;';
-                    block.appendChild(errorEl);
-                }
-                errorEl.textContent = 'Failed to submit: ' + err.message;
-            }
+        function workspaceUrl() {
+            return '/workspace.html?session=' + encodeURIComponent(sessionId) + '&level=' + encodeURIComponent(scanLevelParam || '');
         }
 
-        const SUBMISSION_LABELS = {
-            native: 'Native ARM64',
-            'x64-emulated': 'x64 Emulated',
-            'x86-emulated': 'x86 Emulated',
-            unsupported: 'Unsupported',
-        };
-
-        // Best-effort enhancement, called after tables render: pre-fills each findings
-        // block with the caller's own prior submission for that app (if any), so
-        // resubmitting reads as an edit rather than a blank slate. Silently does nothing
-        // if the request fails — the report itself doesn't depend on this.
-        async function applyMySubmissions() {
+        function exportAssessment() {
             if (!currentResults) return;
-            try {
-                const res = await fetch('/api/community/mine');
-                if (!res.ok) return;
-                const data = await res.json();
-                const byName = {};
-                (data.submissions || []).forEach((s) => { byName[s.app_name] = s; });
-
-                ['native', 'emulated', 'unsupported', 'unknown'].forEach((type) => {
-                    (currentResults[type] || []).forEach((app, idx) => {
-                        const sub = app.name && byName[app.name];
-                        if (!sub) return;
-                        const block = document.getElementById(`findings-${type}-${idx}`);
-                        if (!block) return;
-
-                        const notesInput = block.querySelector('.findings-notes');
-                        let priorEl = block.querySelector('.findings-prior');
-                        if (!priorEl) {
-                            priorEl = document.createElement('div');
-                            priorEl.className = 'findings-prior';
-                            priorEl.style.cssText = 'font-size:0.78rem; color:#3b82f6; margin-bottom:0.4rem;';
-                            if (notesInput) block.insertBefore(priorEl, notesInput);
-                            else block.appendChild(priorEl);
-                        }
-                        priorEl.textContent = `You said: ${SUBMISSION_LABELS[sub.submitted_status] || sub.submitted_status} — you can change this below.`;
-
-                        if (notesInput && !notesInput.value && sub.notes) {
-                            notesInput.value = sub.notes;
-                        }
-                    });
-                });
-            } catch (err) {
-                // best-effort — report still works without this
-            }
-        }
-
-        // ---------------------------------------------------------------------------
-        // Assessment Workspace: personal decision layer + recommendation synthesis.
-        // NO server-side persistence, ever — this Map lives only in this tab's memory
-        // (mirrored into sessionStorage purely so an accidental reload doesn't wipe it,
-        // never a new data-collection surface). Continuity across visits is entirely
-        // client-side export/import; turning a decision into a community contribution
-        // still requires the user to click the pre-existing "Share your Findings"
-        // buttons themselves — nothing here ever calls a write endpoint automatically.
-        // ---------------------------------------------------------------------------
-
-        const DECISION_VALUES = ['personally_verified', 'no_longer_use', 'waiting_for_vendor', 'doesnt_matter', 'research_note'];
-        const VERIFIED_STATUS_VALUES = ['native', 'x64-emulated', 'x86-emulated', 'unsupported'];
-        // Bumped by hand alongside releases — no build step exists to auto-inject this.
-        const CMA_VERSION = '1.0.0';
-        const CARRY_FORWARD_KEY = 'ngpcx_carry_forward_v1';
-        const DOESNT_MATTER_WEIGHT = 0.25;
-        const CRITICAL_WEIGHT_MULTIPLIER = 2;
-
-        // Same normalization used project-wide (scan.js classifyApps, merge.js
-        // findExistingId) — reused verbatim rather than reinvented.
-        function normalizeAppName(name) {
-            return (name || '').toLowerCase().replace(/[\s\-_.]/g, '');
-        }
-
-        // id first (stable across renames), normalized name otherwise — matches the
-        // same precedence classifyApps() itself uses when matching against the catalog.
-        function decisionKey(app) {
-            return (app.id && String(app.id).trim()) || normalizeAppName(app.name);
-        }
-
-        const personalDecisions = new Map();
-
-        function getDecision(app) {
-            return personalDecisions.get(decisionKey(app)) || null;
-        }
-
-        // Only ever called from direct user interaction — always refreshes
-        // researched_at, since that's a genuinely new decision/edit. Import/carry-
-        // forward seeding writes into the Map directly (see consumeCarryForward),
-        // bypassing this function so the original researched_at is preserved.
-        function setDecision(app, patch) {
-            const key = decisionKey(app);
-            const existing = personalDecisions.get(key) || {
-                app_name: app.name, app_id: app.id || null,
-                decision: 'research_note', verified_status: undefined,
-                critical_to_me: false, note: '',
-            };
-            const entry = {
-                ...existing, ...patch,
-                app_name: app.name, app_id: app.id || null,
-                researched_at: new Date().toISOString(),
-            };
-            if (entry.decision !== 'personally_verified') delete entry.verified_status;
-            personalDecisions.set(key, entry);
-            return entry;
-        }
-
-        // Every app in the report gets an entry — a research_note default if the user
-        // never touches it — so Export always reflects the FULL report, not just the
-        // apps someone happened to click on. A user re-importing expects to rebuild
-        // their whole workspace, not just the handful of apps they annotated; only
-        // catalog data (score/confidence/arm_support) stays out of the export, per the
-        // original "personal additions only" scope — the app list itself is fair game,
-        // since re-classifying it is exactly what import needs to reconstruct the
-        // report. No-ops if an entry already exists (never overwrites real data).
-        function ensureDecisionEntry(app) {
-            const key = decisionKey(app);
-            if (personalDecisions.has(key)) return;
-            personalDecisions.set(key, {
-                app_name: app.name, app_id: app.id || null,
-                decision: 'research_note', verified_status: undefined,
-                critical_to_me: false, note: '',
-                researched_at: new Date().toISOString(),
-            });
-        }
-
-        // Validates one imported/carried-forward entry against the known enums before
-        // it can ever reach the synthesis math or the DOM. Unrecognized decision/status
-        // values fall back to a safe no-op rather than propagating a bad value into the
-        // whole page's headline numbers.
-        function sanitizeImportedEntry(raw) {
-            if (!raw || typeof raw !== 'object' || typeof raw.app_name !== 'string' || !raw.app_name.trim()) return null;
-            const decision = DECISION_VALUES.includes(raw.decision) ? raw.decision : 'research_note';
-            const hasValidStatus = decision === 'personally_verified' && VERIFIED_STATUS_VALUES.includes(raw.verified_status);
-            const safeDecision = (decision === 'personally_verified' && !hasValidStatus) ? 'research_note' : decision;
-            return {
-                app_name: raw.app_name.trim(),
-                app_id: typeof raw.app_id === 'string' && raw.app_id.trim() ? raw.app_id.trim() : null,
-                decision: safeDecision,
-                verified_status: hasValidStatus ? raw.verified_status : undefined,
-                critical_to_me: raw.critical_to_me === true,
-                note: typeof raw.note === 'string' ? raw.note.slice(0, 2000) : '',
-                researched_at: (typeof raw.researched_at === 'string' && !isNaN(Date.parse(raw.researched_at)))
-                    ? raw.researched_at : new Date().toISOString(),
-            };
-        }
-
-        // Consumed exactly once, gated on an explicit ?carryForward=1 flag — not just
-        // "a stash happens to exist" — so an abandoned rescan or a leftover stash from
-        // an earlier tab can never silently reattach to an unrelated later session.
-        function consumeCarryForward() {
-            if (params.get('carryForward') !== '1') return;
-            const raw = sessionStorage.getItem(CARRY_FORWARD_KEY);
-            sessionStorage.removeItem(CARRY_FORWARD_KEY);
-            if (!raw) return;
-            try {
-                const stash = JSON.parse(raw);
-                if (!stash || !Array.isArray(stash.entries)) return;
-                const seen = new Set();
-                for (const rawEntry of stash.entries) {
-                    const entry = sanitizeImportedEntry(rawEntry);
-                    if (!entry) continue;
-                    const key = entry.app_id || normalizeAppName(entry.app_name);
-                    if (seen.has(key)) continue; // duplicate within the file — keep the first
-                    seen.add(key);
-                    personalDecisions.set(key, entry);
-                }
-            } catch (err) {
-                // corrupt stash — ignore rather than crash the report
-            }
-        }
-
-        function wireDecisionBlock(block, app, type, idx) {
-            const decisionBtns = block.querySelectorAll('.decision-btn');
-            const verifiedRow = block.querySelector('.verified-status-row');
-            const verifiedBtns = block.querySelectorAll('.verified-status-btn');
-            const criticalCheckbox = block.querySelector('.critical-checkbox');
-            const noteInput = block.querySelector('.decision-note');
-            const statusMsg = block.querySelector('.decision-status-msg');
-            const findingsBlock = block.closest('td')?.querySelector('.findings-block');
-
-            function suggestFindingsButton(status) {
-                if (!findingsBlock) return;
-                findingsBlock.querySelectorAll('.findings-btn[data-status]').forEach((b) => {
-                    b.classList.toggle('suggested', !!status && b.dataset.status === status);
-                });
-            }
-
-            function refreshUI() {
-                const current = getDecision(app);
-                decisionBtns.forEach((b) => b.classList.toggle('selected', !!current && current.decision === b.dataset.decision));
-                const showVerified = !!current && current.decision === 'personally_verified';
-                verifiedRow.style.display = showVerified ? 'flex' : 'none';
-                verifiedBtns.forEach((b) => b.classList.toggle('selected', showVerified && current.verified_status === b.dataset.status));
-                criticalCheckbox.checked = !!(current && current.critical_to_me);
-                if (noteInput && document.activeElement !== noteInput) {
-                    noteInput.value = (current && current.note) || '';
-                }
-                suggestFindingsButton(showVerified ? current.verified_status : null);
-                if (showVerified && current.verified_status) {
-                    statusMsg.textContent = 'Matches your personal verdict — click the highlighted button below to share it with the community.';
-                } else {
-                    statusMsg.textContent = '';
-                }
-                // Keep the visible-row badge live on every UI refresh, not just the
-                // once-per-render reattachment pass — otherwise it goes stale the
-                // instant a decision changes without a full renderReport() call.
-                updateVerifiedBadge(app, type, idx);
-            }
-
-            decisionBtns.forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const current = getDecision(app);
-                    const already = current && current.decision === btn.dataset.decision;
-                    if (already) {
-                        setDecision(app, { decision: 'research_note', verified_status: undefined });
-                    } else {
-                        setDecision(app, {
-                            decision: btn.dataset.decision,
-                            verified_status: btn.dataset.decision === 'personally_verified' ? (current && current.verified_status) : undefined,
-                        });
-                    }
-                    refreshUI();
-                    updateSynthesis();
-                });
-            });
-
-            verifiedBtns.forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    setDecision(app, { decision: 'personally_verified', verified_status: btn.dataset.status });
-                    refreshUI();
-                    updateSynthesis();
-                });
-            });
-
-            criticalCheckbox.addEventListener('change', () => {
-                setDecision(app, { critical_to_me: criticalCheckbox.checked });
-                refreshUI();
-                updateSynthesis();
-            });
-
-            let noteDebounce;
-            noteInput.addEventListener('input', () => {
-                clearTimeout(noteDebounce);
-                noteDebounce = setTimeout(() => {
-                    setDecision(app, { note: noteInput.value.trim() });
-                    updateSynthesis();
-                }, 400);
-            });
-
-            refreshUI();
-        }
-
-        function readinessLabelFor(score) {
-            if (score >= 80) return { label: 'Good Fit', color: '#10b981' };
-            if (score >= 50) return { label: 'Workable with Caveats', color: '#f59e0b' };
-            return { label: 'Not Recommended Yet', color: '#ef4444' };
-        }
-
-        const CONFIDENCE_TIERS = ['Very Limited Data', 'Limited Data', 'Moderate Confidence', 'High Confidence'];
-        function confidenceTierIndex(pct) {
-            if (pct >= 80) return 3;
-            if (pct >= 50) return 2;
-            if (pct >= 25) return 1;
-            return 0;
-        }
-
-        // Weighted, decision-adjusted synthesis. Reuses the exact score-formula SHAPE
-        // classifyApps() already uses (native=100, (emulated+unknown)=60,
-        // unsupported=-20, weighted average), generalized from raw bucket counts to
-        // per-app weighted contributions — not a new algorithm invented from scratch.
-        // Entirely client-side: this is the one place personal (never-persisted)
-        // decision state and catalog readiness data actually meet.
-        function computeSynthesis(results) {
-            const allApps = [];
-            ['native', 'emulated', 'unsupported', 'unknown'].forEach((bucket) => {
-                (results[bucket] || []).forEach((app) => allApps.push({ app, bucket }));
-            });
-
-            let weightedNumerator = 0;
-            let weightedTotal = 0;
-            let knownWeighted = 0;
-            let excludedCount = 0;
-            let unresolvedCount = 0;
-            let unresolvedCriticalCount = 0;
-            let verifiedCount = 0;
-            let waitingCount = 0;
-
-            for (const { app, bucket } of allApps) {
-                const decision = getDecision(app);
-                const decisionValue = decision ? decision.decision : null;
-
-                if (decisionValue === 'no_longer_use') {
-                    excludedCount++;
-                    continue;
-                }
-
-                let weight = 1.0;
-                if (decisionValue === 'doesnt_matter') weight *= DOESNT_MATTER_WEIGHT;
-                if (decision && decision.critical_to_me) weight *= CRITICAL_WEIGHT_MULTIPLIER;
-
-                let effectiveBucket = bucket;
-                let isKnown = bucket !== 'unknown';
-                if (decisionValue === 'personally_verified' && decision.verified_status) {
-                    effectiveBucket = decision.verified_status === 'native' ? 'native'
-                        : decision.verified_status === 'unsupported' ? 'unsupported'
-                            : 'emulated'; // x64/x86-emulated both map to the same weight bucket
-                    isKnown = true;
-                    verifiedCount++;
-                }
-
-                if (decisionValue === 'waiting_for_vendor') waitingCount++;
-
-                const points = effectiveBucket === 'native' ? 100
-                    : effectiveBucket === 'unsupported' ? -20
-                        : 60; // emulated + unknown, matches classifyApps() exactly
-
-                weightedNumerator += points * weight;
-                weightedTotal += weight;
-                if (isKnown) {
-                    knownWeighted += weight;
-                } else {
-                    unresolvedCount++;
-                    if (decision && decision.critical_to_me) unresolvedCriticalCount++;
-                }
-            }
-
-            if (weightedTotal === 0) {
-                return { empty: true, excludedCount };
-            }
-
-            const score = Math.round((weightedNumerator / (weightedTotal * 100)) * 100);
-            const readiness = readinessLabelFor(score);
-
-            const confidencePct = Math.round((knownWeighted / weightedTotal) * 100);
-            let tierIdx = confidenceTierIndex(confidencePct);
-            // A worried buyer's confidence should depend more on the apps they said
-            // matter most — a simple, explainable rule, not another weighted term.
-            if (unresolvedCriticalCount > 0 && tierIdx > 0) tierIdx -= 1;
-            const confidenceLabel = CONFIDENCE_TIERS[tierIdx];
-            const confidenceColor = tierIdx >= 3 ? '#10b981' : tierIdx >= 2 ? '#f59e0b' : '#ef4444';
-
-            // Explanation is template-filled from the same counts that drove the numbers
-            // above — never free-form generation — so the "why" is always traceable.
-            const parts = [];
-            const nativeCount = (results.native || []).length;
-            const countedTotal = allApps.length - excludedCount;
-            parts.push(`${nativeCount} of ${countedTotal} app${countedTotal === 1 ? '' : 's'} run${countedTotal === 1 ? 's' : ''} natively${verifiedCount > 0 ? `, including ${verifiedCount} you personally verified` : ''}`);
-            if (unresolvedCount > 0) {
-                parts.push(`${unresolvedCount} unresolved app${unresolvedCount === 1 ? '' : 's'}${unresolvedCriticalCount > 0 ? ` (${unresolvedCriticalCount} marked critical)` : ''} ${unresolvedCount === 1 ? 'is' : 'are'} holding back a higher confidence rating`);
-            }
-            if (waitingCount > 0) {
-                parts.push(`${waitingCount} waiting on vendor update${waitingCount === 1 ? '' : 's'}`);
-            }
-            // Excluding apps must never silently inflate confidence without disclosure —
-            // otherwise this could read as gaming its own metric instead of reflecting
-            // genuine completeness.
-            if (excludedCount > 0) {
-                parts.push(`${excludedCount} excluded because you said you no longer use ${excludedCount === 1 ? 'it' : 'them'}`);
-            }
-            const explanation = `${readiness.label}, ${confidenceLabel} — ${parts.join('; ')}.`;
-
-            return { empty: false, score, readiness, confidenceLabel, confidenceColor, explanation };
-        }
-
-        function updateSynthesis() {
-            if (!currentResults) return;
-            const synthesis = computeSynthesis(currentResults);
-            const readinessEl = document.getElementById('readiness-label');
-            const explanationEl = document.getElementById('recommendation-explanation');
-            const confLabelEl = document.getElementById('confidence-label');
-            const confBarEl = document.getElementById('confidence-bar');
-
-            if (synthesis.empty) {
-                if (readinessEl) { readinessEl.textContent = 'Nothing to Assess'; readinessEl.style.color = '#64748b'; }
-                if (explanationEl) explanationEl.textContent = 'You\'ve marked every app as no longer used — nothing left to assess. Adjust your decisions above to see a recommendation.';
-                if (confLabelEl) { confLabelEl.textContent = ''; }
-                if (confBarEl) confBarEl.style.width = '0%';
-                return;
-            }
-
-            if (readinessEl) {
-                readinessEl.textContent = synthesis.readiness.label;
-                readinessEl.style.color = synthesis.readiness.color;
-            }
-            if (explanationEl) explanationEl.textContent = synthesis.explanation;
-            if (confLabelEl) {
-                confLabelEl.textContent = synthesis.confidenceLabel;
-                confLabelEl.style.color = synthesis.confidenceColor;
-            }
-            if (confBarEl) {
-                const pctForBar = synthesis.confidenceLabel === 'High Confidence' ? 100
-                    : synthesis.confidenceLabel === 'Moderate Confidence' ? 66
-                        : synthesis.confidenceLabel === 'Limited Data' ? 33 : 10;
-                confBarEl.style.width = pctForBar + '%';
-                confBarEl.style.background = synthesis.confidenceColor;
-            }
-        }
-
-        // Reattachment pass, called at the end of every renderReport() — mirrors the
-        // exact pattern applyMySubmissions() already uses, so personal decisions
-        // survive Refresh/Rescan/import re-renders regardless of how bucket membership
-        // or row index shifts, since everything here is keyed by app id/name, not by
-        // DOM position.
-        // Visible-row badge for personally_verified overrides — the row stays in its
-        // original bucket/table, but the synthesis math treats it differently, so that
-        // override must be visible without expanding the detail row. Called both from
-        // the initial reattachment pass AND live from wireDecisionBlock()'s handlers —
-        // it must never depend only on the once-per-render pass, or the badge goes
-        // stale the moment a decision changes without a full re-render.
-        function updateVerifiedBadge(app, type, idx) {
-            const current = getDecision(app);
-            const row = document.getElementById(`row-${type}-${idx}`);
-            const firstCell = row && row.querySelector('td');
-            if (!firstCell) return;
-            let badge = firstCell.querySelector('.verified-badge');
-            if (current && current.decision === 'personally_verified' && current.verified_status) {
-                if (!badge) {
-                    badge = document.createElement('span');
-                    badge.className = 'verified-badge';
-                    firstCell.appendChild(badge);
-                }
-                badge.textContent = `✓ You verified: ${SUBMISSION_LABELS[current.verified_status] || current.verified_status}`;
-            } else if (badge) {
-                badge.remove();
-            }
-        }
-
-        function applyPersonalDecisions() {
-            if (!currentResults) return;
-            ['native', 'emulated', 'unsupported', 'unknown'].forEach((type) => {
-                (currentResults[type] || []).forEach((app, idx) => {
-                    ensureDecisionEntry(app);
-                    const decisionBlock = document.getElementById(`decision-${type}-${idx}`);
-                    if (decisionBlock) wireDecisionBlock(decisionBlock, app, type, idx);
-                    updateVerifiedBadge(app, type, idx);
-                });
-            });
-            updateSynthesis();
-        }
-
-        function exportPersonalNotes() {
-            const entries = Array.from(personalDecisions.values()).map((e) => ({
-                app_name: e.app_name,
-                app_id: e.app_id || undefined,
-                decision: e.decision,
-                verified_status: e.decision === 'personally_verified' ? e.verified_status : undefined,
-                critical_to_me: e.critical_to_me || undefined,
-                note: e.note || undefined,
-                researched_at: e.researched_at,
-            }));
-            const payload = {
-                format_version: 1,
-                cma_version: CMA_VERSION,
-                scanner_version: null,
-                exported_at: new Date().toISOString(),
-                entries,
-            };
+            const payload = buildExportPayload(currentResults, currentPersonalContext);
             const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `checkmyarm-workspace-${new Date().toISOString().slice(0, 10)}.json`;
+            link.download = `checkmyarm-assessment-${new Date().toISOString().slice(0, 10)}.json`;
             link.click();
             URL.revokeObjectURL(url);
         }
 
-        document.getElementById('export-btn').addEventListener('click', exportPersonalNotes);
-
-        document.getElementById('rescan-btn').addEventListener('click', () => {
-            if (!confirm('Rescan will replace your current app list with a fresh scan. Your Workspace notes will carry forward for apps that still match. Continue?')) return;
-            const entries = Array.from(personalDecisions.values()).map((e) => ({
-                app_name: e.app_name,
-                app_id: e.app_id || undefined,
-                decision: e.decision,
-                verified_status: e.decision === 'personally_verified' ? e.verified_status : undefined,
-                critical_to_me: e.critical_to_me || undefined,
-                note: e.note || undefined,
-                researched_at: e.researched_at,
-            }));
-            sessionStorage.setItem(CARRY_FORWARD_KEY, JSON.stringify({ entries, source: 'rescan' }));
-            window.location.href = '/?rescan=1';
-        });
-
+        document.getElementById('export-btn').addEventListener('click', exportAssessment);
         document.getElementById('print-btn').addEventListener('click', () => window.print());
 
-        consumeCarryForward();
-
-        // Populates the nav sign-in/account indicator and, when OAuth is enabled and
-        // the visitor isn't signed in, the "sign in to have your contribution carry
-        // more weight" hint on each findings block. Login is entirely optional — if
-        // OAuth isn't enabled (not yet validated in production) or the request fails,
-        // this just leaves the anonymous-only UI as-is.
+        // Populates the nav sign-in/account indicator. Login is entirely
+        // optional and unrelated to the assessment itself.
         async function loadAuthStatus() {
             const authEl = document.getElementById('auth-status');
             try {
@@ -1315,11 +549,11 @@
                     if (authEl) {
                         authEl.innerHTML = `<span class="back-link">Signed in as ${escapeHtml(data.user.displayName || 'you')}</span> · <a href="/auth/logout" class="back-link">Log out</a>`;
                     }
-                    const workspaceEl = document.getElementById('workspace-nav');
-                    if (workspaceEl && (data.user.role === 'researcher' || data.user.role === 'admin')) {
+                    const toolsEl = document.getElementById('workspace-nav');
+                    if (toolsEl && (data.user.role === 'researcher' || data.user.role === 'admin')) {
                         const isAdmin = data.user.role === 'admin';
                         const href = isAdmin ? '/admin-dashboard.html' : '/admin-research.html';
-                        workspaceEl.innerHTML = `<a href="${href}" class="back-link">Tools</a>`;
+                        toolsEl.innerHTML = `<a href="${href}" class="back-link">Tools</a>`;
                     }
                     return;
                 }
@@ -1335,10 +569,6 @@
                     }
                     authEl.innerHTML = links.join(' · ');
                 }
-                document.querySelectorAll('.findings-signin-hint').forEach((el) => {
-                    el.textContent = 'Sign in to have your contribution carry more weight.';
-                    el.style.display = 'block';
-                });
             } catch (err) {
                 // best-effort — anonymous workflow still works without this
             }
@@ -1367,13 +597,11 @@
             requestAnimationFrame(tick);
         }
 
-        function buildAppSearchUrl(appName, mode) {
-            const query = mode === 'unknown'
-                ? `${appName} ARM64 Windows compatibility`
-                : `${appName} ARM64 native version`;
-            return 'https://www.google.com/search?q=' + encodeURIComponent(query);
-        }
-
+        // Read-only table — no decision/findings controls, and no research
+        // links (WORKSPACE.md: "Check →" belongs to the Workspace, not
+        // Results). Inspecting evidence (Source/Confidence/notes) is fine
+        // here; editing or researching it is not. Each row instead links
+        // into its corresponding Workspace item — a doorway, not a control.
         function buildTable(apps, type) {
             if (!apps || apps.length === 0) return '';
 
@@ -1385,19 +613,19 @@
                 system: '⚙ System Component'
             };
 
-            const showActionColumn = type === 'unknown' || type === 'emulated';
-            const actionLabel = type === 'unknown' ? 'Check' : 'Check for update';
-            const colCount = showActionColumn ? 5 : 4;
+            const colCount = 4;
 
             const rows = apps.map((app, idx) => {
                 const name = escapeHtml(app.name || app.id);
                 const packageId = escapeHtml(app.id || '');
                 const version = escapeHtml(app.version || '—');
 
-                let actionCell = '';
-                if (showActionColumn) {
-                    actionCell = `<td><a href="${buildAppSearchUrl(name, type)}" target="_blank" rel="noopener" class="badge check" style="text-decoration:none;">${actionLabel} →</a></td>`;
-                }
+                // System components have no Personal Context/decision concept
+                // (excluded from the Workspace's Needs Attention/Already
+                // Considered grouping entirely, per WORKSPACE.md) — no link.
+                const workspaceLink = type !== 'system'
+                    ? ` <a class="workspace-link" href="${workspaceUrl()}#${itemAnchorId(decisionKey(app), false)}" style="font-size:0.72rem; color:#3b82f6; text-decoration:none; margin-left:0.5rem; white-space:nowrap;">Workspace →</a>`
+                    : '';
 
                 const detailId = `detail-${type}-${idx}`;
                 const source = escapeHtml(app.source || 'Unknown');
@@ -1407,56 +635,13 @@
                 const notes = escapeHtml(app.notes || '');
                 const sourceUrl = app.source_url ? escapeHtml(app.source_url) : null;
 
-                const findingsId = `findings-${type}-${idx}`;
-                const findingsIntro = type === 'unknown'
-                    ? "Researched this app's ARM64 compatibility? Let us know what you found."
-                    : 'What did you actually experience with this app?';
-                const findingsBlock = type === 'system' ? '' : `
-            <div class="findings-block" id="${findingsId}" style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #1e293b;">
-              <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.4rem;">Share your Findings — ${findingsIntro}</div>
-              <input type="text" class="findings-notes" placeholder="Notes (optional)" />
-              <div class="findings-actions">
-                <button class="findings-btn" data-status="native" onclick="submitFinding(this, '${type}', ${idx}, 'native')">Native</button>
-                <button class="findings-btn" data-status="x64-emulated" onclick="submitFinding(this, '${type}', ${idx}, 'x64-emulated')">x64 Emulated</button>
-                <button class="findings-btn" data-status="x86-emulated" onclick="submitFinding(this, '${type}', ${idx}, 'x86-emulated')">x86 Emulated</button>
-                <button class="findings-btn" data-status="unsupported" onclick="submitFinding(this, '${type}', ${idx}, 'unsupported')">Unsupported</button>
-              </div>
-              <div class="findings-signin-hint" style="display:none; font-size:0.75rem; color:#64748b; margin-top:0.4rem;"></div>
-            </div>
-        `;
-
-                // Personal-decision layer — session-only, never written to the server.
-                // "Share this with the community" isn't a separate submit action: picking a
-                // verified status here just highlights the matching button in the findings
-                // block above (via .suggested), so any actual submission still goes through
-                // the user explicitly clicking that pre-existing button themselves.
-                const decisionId = `decision-${type}-${idx}`;
-                const decisionBlock = type === 'system' ? '' : `
-            <div class="decision-block" id="${decisionId}">
-              <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.4rem;">Your Assessment — how does this factor into your decision?</div>
-              <div class="findings-actions">
-                <button class="decision-btn" data-decision="personally_verified">I verified this</button>
-                <button class="decision-btn" data-decision="waiting_for_vendor">Waiting on vendor</button>
-                <button class="decision-btn" data-decision="doesnt_matter">Doesn't matter to me</button>
-                <button class="decision-btn" data-decision="no_longer_use">I no longer use this</button>
-              </div>
-              <div class="verified-status-row findings-actions" style="display:none; margin-top:0.5rem;">
-                <span style="font-size:0.75rem; color:#64748b; align-self:center;">Verified as:</span>
-                <button class="verified-status-btn" data-status="native">Native</button>
-                <button class="verified-status-btn" data-status="x64-emulated">x64 Emulated</button>
-                <button class="verified-status-btn" data-status="x86-emulated">x86 Emulated</button>
-                <button class="verified-status-btn" data-status="unsupported">Unsupported</button>
-              </div>
-              <label class="critical-label">
-                <input type="checkbox" class="critical-checkbox" /> Critical to my decision
-              </label>
-              <input type="text" class="decision-note" placeholder="Personal note (optional — stays on your device)" />
-              <div class="decision-status-msg"></div>
-            </div>
-        `;
-
                 const compatNote = notes
                     ? `<div class="compat-note"><strong>Compatibility Notes</strong>${notes}</div>`
+                    : '';
+
+                const decision = type !== 'system' ? currentPersonalContext.get(decisionKey(app)) : null;
+                const verifiedBadge = (decision && decision.decision === 'personally_verified' && decision.verified_status)
+                    ? `<span class="verified-badge">✓ You verified: ${escapeHtml(SUBMISSION_LABELS[decision.verified_status] || decision.verified_status)}</span>`
                     : '';
 
                 const detailRow = `
@@ -1467,8 +652,6 @@
             &nbsp;·&nbsp;
             <strong style="color:#94a3b8;">Confidence:</strong> ${confidence}
             ${sourceUrl ? `<br><a href="${sourceUrl}" target="_blank" rel="noopener" style="color:#3b82f6;">View source →</a>` : ''}
-            ${decisionBlock}
-            ${findingsBlock}
           </td>
         </tr>
       `;
@@ -1476,12 +659,11 @@
                 return `
         <tr id="row-${type}-${idx}">
           <td>
-            <button onclick="toggleAppDetail('${detailId}', this)" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:0.75rem;padding:0;margin-right:0.5rem;">▶</button>${name}
+            <button onclick="toggleAppDetail('${detailId}', this)" aria-expanded="false" aria-label="Show evidence detail for ${name}" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:0.75rem;padding:0;margin-right:0.5rem;">▶</button>${name}${verifiedBadge}${workspaceLink}
           </td>
           <td style="color:#64748b;font-size:0.8rem">${packageId}</td>
           <td>${version}</td>
           <td><span class="badge ${type}"${type === 'unknown' ? ' title="Emulation likely, but not yet verified."' : ''}>${labels[type]}</span></td>
-          ${actionCell}
         </tr>
         ${detailRow}
       `;
@@ -1491,8 +673,7 @@
                 ? '<p style="color:#64748b; font-size:0.8rem; margin:-0.5rem 0 0.75rem 0;">Emulation likely, but not yet verified. <a href="/about.html#methodology" style="color:#3b82f6;">Why?</a></p>'
                 : '';
 
-            return `
-        <div class="section-title">${labels[type]} (${apps.length})</div>
+            const table = `
         ${sectionCaption}
         <table class="app-table">
           <thead>
@@ -1501,37 +682,29 @@
               <th>Package ID</th>
               <th>Version</th>
               <th>Status</th>
-              ${showActionColumn ? '<th></th>' : ''}
             </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
       `;
-        }
 
-        // Presentation style for the device driver-check column.
-        // 'badge' = pill button in its own column (current choice)
-        // 'inline' = plain text link appended next to the device name
-        const DEVICE_LINK_STYLE = 'badge';
-
-        function isLikelyNative(device) {
-            if (device.class === 'MEDIA') {
-                // MEDIA covers both plain USB Audio Class devices (mic/headset —
-                // genuinely Windows-inbox-driven) and professional audio
-                // interfaces (often vendor ASIO drivers) — the class alone can't
-                // tell these apart, so require corroborating evidence
-                // (driver_provider, only collected in Standard/Full mode) before
-                // claiming native. No evidence available (Quick mode, or the
-                // lookup failed) means "Check", not an optimistic guess.
-                return !!device.driver_provider && device.driver_provider.toLowerCase().includes('microsoft');
+            // System components are excluded from scoring and from the Workspace's
+            // Needs Attention queue entirely — collapsed by default so they read as
+            // "here for reference" rather than something needing the same attention
+            // as the four scored buckets above. Still fully inspectable on request.
+            if (type === 'system') {
+                return `
+        <details class="collapsible-details">
+          <summary class="section-title" style="cursor:pointer; display:list-item;">${labels[type]} (${apps.length}) — not evaluated, does not affect your score</summary>
+          ${table}
+        </details>
+      `;
             }
-            if (GENERIC_DRIVER_CLASSES.includes(device.class)) return true;
-            return GENERIC_DRIVER_NAME_PATTERNS.test(device.name);
-        }
 
-        function buildDriverSearchUrl(device) {
-            const query = device.manufacturer ? `${device.manufacturer} ${device.name} ARM64 driver` : `${device.name} ARM64 driver`;
-            return 'https://www.google.com/search?q=' + encodeURIComponent(query);
+            return `
+        <div class="section-title">${labels[type]} (${apps.length})</div>
+        ${table}
+      `;
         }
 
         function buildDeviceTable(devices) {
@@ -1544,21 +717,17 @@
                 const recency = device.days_ago === null || device.days_ago === undefined
                     ? '—'
                     : device.days_ago === 0 ? 'Currently connected' : `${device.days_ago}d ago`;
-
-                let checkCell;
-                if (isGeneric) {
-                    checkCell = `<span class="badge native">✓ Likely native</span>`;
-                } else {
-                    const url = buildDriverSearchUrl(device);
-                    checkCell = `<a href="${url}" target="_blank" rel="noopener" class="badge check" style="text-decoration:none;">Check →</a>`;
-                }
+                const statusCell = isGeneric
+                    ? `<span class="badge native">✓ Likely native</span>`
+                    : `<span class="badge check">Worth a check</span>`;
+                const anchor = itemAnchorId(deviceDecisionKey(device), true);
 
                 return `
         <tr>
-          <td>${safeName}</td>
+          <td>${safeName} <a class="workspace-link" href="${workspaceUrl()}#${anchor}" style="font-size:0.72rem; color:#3b82f6; text-decoration:none; margin-left:0.5rem; white-space:nowrap;">Workspace →</a></td>
           <td style="color:#64748b;font-size:0.8rem">${safeClass}${device.is_network ? ' (network)' : ''}</td>
           <td style="color:#64748b;font-size:0.85rem">${recency}</td>
-          <td>${checkCell}</td>
+          <td>${statusCell}</td>
         </tr>
       `;
             }).join('');
@@ -1571,7 +740,7 @@
               <th>Device</th>
               <th>Category</th>
               <th>Last seen</th>
-              <th>Driver check</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -1582,16 +751,204 @@
           card readers, biometric readers). "Likely native" reflects standard USB device classes with built-in
           Windows drivers — vendor companion apps for extra features, and biometric/smart-card readers, may still
           need a closer look. Audio devices (microphones, headsets, and professional audio interfaces alike) show
-          "Check" unless Standard or Full scan confirms a Windows-provided driver, since this class covers both.
+          "Check" unless a Standard or Advanced Assessment confirms a Windows-provided driver, since this class covers both.
           Some devices, including generic storage and virtual system devices, aren't evaluated.
         </p>
       `;
         }
 
+        // Reduction narrative + Primary Reasons — the "already did the work"
+        // moment. Deliberately non-interactive: each preview item is text and
+        // a reason chip, never a control. See WORKSPACE.md, The Assessment Loop.
+        function renderReductionSummary(results, synthesis) {
+            const apps = [];
+            ['native', 'emulated', 'unsupported', 'unknown'].forEach((bucket) => {
+                (results[bucket] || []).forEach((app) => apps.push({ app, bucket }));
+            });
+            const devices = results.devices || [];
+
+            const needsAttention = [];
+            let alreadyCount = 0;
+
+            apps.forEach(({ app, bucket }) => {
+                const decision = currentPersonalContext.get(decisionKey(app));
+                const state = classifyAssessmentItem({ decision, bucket, isLikelyNativeDevice: null });
+                if (state === 'needsAttention') {
+                    const imp = defaultImportanceForApp(app);
+                    needsAttention.push({ name: app.name, reason: imp.reason, level: imp.level, anchor: itemAnchorId(decisionKey(app), false) });
+                } else {
+                    alreadyCount++;
+                }
+            });
+
+            devices.forEach((device) => {
+                const decision = currentPersonalContext.get(deviceDecisionKey(device));
+                const nativeLikely = isLikelyNative(device);
+                const state = classifyAssessmentItem({ decision, bucket: null, isLikelyNativeDevice: nativeLikely });
+                if (state === 'needsAttention') {
+                    const imp = defaultImportanceForDevice(device);
+                    needsAttention.push({ name: device.name, reason: imp.reason, level: imp.level, anchor: itemAnchorId(deviceDecisionKey(device), true) });
+                } else {
+                    alreadyCount++;
+                }
+            });
+
+            const total = apps.length + devices.length;
+            const summaryEl = document.getElementById('reduction-summary');
+            const textEl = document.getElementById('reduction-text');
+            const listEl = document.getElementById('preview-list');
+            const refineCta = document.getElementById('refine-cta');
+            const refineLink = document.getElementById('refine-link');
+
+            if (refineCta) refineCta.href = workspaceUrl();
+            if (refineLink) refineLink.href = workspaceUrl();
+
+            if (total === 0) {
+                if (summaryEl) summaryEl.style.display = 'none';
+                return;
+            }
+
+            if (summaryEl) summaryEl.style.display = 'block';
+            const openCount = needsAttention.length;
+            if (textEl) {
+                // Two distinct sentences, deliberately not merged: the first
+                // is about RESEARCH STATUS (how much is already resolved vs.
+                // worth a closer look — unchanged from before). The second,
+                // shown only when Light Assessment actually deprioritized
+                // something, is about SCORING INFLUENCE — how many observed
+                // apps are shaping the recommendation vs. sitting visible but
+                // not currently counted. Same underlying data as the
+                // "Not Currently Prioritized" section below; this is the
+                // one-sentence version of that distinction. Omitted entirely
+                // under Standard/Advanced, where nothing is deprioritized and
+                // the sentence would just restate the app count.
+                const influenceSentence = (synthesis && !synthesis.empty && synthesis.deprioritizedCount > 0)
+                    ? ` Of <strong>${synthesis.totalAppCount}</strong> application${synthesis.totalAppCount === 1 ? '' : 's'} identified, <strong>${synthesis.countedTotal}</strong> show${synthesis.countedTotal === 1 ? 's' : ''} strong evidence of being part of your workflow and ${synthesis.countedTotal === 1 ? 'is' : 'are'} shaping this recommendation — <strong>${synthesis.deprioritizedCount}</strong> more ${synthesis.deprioritizedCount === 1 ? 'is' : 'are'} not currently prioritized, but stay${synthesis.deprioritizedCount === 1 ? 's' : ''} visible and can be promoted anytime.`
+                    : '';
+                textEl.innerHTML = `We evaluated <strong>${total}</strong> application${total === 1 ? '' : 's'} and device${total === 1 ? '' : 's'}. ` +
+                    `<strong>${alreadyCount}</strong> already provide${alreadyCount === 1 ? 's' : ''} enough information to support this assessment. ` +
+                    (openCount > 0
+                        ? `Only <strong>${openCount}</strong> could benefit from additional context or a closer look.`
+                        : `Nothing else needs a closer look right now.`) +
+                    influenceSentence;
+            }
+
+            const order = { high: 0, normal: 1, low: 2 };
+            needsAttention.sort((a, b) => order[a.level] - order[b.level]);
+            const preview = needsAttention.slice(0, 6);
+
+            if (listEl) {
+                listEl.innerHTML = preview.map((item) => `
+          <a class="preview-item" href="${workspaceUrl()}#${item.anchor}">
+            <span class="preview-item-name">${escapeHtml(item.name)}</span>
+            ${item.reason ? `<span class="reason-chip">${escapeHtml(item.reason)}</span>` : '<span class="reason-chip">Worth checking</span>'}
+          </a>
+        `).join('');
+            }
+        }
+
+        function renderPrimaryReasons(synthesis) {
+            const wrap = document.getElementById('primary-reasons');
+            const list = document.getElementById('reason-list');
+            if (!wrap || !list) return;
+            if (!synthesis || synthesis.empty || !synthesis.reasons || synthesis.reasons.length === 0) {
+                wrap.style.display = 'none';
+                return;
+            }
+            wrap.style.display = 'block';
+            list.innerHTML = synthesis.reasons.map(({ app, bucket, kind }) => {
+                const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported' };
+                const anchor = itemAnchorId(decisionKey(app), false);
+                // Two visually distinct kinds, never blended into one badge
+                // style — a score-driving app (native/unsupported) vs. an
+                // unresolved item YOU marked critical that's actively
+                // capping Confidence. Same list, clearly different reasons.
+                const badge = kind === 'confidence'
+                    ? `<span class="badge unknown" title="Unresolved and marked critical to you — this is what's holding Confidence back.">⚠ Limiting confidence</span>`
+                    : `<span class="badge ${bucket}">${labels[bucket] || bucket}</span>`;
+                return `
+          <a class="reason-item" href="${workspaceUrl()}#${anchor}">
+            <span class="reason-item-name">${escapeHtml(app.name)}</span>
+            ${badge}
+          </a>
+        `;
+            }).join('');
+        }
+
+        // Not the same list as the reduction narrative below (that's about
+        // research status — needs attention vs. already considered — and
+        // applies in every mode). This is about SCORING inclusion, only
+        // relevant when Light Assessment excluded low-signal apps from the
+        // synthesis. An app can be in both, neither, or either — orthogonal
+        // axes. Read-only, collapsed by default, like System Components.
+        // Shown only when this session was created from an imported export
+        // file that carried an assessment_snapshot (the three-layer export
+        // format — see assessment.js). Purely a read-only comparison: the
+        // historical numbers are frozen exactly as exported, never
+        // recomputed here, sitting next to the freshly (re)calculated
+        // current assessment below. Idempotent removal like every other
+        // dynamically-inserted note on this page (see CLAUDE.md, Report
+        // refresh gotcha) — harmless if renderReport() runs more than once.
+        function renderHistoricalComparison(importedSnapshot, synthesis) {
+            const container = document.getElementById('historical-comparison');
+            if (!container) return;
+            if (!importedSnapshot || synthesis.empty) {
+                container.style.display = 'none';
+                container.innerHTML = '';
+                return;
+            }
+            const exportedAt = importedSnapshot.catalog_snapshot_at
+                ? new Date(importedSnapshot.catalog_snapshot_at).toLocaleDateString()
+                : null;
+            const histLabel = importedSnapshot.readiness_label ? escapeHtml(importedSnapshot.readiness_label) : '—';
+            const histScore = (importedSnapshot.score !== null && importedSnapshot.score !== undefined) ? importedSnapshot.score : '—';
+            const histConf = importedSnapshot.confidence_label ? escapeHtml(importedSnapshot.confidence_label) : '—';
+            container.style.display = 'block';
+            container.innerHTML = `
+        <div class="refresh-banner" style="border-color:rgba(148,163,184,0.3); background:rgba(148,163,184,0.06);">
+          <strong style="color:#cbd5e1; font-size:0.85rem;">Comparing against an imported assessment${exportedAt ? ' from ' + exportedAt : ''}</strong>
+          <span style="font-size:0.82rem; color:#94a3b8;">
+            At import: <strong style="color:#e2e8f0;">${histLabel}</strong>, Score ${histScore}, ${histConf}
+            &nbsp;·&nbsp;
+            Now: <strong style="color:#e2e8f0;">${synthesis.readiness.label}</strong>, Score ${synthesis.score}, ${synthesis.confidenceLabel}
+          </span>
+          <span style="font-size:0.75rem; color:#64748b;">The imported numbers are frozen from when you exported them — this session's numbers reflect the current catalog and your current Workspace notes.</span>
+        </div>
+      `;
+        }
+
+        function renderNotPrioritized(synthesis) {
+            const container = document.getElementById('not-prioritized-section');
+            if (!container) return;
+            if (!synthesis || !synthesis.deprioritized || synthesis.deprioritized.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', unknown: '? Unknown' };
+            const rows = synthesis.deprioritized.map(({ app, bucket }) => {
+                const anchor = itemAnchorId(decisionKey(app), false);
+                return `
+          <a class="preview-item" href="${workspaceUrl()}#${anchor}">
+            <span class="preview-item-name">${escapeHtml(app.name)}</span>
+            <span class="badge ${bucket}">${labels[bucket] || bucket}</span>
+          </a>
+        `;
+            }).join('');
+            container.innerHTML = `
+        <details class="collapsible-details">
+          <summary class="section-title" style="cursor:pointer; display:list-item;">Not Currently Prioritized (${synthesis.deprioritized.length})</summary>
+          <p style="color:#94a3b8; font-size:0.85rem; margin:0.5rem 0 0.75rem 0;">
+            These aren't currently shaping your Score or Confidence — promote any that matter to you from the Workspace.
+          </p>
+          <div class="preview-list">${rows}</div>
+        </details>
+      `;
+        }
 
         function renderReport(data) {
             const results = data.results;
             currentResults = results;
+            currentPersonalContext = loadPersonalContext(sessionId, params);
 
             // System info
             if (results.system) {
@@ -1607,24 +964,22 @@
                 }
             }
 
-            // Score — the raw catalog gauge stays exactly as before, untouched by
-            // personal decisions. The new Readiness label + Recommendation Confidence
-            // (computed in applyPersonalDecisions() -> updateSynthesis(), called below
-            // once the tables exist) are the weighted, decision-aware outputs.
             animateScore(results.score || 0);
 
-            // Scan time
             if (results.lastScanned) {
                 const d = new Date(results.lastScanned);
                 document.getElementById('scan-time').textContent =
                     'Scanned ' + d.toLocaleString();
             }
 
-            // Scan level
+            // "Light/Standard/Advanced" are assessment levels, not scan
+            // depths — see CLAUDE.md, Assessment levels. results.scan_mode
+            // keeps its original wire values ('quick'/'standard'/'full')
+            // unchanged; only the user-facing label and framing changed.
             const levelLabels = {
-                quick: { title: 'Quick scan', detail: 'recently used apps and currently connected devices' },
-                standard: { title: 'Standard scan', detail: 'all installed apps used in the last 60 days, and most devices used recently' },
-                full: { title: 'Full scan', detail: 'everything — all apps and device history, including system items' }
+                quick: { title: 'Light Assessment', detail: 'a fast recommendation built from the apps and devices you actually use' },
+                standard: { title: 'Standard Assessment', detail: 'the recommended balance — broader app coverage and device history for higher confidence' },
+                full: { title: 'Advanced Assessment', detail: 'maximum visibility — every app, device, and system component exposed' }
             };
             const level = levelLabels[results.scan_mode];
             if (level) {
@@ -1632,12 +987,10 @@
                     `${level.title} <span style="font-weight:400; color:#64748b;">— ${level.detail}</span>`;
             }
 
-            document.getElementById('printer-note').textContent = 'Installed printers are always included, regardless of scan level.';
+            document.getElementById('printer-note').textContent = 'Installed printers are always included, regardless of assessment level.';
 
-            // renderReport can run more than once (refresh) — remove any notes
-            // from a previous render before adding new ones, so they don't
-            // accumulate as duplicate rows on every refresh.
             document.getElementById('quick-mode-note')?.remove();
+            document.getElementById('quick-apps-note')?.remove();
             document.getElementById('standard-mode-note')?.remove();
             document.getElementById('system-component-note')?.remove();
 
@@ -1645,15 +998,26 @@
                 const quickNote = document.createElement('p');
                 quickNote.id = 'quick-mode-note';
                 quickNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
-                quickNote.textContent = 'Quick scan only detects devices currently plugged in — devices you use regularly but had disconnected won\'t appear here.';
+                quickNote.textContent = 'Light Assessment only evaluates devices currently plugged in — devices you use regularly but had disconnected won\'t appear here.';
                 document.getElementById('printer-note').insertAdjacentElement('afterend', quickNote);
+
+                // Deliberately framed as a curation choice, not an apology for
+                // a small sample — Light is efficient by design, not cursory.
+                // Everything it didn't prioritize is still listed (see
+                // #not-prioritized-section below) and promotable from the
+                // Workspace, so this note explains the "why," not a limitation.
+                const quickAppsNote = document.createElement('p');
+                quickAppsNote.id = 'quick-apps-note';
+                quickAppsNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
+                quickAppsNote.textContent = 'Light Assessment builds your Score and Confidence from apps you\'re currently running, that start automatically, or that you use often. Everything else the scan found is still listed below under "Not Currently Prioritized" — nothing is hidden, and you can promote anything that matters to you from the Workspace.';
+                document.getElementById('printer-note').insertAdjacentElement('afterend', quickAppsNote);
             }
 
             if (results.scan_mode === 'standard') {
                 const standardNote = document.createElement('p');
                 standardNote.id = 'standard-mode-note';
                 standardNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
-                standardNote.textContent = 'Standard scan checks most device types used in the last 14 days, and docks/network adapters used in the last 60 days.';
+                standardNote.textContent = 'Standard Assessment checks most device types used in the last 14 days, and docks/network adapters used in the last 60 days.';
                 document.getElementById('printer-note').insertAdjacentElement('afterend', standardNote);
             }
 
@@ -1665,7 +1029,6 @@
                 document.getElementById('printer-note').insertAdjacentElement('afterend', systemNote);
             }
 
-            // Counts
             document.getElementById('count-native').textContent = results.native?.length || 0;
             document.getElementById('count-emulated').textContent = results.emulated?.length || 0;
             document.getElementById('count-unsupported').textContent = results.unsupported?.length || 0;
@@ -1681,19 +1044,63 @@
             document.getElementById('count-devices-native').textContent = nativeCount;
             document.getElementById('count-devices-review').textContent = reviewCount;
 
-            // Tables
+            const deviceAssessmentLevels = {
+                quick: 'Currently connected devices only',
+                standard: 'Devices used recently, plus current',
+                full: 'Full device history',
+            };
+            const deviceLevelEl = document.getElementById('device-assessment-level');
+            if (deviceLevelEl) deviceLevelEl.textContent = deviceAssessmentLevels[results.scan_mode] || '';
+
             document.getElementById('native-section').innerHTML = buildTable(results.native, 'native');
             document.getElementById('emulated-section').innerHTML = buildTable(results.emulated, 'emulated');
             document.getElementById('unsupported-section').innerHTML = buildTable(results.unsupported, 'unsupported');
             document.getElementById('unknown-section').innerHTML = buildTable(results.unknown, 'unknown');
             document.getElementById('devices-section').innerHTML = buildDeviceTable(results.devices);
 
-            applyMySubmissions();
-            applyPersonalDecisions();
+            const synthesis = computeSynthesis(results, currentPersonalContext);
+            const readinessEl = document.getElementById('readiness-label');
+            const explanationEl = document.getElementById('recommendation-explanation');
+            const confLabelEl = document.getElementById('confidence-label');
+            const confBarEl = document.getElementById('confidence-bar');
+
+            if (synthesis.empty) {
+                if (readinessEl) { readinessEl.textContent = 'Nothing to Assess'; readinessEl.style.color = '#64748b'; }
+                if (explanationEl) {
+                    explanationEl.textContent = synthesis.excludedCount > 0
+                        ? 'Every app was marked as no longer used — nothing left to assess. Adjust this in the Workspace to see a recommendation.'
+                        : synthesis.deprioritizedCount > 0
+                            ? 'Light Assessment didn\'t find any apps you\'re currently running, starting automatically, or using often — so there\'s nothing to build a recommendation from yet. Promote an app that matters to you from the Workspace, or run a Standard Assessment for a fuller picture.'
+                            : 'No applications were found in this scan to assess.';
+                }
+                if (confLabelEl) { confLabelEl.textContent = ''; }
+                if (confBarEl) confBarEl.style.width = '0%';
+            } else {
+                if (readinessEl) {
+                    readinessEl.textContent = synthesis.readiness.label;
+                    readinessEl.style.color = synthesis.readiness.color;
+                }
+                if (explanationEl) explanationEl.textContent = synthesis.explanation;
+                if (confLabelEl) {
+                    confLabelEl.textContent = synthesis.confidenceLabel;
+                    confLabelEl.style.color = synthesis.confidenceColor;
+                }
+                if (confBarEl) {
+                    const pctForBar = synthesis.confidenceLabel === 'High Confidence' ? 100
+                        : synthesis.confidenceLabel === 'Moderate Confidence' ? 66
+                            : synthesis.confidenceLabel === 'Limited Data' ? 33 : 10;
+                    confBarEl.style.width = pctForBar + '%';
+                    confBarEl.style.background = synthesis.confidenceColor;
+                }
+            }
+
+            renderPrimaryReasons(synthesis);
+            renderReductionSummary(results, synthesis);
+            renderNotPrioritized(synthesis);
+            renderHistoricalComparison(importedAssessmentSnapshot, synthesis);
             loadAuthStatus();
             renderRefreshBanner(results);
 
-            // Show report
             document.getElementById('loading').style.display = 'none';
             document.getElementById('report').style.display = 'block';
         }
@@ -1732,7 +1139,7 @@
 
             banner.style.display = 'flex';
             banner.innerHTML = `
-                <span>🔍 Some apps don't have a confirmed verdict yet. A check already ran automatically — refresh for updates, or share what you know below.</span>
+                <span>🔍 Some apps don't have a confirmed verdict yet. A check already ran automatically — refresh for updates, or share what you know in the Workspace.</span>
                 <button class="refresh-btn" id="refresh-results-btn">Refresh results</button>
                 <div class="refresh-status-msg" id="refresh-status-msg"></div>
             `;
@@ -1772,24 +1179,47 @@
 
         // If we have a session ID, poll for results
         if (sessionId) {
-            const poll = setInterval(async () => {
+            let pollHandle = null;
+            async function checkSession() {
                 try {
                     const res = await fetch('/api/session/' + sessionId);
                     const data = await res.json();
 
                     if (data.status === 'complete') {
-                        clearInterval(poll);
-                        renderReport(data);
+                        if (pollHandle) clearInterval(pollHandle);
+                        // A brief, honest beat on "Preparing Assessment" —
+                        // classification/synthesis genuinely happens here,
+                        // just fast; this gives the reasoning stage visual
+                        // weight instead of jumping straight from "Scanner
+                        // connected" to Results with nothing in between.
+                        // Recalculate/import arrivals already show this
+                        // heading from page load, so the pause is minimal.
+                        showPreparingAssessment();
+                        setTimeout(() => renderReport(data), arrivedViaAssessmentOnly ? 150 : 400);
                     }
                 } catch (err) {
                     console.error('Poll error:', err);
                 }
-            }, 1500);
+            }
+            pollHandle = setInterval(checkSession, 1500);
+            // Recalculate/import results are already sitting in the
+            // database — don't make that flow wait out a full poll
+            // interval just to feel as slow as a genuine fresh scan.
+            if (arrivedViaAssessmentOnly) checkSession();
         } else {
             // No session - show generic waiting message
-            document.querySelector('.loading p').textContent =
-                'No session found. Return to the home page and click Run Scan.';
+            if (loadingDetailEl) {
+                loadingDetailEl.textContent = 'No session found. Return to the home page and click Run Scan.';
+            }
         }
+
+        // Chrome's back-forward cache can restore this page with stale in-memory
+        // state after browser back/forward navigation — reload Personal Context
+        // and re-render so a Recalculate done elsewhere in the loop isn't missed.
+        window.addEventListener('pageshow', (event) => {
+            if (!event.persisted || !currentResults) return;
+            renderReport({ results: currentResults });
+        });
     </script>
 
 </body>

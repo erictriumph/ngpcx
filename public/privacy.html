@@ -132,6 +132,11 @@
             padding-left: 1.25rem;
         }
 
+        .mission-line {
+            color: #93c5fd;
+            font-weight: 600;
+        }
+
         footer {
             border-top: 1px solid #1e293b;
             padding: 2rem;
@@ -153,8 +158,34 @@
         <p class="intro">
             This isn't a legal document — it's a plain description of what CheckMyARM actually does with your
             data today, based directly on how the app is built. See <a href="/about.html">About</a> for how
-            compatibility classification works.
+            compatibility classification works, or <a href="/how-it-thinks.html">How CheckMyARM Thinks</a> for
+            the reasoning behind the recommendation itself.
         </p>
+
+        <section>
+            <h2>Privacy by design, not by promise</h2>
+            <p class="philosophy">
+                We don't want — or need — to see anything that would invade your privacy. CheckMyARM was
+                designed with a privacy-first mindset: before anything else was built, the question was "what's
+                the least we could possibly look at and still answer this honestly?" Everything below follows
+                from that answer, not the other way around.
+            </p>
+            <p>
+                That's why CheckMyARM intentionally avoids collecting documents, passwords, browsing history,
+                personal communications, file contents, and other sensitive information — not because we
+                promise to handle them carefully, but because none of it helps answer the question you're
+                actually asking: <em>will my stuff work on Windows on ARM?</em> The technical observations we
+                do use exist for one purpose — building your assessment — and nothing else.
+            </p>
+            <p>
+                <span class="mission-line">We never retain your assessment.</span> If you choose to save your
+                work — exporting it to continue later — that's your decision, not ours; nothing about how
+                CheckMyARM works requires us to keep a copy on our end. Real privacy by design is achieved by
+                minimizing what's collected and how long it's kept, not by building bigger locks around
+                ever-growing stores of data. We can't promise perfect security — no one honestly can — but we
+                can, and do, promise there's simply less here to protect.
+            </p>
+        </section>
 
         <section>
             <h2>What we collect</h2>
@@ -242,13 +273,11 @@
         </section>
 
         <section>
-            <h2>Our philosophy</h2>
+            <h2>In short</h2>
             <p class="philosophy">
                 We believe compatibility information is valuable, but personal inventories are not. CheckMyARM
-                tries to collect only what's needed to generate your report and improve the shared compatibility
-                database — nothing more. That's also why your Workspace — the decisions, priorities, and notes you
-                build as you assess your apps — stays entirely in your browser and is never stored on our end, even
-                though you can save and continue it whenever you're ready.
+                collects only what's needed to generate your report and improve the shared compatibility
+                database — nothing more.
             </p>
         </section>
     </div>

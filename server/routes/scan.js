@@ -188,7 +188,19 @@ router.post('/scan', (req, res) => {
     return res.status(400).json({ error: 'Invalid request - expected an apps array' });
   }
 
-  const classified = classifyApps(apps);
+  // AppX/Store apps are merged into the same population classifyApps() scores
+  // everything else against, rather than a parallel/special-cased path — the
+  // scanner already guarantees these are disjoint from `apps` (deduped
+  // against the winget/ARP inventory before this payload was ever sent), so
+  // no further dedup is needed here. This is what lets apps like WhatsApp,
+  // LinkedIn, and ChatGPT (Store-only, no winget/ARP entry) receive a real
+  // arm_support verdict: matched apps get one, unmatched ones land in
+  // `unknown` exactly like any other unrecognized app — the same honest
+  // match-or-Unknown outcome every other source already gets, which is what
+  // keeps this from compromising score integrity.
+  const appxApps = req.body.appx_apps || [];
+  const classifyPopulation = apps.concat(appxApps);
+  const classified = classifyApps(classifyPopulation);
 
   const report = {
     ...classified,
@@ -200,14 +212,15 @@ router.post('/scan', (req, res) => {
     // change, which is expected and harmless.
     scanner_version: req.body.scanner_version || null,
     payload_version: req.body.payload_version || null,
-    // Guidance Signals (apps observed running or AppX-packaged that aren't
-    // already in `apps`) — pure passthrough, deliberately never passed through
-    // classifyApps(). They must never affect `score` or the classified
-    // buckets above; keeping them out of that function entirely guarantees it
-    // by construction rather than by trusting every future call site to
-    // remember not to include them.
+    // Portable/sideloaded apps observed running that aren't already in
+    // `apps` — pure passthrough, deliberately never passed through
+    // classifyApps(). Must never affect `score` or the classified buckets
+    // above; keeping it out of that function entirely guarantees this by
+    // construction rather than by trusting every future call site to
+    // remember not to include it. (appx_apps is no longer passed through
+    // separately — it's now part of the classified buckets above, so a
+    // second raw copy here would just be redundant.)
     unlisted_apps: req.body.unlisted_apps || [],
-    appx_apps: req.body.appx_apps || [],
     lastScanned: new Date().toISOString()
   };
 
@@ -216,10 +229,13 @@ router.post('/scan', (req, res) => {
   if (sessionId) {
     const session = db.prepare(`SELECT expires_at FROM sessions WHERE id = ?`).get(sessionId);
     if (session && new Date(session.expires_at) >= new Date()) {
+      // raw_apps persists the merged population (not just `apps`) so a later
+      // /refresh re-run of classifyApps() keeps classifying AppX apps too —
+      // otherwise a refresh would silently drop them back to unclassified.
       db.prepare(`
         UPDATE sessions SET status = 'complete', results = ?, raw_apps = ?
         WHERE id = ?
-      `).run(JSON.stringify(report), JSON.stringify(apps), sessionId);
+      `).run(JSON.stringify(report), JSON.stringify(classifyPopulation), sessionId);
     } else if (session) {
       console.log(`  Ignored scan submission for expired session: ${sessionId}`);
     }

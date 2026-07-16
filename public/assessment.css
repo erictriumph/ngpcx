@@ -1,0 +1,428 @@
+/* assessment.css — shared visual language between report.html (Results) and
+   workspace.html (Workspace). Common design tokens/components only — each
+   page keeps its own page-specific layout (sticky header, priority
+   sections, print rules, etc.) inline. See WORKSPACE.md. */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: system-ui, sans-serif;
+    background: #0f172a;
+    color: #f1f5f9;
+    min-height: 100vh;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid #1e293b;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #3b82f6;
+    letter-spacing: -0.5px;
+}
+
+.logo img {
+    height: 28px;
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+.logo span {
+    color: #f1f5f9;
+}
+
+.back-link {
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.back-link:hover {
+    color: #f1f5f9;
+}
+
+/* LOADING */
+.loading {
+    max-width: 600px;
+    margin: 8rem auto;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #1e293b;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1.5rem auto;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.loading p {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+/* SYSTEM INFO */
+.system-info {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.sys-item label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.sys-item span {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* SUMMARY CARDS */
+.summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid;
+    text-align: center;
+}
+
+.summary-card.native {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.summary-card.emulated {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.summary-card.unsupported {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.summary-card.unknown {
+    background: rgba(100, 116, 139, 0.1);
+    border-color: rgba(100, 116, 139, 0.3);
+}
+
+.summary-card.system {
+    background: rgba(100, 116, 139, 0.05);
+    border-color: rgba(100, 116, 139, 0.2);
+}
+
+.system .summary-count {
+    color: #475569;
+}
+
+.badge.system {
+    background: rgba(100, 116, 139, 0.15);
+    color: #64748b;
+}
+
+.summary-count {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+}
+
+.native .summary-count {
+    color: #10b981;
+}
+
+.emulated .summary-count {
+    color: #f59e0b;
+}
+
+.unsupported .summary-count {
+    color: #ef4444;
+}
+
+.unknown .summary-count {
+    color: #64748b;
+}
+
+.summary-label {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+/* APP TABLE */
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin: 2rem 0 0.75rem 0;
+}
+
+.app-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1e293b;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #334155;
+    margin-bottom: 0.5rem;
+}
+
+.app-table th {
+    background: #0f172a;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.app-table td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #334155;
+    font-size: 0.9rem;
+}
+
+.app-table tr:hover td {
+    background: #263548;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.badge.native {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.badge.emulated {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.badge.unsupported {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.badge.unknown {
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+}
+
+.badge.check {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.arm-warning {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    color: #93c5fd;
+    font-size: 0.95rem;
+}
+
+/* Compatibility Notes — deliberately visually distinct from the Source/
+   Confidence metadata line below it, since this is the one piece of text in
+   the row most likely to actually affect a purchase or deployment decision. */
+.compat-note {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 8px;
+    padding: 0.6rem 0.85rem;
+    margin-bottom: 0.75rem;
+    color: #e2e8f0;
+}
+
+.compat-note strong {
+    color: #93c5fd;
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+footer {
+    border-top: 1px solid #1e293b;
+    padding: 2rem;
+    text-align: center;
+    color: #475569;
+    font-size: 0.85rem;
+}
+
+.action-btn {
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #cbd5e1;
+    padding: 0.45rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    border-color: #3b82f6;
+    color: #f1f5f9;
+}
+
+.workspace-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.recommendation-explanation {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+    max-width: 720px;
+}
+
+/* Decision + findings controls — used only on workspace.html, but the
+   button/input visual language is shared so a control never looks
+   different depending on which page happens to render it. */
+.findings-notes,
+.decision-note {
+    width: 100%;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #f1f5f9;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    font-family: inherit;
+    margin-bottom: 0.5rem;
+}
+
+.findings-notes::placeholder,
+.decision-note::placeholder {
+    color: #475569;
+}
+
+.findings-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.findings-btn,
+.decision-btn,
+.verified-status-btn {
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #f1f5f9;
+    padding: 0.3rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.findings-btn:hover,
+.decision-btn:hover,
+.verified-status-btn:hover {
+    border-color: #3b82f6;
+}
+
+.findings-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.findings-btn.suggested {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.decision-btn.selected,
+.verified-status-btn.selected {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+}
+
+.critical-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    font-size: 0.78rem;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.decision-status-msg {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.4rem;
+}
+
+.verified-badge {
+    margin-left: 0.5rem;
+    font-size: 0.72rem;
+    color: #10b981;
+}
+
+.reason-chip {
+    display: inline-block;
+    font-size: 0.7rem;
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 20px;
+    padding: 0.1rem 0.55rem;
+    margin-left: 0.5rem;
+}

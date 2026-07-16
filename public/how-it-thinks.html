@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckMyARM — How CheckMyARM Thinks</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #3b82f6;
+            letter-spacing: -0.5px;
+        }
+
+        .logo img {
+            height: 28px;
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        .logo span {
+            color: #f1f5f9;
+        }
+
+        .back-link {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 4rem;
+        }
+
+        .eyebrow {
+            color: #64748b;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 0.75rem;
+        }
+
+        .mission {
+            color: #93c5fd;
+            font-size: 1.15rem;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 3rem;
+        }
+
+        section {
+            margin-bottom: 2.75rem;
+        }
+
+        section h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.85rem;
+            line-height: 1.35;
+        }
+
+        section p {
+            color: #cbd5e1;
+            font-size: 0.97rem;
+            line-height: 1.7;
+        }
+
+        section p+p {
+            margin-top: 0.85rem;
+        }
+
+        section em {
+            color: #93c5fd;
+            font-style: normal;
+        }
+
+        .examples {
+            margin: 1rem 0 0 0;
+            padding: 1rem 1.25rem;
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.18);
+            border-radius: 10px;
+        }
+
+        .examples-label {
+            color: #64748b;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.6rem;
+        }
+
+        .examples ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .examples li {
+            color: #cbd5e1;
+            font-size: 0.92rem;
+        }
+
+        .examples li::before {
+            content: "· ";
+            color: #3b82f6;
+        }
+
+        a {
+            color: #3b82f6;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #1e293b;
+            margin: 2.75rem 0;
+        }
+
+        .closing {
+            padding-top: 0.5rem;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.65;
+            text-align: center;
+        }
+
+        .closing strong {
+            color: #93c5fd;
+        }
+
+        footer {
+            border-top: 1px solid #1e293b;
+            padding: 2rem;
+            text-align: center;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        <a href="/" class="back-link">← Back to scanner</a>
+    </nav>
+
+    <div class="container">
+        <div class="eyebrow">The philosophy behind your recommendation</div>
+        <h1>How CheckMyARM Thinks</h1>
+        <p class="mission">Our goal is to reduce the stress of uncertainty.</p>
+
+        <section>
+            <h2>We start with observation</h2>
+            <p>
+                Before CheckMyARM can tell you anything useful, it has to look. The scanner reads what's
+                actually installed and connected on your machine — not what you remember installing, not what
+                a spec sheet claims, what's really there right now. Everything else follows from that starting
+                point.
+            </p>
+        </section>
+
+        <section>
+            <h2>We gather evidence, not certainty</h2>
+            <p>
+                No single fact about an application tells us much on its own. An app being installed doesn't
+                mean it matters to you. An app you haven't opened in months might still be essential once a
+                year. So instead of asking one question and trusting the answer, CheckMyARM looks at several
+                independent signals and lets them reinforce — or contradict — each other.
+            </p>
+            <div class="examples">
+                <div class="examples-label">A few of the things we look at</div>
+                <ul>
+                    <li>Whether an application is currently running</li>
+                    <li>Whether it starts automatically with Windows</li>
+                    <li>Whether it's been launched recently</li>
+                    <li>Whether a device is currently attached</li>
+                </ul>
+            </div>
+            <p>
+                None of these, by itself, is proof that something matters to you. Together, they start to
+                paint a picture — and the more of them that agree, the more confident that picture becomes.
+            </p>
+        </section>
+
+        <section>
+            <h2>No single observation decides anything</h2>
+            <p>
+                This is a deliberate rule, not a technical detail: CheckMyARM never lets one piece of evidence
+                single-handedly determine a recommendation. A single signal can be misleading — a device could
+                be attached today by coincidence, an app could be open because you happened to click it a
+                minute ago. It's the pattern across multiple independent observations that CheckMyARM actually
+                trusts.
+            </p>
+        </section>
+
+        <section>
+            <h2>Community knowledge strengthens recommendations</h2>
+            <p>
+                Automated observation only gets you so far. Some questions — does this specific app actually
+                work well on Windows on ARM, not just launch — are best answered by someone who's already
+                running it. CheckMyARM combines what it can observe on your machine with what real people have
+                found on theirs, so the recommendation reflects more than one source of truth. See the
+                <a href="/about.html">About page</a> for how that community actually works.
+            </p>
+        </section>
+
+        <section>
+            <h2>Only you know certain things</h2>
+            <p>
+                CheckMyARM can observe your machine, but it can't read your mind. It doesn't know that the
+                app it flagged as low-priority is actually the one thing your job depends on, or that the one
+                it assumed mattered is something you stopped using years ago and just never uninstalled. That's
+                why the Workspace exists — a place to add what only you know, so your recommendation reflects
+                your reality, not just what a scan can see.
+            </p>
+        </section>
+
+        <section>
+            <h2>Confidence communicates certainty, not correctness</h2>
+            <p>
+                A high-confidence recommendation doesn't mean "this is good news." It means CheckMyARM has
+                enough independent evidence to trust its own reading of your situation — favorable or not. A
+                low-confidence result isn't a failure either; it's an honest signal that there's real
+                uncertainty left, and that a closer look (or a bit more of your own input) would genuinely
+                help. Confidence is about how much we know, never a verdict dressed up as one.
+            </p>
+        </section>
+
+        <section>
+            <h2>Privacy is part of the design, not an afterthought</h2>
+            <p>
+                What CheckMyARM looks at is scoped tightly to one question: is this software or device part of
+                your computing environment? That boundary was drawn before anything was built, not added
+                afterward to answer a complaint. See the <a href="/privacy.html">Privacy page</a> for exactly
+                where that line is drawn.
+            </p>
+        </section>
+
+        <hr class="divider">
+
+        <p class="closing">
+            <strong>Our goal is to reduce the stress of uncertainty.</strong><br>
+            Everything above is in service of that one idea — not a features list, just the reasoning behind
+            it.
+        </p>
+    </div>
+
+    <footer>CheckMyARM — ARM Readiness Scanner. © 2026 CheckMyARM. All rights reserved.</footer>
+</body>
+
+</html>

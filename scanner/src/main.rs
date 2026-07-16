@@ -38,6 +38,48 @@ struct AppEntry {
     is_running: bool,
     is_startup: bool,
     has_start_menu_entry: bool,
+    // Pinning is a deliberate user action, not incidental presence — one of
+    // the strongest cheap importance signals available (see CLAUDE.md,
+    // Assessment levels). Taskbar only, not Start pinning: Start's pinned
+    // layout on Windows 11 is stored in an undocumented binary blob with no
+    // stable, simple read path; the taskbar's legacy .lnk-folder mechanism
+    // is still functional and trivial to enumerate the same way Start Menu
+    // shortcuts already are.
+    is_pinned_taskbar: bool,
+    // UserAssist (Explorer's own launch tracker) — see CLAUDE.md, UserAssist
+    // Enrichment milestone. Raw, uninterpreted observations: launch_count is
+    // the number of deliberate (non-automatic) launches Explorer recorded;
+    // days_since_last_launch is a relative age already computed here, never
+    // an exact timestamp. None means no UserAssist evidence was found for
+    // this app — missing evidence, not evidence of zero use (it may simply
+    // never have been launched via Explorer/Start/taskbar/search, or
+    // UserAssist may not track this particular app at all). Deliberately
+    // NOT reduced to a band ("frequent"/"occasional") here — that
+    // interpretation belongs to the assessment layer, which should be free
+    // to change its thresholds without a new scanner release.
+    launch_count: Option<u32>,
+    days_since_last_launch: Option<u32>,
+    // Experimental — see CLAUDE.md, UserAssist Enrichment milestone, Focus
+    // Fields addendum. Only ever populated from UserAssist's direct-.exe
+    // GUID (real-data verification found the shortcut-GUID entries
+    // unreliable at these offsets). Raw, un-interpreted, not wired into
+    // any scoring/importance logic yet — preserved because collection is
+    // cheap and privacy-conscious, per this milestone's guiding brief, not
+    // because the assessment layer currently uses it.
+    focus_count: Option<u32>,
+    focus_time_ms: Option<u32>,
+    // Default-handler ("Environment Integration") evidence — see CLAUDE.md,
+    // Default-Handler Evidence addendum. Scoped to protocol handlers only
+    // (http/https/mailto); file-extension UserChoice entries were
+    // investigated and found consistently empty on real test hardware, so
+    // that half of the original idea isn't implemented — reported as a
+    // limitation, not guessed at. default_handler_count is how many of the
+    // checked protocols resolved to this app; categories is a short,
+    // deliberately coarse list ("browser"/"mail"), never a raw ProgId or
+    // extension. None means no checked protocol currently defaults to this
+    // app — missing evidence, not evidence the app is unused.
+    default_handler_count: Option<u32>,
+    default_handler_categories: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -272,20 +314,16 @@ fn is_process_running(haystack: &str, running: &HashSet<String>) -> bool {
     running.iter().any(|key| haystack.contains(key.as_str()))
 }
 
-// Quick: any Prefetch record at all, or currently running (unchanged from the
-// original boolean-presence behavior, just also OR'd with live process state).
-// Standard: used within the last 60 days, or no recency data at all (mirrors
-// the device tiering formula's "unknown = keep" rule — a missing Prefetch
-// record doesn't prove staleness, since Prefetch itself can be disabled
-// system-wide), or currently running.
-// Full: everything, unfiltered.
-fn include_by_recency(mode: &str, is_running: bool, days_ago: Option<f64>) -> bool {
-    match mode {
-        "quick" => is_running || days_ago.is_some(),
-        "standard" => is_running || days_ago.map_or(true, |d| d <= 60.0),
-        _ => true,
-    }
-}
+// Application inventory is intentionally mode-agnostic — see the
+// Assessment levels doc in CLAUDE.md. `winget export` and the ARP registry
+// read are unconditional regardless of mode (confirmed: no mode-dependent
+// enumeration cost exists for apps, only device history lookups have a real
+// scan-time cost — see get_devices() below). Previously this function
+// gated which already-discovered apps got pushed into the outgoing payload
+// per mode; that's now the assessment layer's job (isLightPriorityApp() in
+// assessment.js), operating on the full inventory the scanner always
+// reports. days_ago/is_running/recently_used are still computed and
+// attached to every app as enrichment — just no longer used to exclude one.
 
 // Standard mode's device recency window varies by class: Camera/HIDClass/
 // MEDIA/Biometric/SmartCardReader tend to cluster into "near-daily" or
@@ -588,7 +626,6 @@ Get-Printer | Where-Object {
 // ─────────────────────────────────────────
 
 fn get_installed_apps(
-    mode: &str,
     recent: &HashMap<String, f64>,
     running: &HashSet<String>,
 ) -> Vec<AppEntry> {
@@ -705,10 +742,6 @@ fn get_installed_apps(
                         is_process_running(&name_lower, running) || is_process_running(&id_lower, running);
                     let recently_used = days_ago.is_some() || is_running;
 
-                    if !include_by_recency(mode, is_running, days_ago) {
-                        continue;
-                    }
-
                     apps.push(AppEntry {
                         name,
                         id: Some(id),
@@ -719,6 +752,13 @@ fn get_installed_apps(
                         is_running: false,
                         is_startup: false,
                         has_start_menu_entry: false,
+                        is_pinned_taskbar: false,
+                        launch_count: None,
+                        days_since_last_launch: None,
+                        focus_count: None,
+                        focus_time_ms: None,
+                        default_handler_count: None,
+                        default_handler_categories: None,
                     });
                 }
             }
@@ -797,11 +837,20 @@ fn parse_arp_date(raw: &str) -> Option<f64> {
     None
 }
 
+// HKCU coverage catches per-user installs that never touch HKLM at all —
+// developer tools installed without admin rights, and notably
+// Chrome/Edge-installed PWAs, which register a per-user uninstall entry
+// (Publisher containing "Google\Chrome" or "Microsoft\Edge") purely under
+// HKCU. Confirmed on a real machine: a Chrome-installed PWA was completely
+// invisible to this scanner before this change despite being genuinely
+// installed and usable. No Wow6432Node equivalent needed for HKCU — that
+// redirection only applies to HKLM (and HKCR) on 64-bit Windows, not to
+// per-user hives.
 fn get_arp_apps() -> Vec<ArpAppEntry> {
     println!("  Checking installed-programs registry (ARP)...");
 
     let ps_script = r#"
-Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*, HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue |
+Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*, HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*, HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue |
     Where-Object { $_.DisplayName -and $_.SystemComponent -ne 1 } |
     Select-Object DisplayName, DisplayVersion, InstallDate, Publisher |
     ConvertTo-Json
@@ -848,7 +897,6 @@ fn normalize_name(s: &str) -> String {
 fn merge_arp_into_apps(
     apps: &mut Vec<AppEntry>,
     arp_apps: Vec<ArpAppEntry>,
-    mode: &str,
     recent: &HashMap<String, f64>,
     running: &HashSet<String>,
 ) {
@@ -874,10 +922,6 @@ fn merge_arp_into_apps(
         let days_ago = find_recency_days(&name_lower, recent);
         let is_running = is_process_running(&name_lower, running);
 
-        if !include_by_recency(mode, is_running, days_ago) {
-            continue;
-        }
-
         apps.push(AppEntry {
             name: arp_app.name,
             id: None,
@@ -888,6 +932,13 @@ fn merge_arp_into_apps(
             is_running: false,
             is_startup: false,
             has_start_menu_entry: false,
+            is_pinned_taskbar: false,
+            launch_count: None,
+            days_since_last_launch: None,
+            focus_count: None,
+            focus_time_ms: None,
+            default_handler_count: None,
+            default_handler_categories: None,
         });
         added += 1;
     }
@@ -937,6 +988,9 @@ fn apply_signals(
     running: &HashSet<String>,
     startup_names: &[String],
     start_menu_names: &[String],
+    pinned_names: &[String],
+    userassist: &[UserAssistEvidence],
+    default_handlers: &[DefaultHandlerEvidence],
 ) {
     for app in apps.iter_mut() {
         if !app.is_running {
@@ -959,6 +1013,88 @@ fn apply_signals(
             let sn = normalize_name(s);
             !sn.is_empty() && (sn.contains(norm.as_str()) || norm.contains(sn.as_str()))
         });
+        app.is_pinned_taskbar = pinned_names.iter().any(|s| {
+            let sn = normalize_name(s);
+            !sn.is_empty() && (sn.contains(norm.as_str()) || norm.contains(sn.as_str()))
+        });
+
+        // UserAssist: prefer an exact PackageFamilyName match (AppX apps
+        // already carry this as `id`, see get_appx_apps()) over the fuzzy
+        // basename match everything else falls back to — an id match is
+        // unambiguous, a name match carries the same accepted imprecision
+        // as every other Guidance Signal above. Multiple raw UserAssist
+        // records can legitimately match one app (direct-exe launches and
+        // shortcut launches are tracked under separate GUIDs) — counts sum,
+        // and the most recent (smallest) days-since-last-launch wins, the
+        // same "most informative evidence wins" fallback already used for
+        // device recency (IsPresent OR LastRemovalDate OR LastArrivalDate).
+        let app_id_lower = app.id.as_deref().unwrap_or("").to_lowercase();
+        let mut matches: Vec<&UserAssistEvidence> = if app_id_lower.is_empty() {
+            vec![]
+        } else {
+            userassist
+                .iter()
+                .filter(|e| e.is_package && e.key.to_lowercase() == app_id_lower)
+                .collect()
+        };
+        if matches.is_empty() {
+            matches = userassist
+                .iter()
+                .filter(|e| {
+                    !e.is_package && (e.key.contains(norm.as_str()) || norm.contains(e.key.as_str()))
+                })
+                .collect();
+        }
+        if !matches.is_empty() {
+            app.launch_count = Some(matches.iter().map(|e| e.launch_count).sum());
+            app.days_since_last_launch = matches.iter().filter_map(|e| e.days_since_last_launch).min();
+            let focus_counts: Vec<u32> = matches.iter().filter_map(|e| e.focus_count).collect();
+            if !focus_counts.is_empty() {
+                app.focus_count = Some(focus_counts.iter().sum());
+            }
+            let focus_times: Vec<u32> = matches.iter().filter_map(|e| e.focus_time_ms).collect();
+            if !focus_times.is_empty() {
+                app.focus_time_ms = Some(focus_times.iter().sum());
+            }
+        }
+
+        // Default-handler evidence: identical exact-id-then-fuzzy-name
+        // matching contract as UserAssist above, reused rather than
+        // reinvented. A protocol like http/https/mailto only ever resolves
+        // to one ProgId at a time, so at most one match is expected here in
+        // practice — the same "sum count / union categories" merge is used
+        // anyway for consistency with every other evidence source.
+        let dh_matches: Vec<&DefaultHandlerEvidence> = if !app_id_lower.is_empty() {
+            let exact: Vec<&DefaultHandlerEvidence> = default_handlers
+                .iter()
+                .filter(|e| e.is_package && e.key.to_lowercase() == app_id_lower)
+                .collect();
+            if !exact.is_empty() {
+                exact
+            } else {
+                default_handlers
+                    .iter()
+                    .filter(|e| !e.is_package && (e.key.contains(norm.as_str()) || norm.contains(e.key.as_str())))
+                    .collect()
+            }
+        } else {
+            default_handlers
+                .iter()
+                .filter(|e| !e.is_package && (e.key.contains(norm.as_str()) || norm.contains(e.key.as_str())))
+                .collect()
+        };
+        if !dh_matches.is_empty() {
+            app.default_handler_count = Some(dh_matches.iter().map(|e| e.count).sum());
+            let mut categories: Vec<String> = Vec::new();
+            for e in &dh_matches {
+                for c in &e.categories {
+                    if !categories.contains(c) {
+                        categories.push(c.clone());
+                    }
+                }
+            }
+            app.default_handler_categories = Some(categories);
+        }
     }
 }
 
@@ -1021,6 +1157,13 @@ Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object {
             is_running: true,
             is_startup: false,
             has_start_menu_entry: false,
+            is_pinned_taskbar: false,
+            launch_count: None,
+            days_since_last_launch: None,
+            focus_count: None,
+            focus_time_ms: None,
+            default_handler_count: None,
+            default_handler_categories: None,
         });
     }
 
@@ -1087,6 +1230,345 @@ Get-ChildItem -Path $paths -Filter *.lnk -Recurse -ErrorAction SilentlyContinue 
         .collect()
 }
 
+// Taskbar pinning is a deliberate user action — one of the strongest cheap
+// importance signals available, arguably stronger than is_running (which
+// only proves "happened to be open right now," not "core to my workflow").
+// The legacy .lnk-folder mechanism this reads is undocumented as a stable
+// API and Windows 11 has been migrating taskbar customization to newer
+// backends over time, so this may stop finding anything on some future
+// build — verified working on this real Windows 11 install today, and the
+// failure mode if it ever stops is an empty list (missing evidence),
+// exactly the safe direction per this milestone's own guiding philosophy.
+// Same "base filename only, never resolves the shortcut target" discipline
+// as get_start_menu_names().
+fn get_taskbar_pinned_names() -> Vec<String> {
+    let ps_script = r#"
+$path = Join-Path $env:AppData 'Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar'
+if (-not (Test-Path $path)) { '[]'; exit }
+
+Get-ChildItem -Path $path -Filter *.lnk -ErrorAction SilentlyContinue |
+    Select-Object -ExpandProperty BaseName -Unique |
+    ForEach-Object { [PSCustomObject]@{ Name = $_ } } |
+    ConvertTo-Json
+"#;
+
+    let json = match run_powershell_json(ps_script, "taskbar pin scan") {
+        Some(v) => v,
+        None => return vec![],
+    };
+
+    json_as_items(&json)
+        .into_iter()
+        .filter_map(|item| item["Name"].as_str().map(|s| s.to_string()))
+        .collect()
+}
+
+// One decoded, already-aggregated UserAssist observation, internal to the
+// scanner process only (never serialized/sent as-is) — `key`/`is_package`
+// tell apply_signals() whether to match it against an AppX PackageFamilyName
+// (exact) or fall back to the fuzzy basename matching every other Guidance
+// Signal already uses. focus_count/focus_time_ms are experimental (see
+// get_userassist_data()'s doc comment) and only ever populated from
+// direct-.exe-GUID records — real-data verification found the shortcut-GUID
+// entries carry near-zero, non-representative values at these offsets.
+struct UserAssistEvidence {
+    key: String,
+    is_package: bool,
+    launch_count: u32,
+    days_since_last_launch: Option<u32>,
+    focus_count: Option<u32>,
+    focus_time_ms: Option<u32>,
+}
+
+// UserAssist — Windows Explorer's own internal launch tracker. Undocumented
+// by Microsoft but stable since Vista; see CLAUDE.md, UserAssist Enrichment
+// milestone, for the research this is based on. Unlike Prefetch, UserAssist
+// specifically excludes non-interactive launches — real testing (and this
+// codebase's own research pass) confirmed Startup-folder and Scheduled-Task
+// launches consistently register a zero run count even though the program
+// genuinely ran. That makes a nonzero run count here the one signal in this
+// codebase that corroborates a *deliberate, Explorer-driven* launch, rather
+// than mere presence or automatic execution — entries with a zero count are
+// discarded entirely below, not treated as weak evidence.
+//
+// Two GUIDs matter for Windows 10/11 (a handful of older folder-scoped GUIDs
+// from the XP/7 era don't carry meaningful execution data today and aren't
+// read here):
+//   CEBFF5CD-ACE2-4F4F-9178-9926F41749EA — direct .exe launches
+//   F4E57C4B-2036-45F0-A9AB-443BCFE33D9F — shortcut/.lnk launches (Start
+//     Menu, taskbar, search), including AppX/UWP apps, which appear here as
+//     AUMIDs ("PackageFamilyName!AppId") rather than file paths.
+//
+// Privacy/precision discipline: value names are ROT13-decoded here (a
+// documented, trivial reversal, not real obfuscation) purely to extract a
+// program name/PackageFamilyName — the same tier of information ARP/winget
+// already send, never a full path beyond what's needed to find the last
+// path segment. The last-run FILETIME is converted to a relative day count
+// inside this PowerShell script and immediately discarded; only the
+// relative age ever reaches Rust, and only the relative age is ever sent to
+// the server — exact timestamps never leave this function.
+//
+// `UEME_CTLSESSION` (and the `UEME_CTL*` family generally) is a well-known
+// Explorer internal session-bookkeeping entry, not an application — verified
+// directly against this machine's own registry: it carries a ~1.6KB value
+// (vs. 72 bytes for a real app entry) and a nonsense pre-1970 "last run"
+// date when parsed as a normal record. Excluded by name before any byte
+// parsing runs, not silently absorbed and hoped to never fuzzy-match.
+//
+// Focus Count (offset 8) / Focus Time in ms (offset 12) — added as
+// EXPERIMENTAL raw evidence after direct verification against this
+// machine's real data: values from the direct-.exe GUID were plausible
+// (e.g. a browser genuinely used today showing ~45 minutes of accumulated
+// focus time) and internally consistent with which apps were actually used.
+// Values from the shortcut-launch GUID were NOT — near-zero/nonsensical
+// even for apps with a real, same-day launch recorded on their direct-.exe
+// counterpart — so this scanner only ever populates focus fields from the
+// direct-.exe GUID; shortcut-GUID records never contribute focus data,
+// matching this milestone's "report rather than invent semantics" brief.
+// Neither field is wired into scoring/importance anywhere yet — see
+// CLAUDE.md, UserAssist Enrichment milestone, Focus Fields addendum.
+fn get_userassist_data() -> Vec<UserAssistEvidence> {
+    let ps_script = r#"
+$guids = @(
+    @{ Id = 'CEBFF5CD-ACE2-4F4F-9178-9926F41749EA'; IsDirectExe = $true },
+    @{ Id = 'F4E57C4B-2036-45F0-A9AB-443BCFE33D9F'; IsDirectExe = $false }
+)
+$rot13 = {
+    param($s)
+    -join ($s.ToCharArray() | ForEach-Object {
+        if ($_ -cmatch '[a-zA-Z]') {
+            $base = if ([char]::IsUpper($_)) { 65 } else { 97 }
+            [char]((([int]$_ - $base + 13) % 26) + $base)
+        } else { $_ }
+    })
+}
+
+$results = foreach ($guidInfo in $guids) {
+    $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{$($guidInfo.Id)}\Count"
+    $key = Get-Item -Path $path -ErrorAction SilentlyContinue
+    if (-not $key) { continue }
+    foreach ($valueName in $key.GetValueNames()) {
+        if (-not $valueName -or $valueName -like 'UEME_CTL*') { continue }
+        $bytes = $key.GetValue($valueName)
+        if ($bytes -isnot [byte[]] -or $bytes.Length -lt 68) { continue }
+        $runCount = [BitConverter]::ToUInt32($bytes, 4)
+        if ($runCount -lt 1) { continue }
+        $decodedName = & $rot13 $valueName
+        $lastRunTicks = [BitConverter]::ToInt64($bytes, 60)
+        $daysSince = $null
+        if ($lastRunTicks -gt 0) {
+            try {
+                $lastRunUtc = [DateTime]::FromFileTimeUtc($lastRunTicks)
+                $daysSince = [int]([DateTime]::UtcNow - $lastRunUtc).TotalDays
+                if ($daysSince -lt 0) { $daysSince = 0 }
+            } catch { $daysSince = $null }
+        }
+        $focusCount = $null
+        $focusTimeMs = $null
+        if ($guidInfo.IsDirectExe) {
+            $focusCount = [BitConverter]::ToUInt32($bytes, 8)
+            $focusTimeMs = [BitConverter]::ToUInt32($bytes, 12)
+        }
+        [PSCustomObject]@{
+            Name = $decodedName
+            RunCount = $runCount
+            DaysSinceLastLaunch = $daysSince
+            FocusCount = $focusCount
+            FocusTimeMs = $focusTimeMs
+        }
+    }
+}
+$results | ConvertTo-Json
+"#;
+
+    let json = match run_powershell_json(ps_script, "UserAssist scan") {
+        Some(v) => v,
+        None => return vec![],
+    };
+
+    // Aggregate raw per-value records into one evidence entry per app: both
+    // GUIDs above can carry launch/recency data for the same app, so counts
+    // sum and the more recent (smaller) days-since-last-launch wins — same
+    // "most informative evidence wins" fallback already used for device
+    // recency. Focus fields only ever arrive from direct-.exe records (see
+    // doc comment above), so they simply sum/take-min across whatever
+    // direct-.exe records matched — never diluted by shortcut-GUID noise.
+    struct Agg {
+        launch_count: u32,
+        days_since_last_launch: Option<u32>,
+        focus_count: Option<u32>,
+        focus_time_ms: Option<u32>,
+    }
+    let mut aggregated: HashMap<(String, bool), Agg> = HashMap::new();
+
+    for item in json_as_items(&json) {
+        let decoded = match item["Name"].as_str() {
+            Some(n) if !n.trim().is_empty() => n,
+            _ => continue,
+        };
+        let run_count = item["RunCount"].as_u64().unwrap_or(0) as u32;
+        if run_count < 1 {
+            continue;
+        }
+        let days_since = item["DaysSinceLastLaunch"].as_u64().map(|d| d as u32);
+        let focus_count = item["FocusCount"].as_u64().map(|d| d as u32);
+        let focus_time_ms = item["FocusTimeMs"].as_u64().map(|d| d as u32);
+
+        // AppX/UWP entries are AUMIDs ("PackageFamilyName!AppId"); everything
+        // else is a full path. Reduce each to the same key shape the rest of
+        // apply_signals() already uses: the exact PackageFamilyName for
+        // AppX, or the normalized basename for a real path (fuzzy match).
+        let (key, is_package) = match decoded.find('!') {
+            Some(bang) => (decoded[..bang].to_string(), true),
+            None => {
+                let basename = decoded.rsplit(['\\', '/']).next().unwrap_or(decoded);
+                (normalize_name(basename), false)
+            }
+        };
+        if key.is_empty() {
+            continue;
+        }
+
+        let entry = aggregated.entry((key, is_package)).or_insert(Agg {
+            launch_count: 0,
+            days_since_last_launch: None,
+            focus_count: None,
+            focus_time_ms: None,
+        });
+        entry.launch_count += run_count;
+        entry.days_since_last_launch = match (entry.days_since_last_launch, days_since) {
+            (Some(a), Some(b)) => Some(a.min(b)),
+            (Some(a), None) => Some(a),
+            (None, b) => b,
+        };
+        if let Some(fc) = focus_count {
+            entry.focus_count = Some(entry.focus_count.unwrap_or(0) + fc);
+        }
+        if let Some(ft) = focus_time_ms {
+            entry.focus_time_ms = Some(entry.focus_time_ms.unwrap_or(0) + ft);
+        }
+    }
+
+    aggregated
+        .into_iter()
+        .map(|((key, is_package), agg)| UserAssistEvidence {
+            key,
+            is_package,
+            launch_count: agg.launch_count,
+            days_since_last_launch: agg.days_since_last_launch,
+            focus_count: agg.focus_count,
+            focus_time_ms: agg.focus_time_ms,
+        })
+        .collect()
+}
+
+// One resolved, already-aggregated default-handler observation, internal to
+// the scanner process only. Same key/is_package shape as UserAssistEvidence
+// (exact PackageFamilyName match for AppX-backed handlers, fuzzy basename
+// match otherwise) — deliberately reusing the identical matching contract
+// apply_signals() already applies to every other Guidance Signal.
+struct DefaultHandlerEvidence {
+    key: String,
+    is_package: bool,
+    count: u32,
+    categories: Vec<String>,
+}
+
+// Default-handler ("Environment Integration") evidence — see CLAUDE.md,
+// Default-Handler Evidence addendum, for the real-data investigation this
+// is based on. Deliberately scoped to PROTOCOL handlers only (http, https,
+// mailto): file-extension UserChoice entries (.pdf, .htm, .docx, etc.) were
+// checked against this machine's real registry and found consistently
+// EMPTY — not present at all, not merely hard to resolve — so that half of
+// the original idea is reported as an investigated limitation rather than
+// guessed at or shipped on zero real positive examples.
+//
+// Resolution path, verified against real data: HKCU's per-protocol
+// UserChoice key gives a ProgId; `HKCU\Software\Classes\{ProgId}\Application`
+// (falling back to HKLM) gives a human-readable ApplicationName and,
+// for AppX-backed handlers, an AppUserModelId whose PackageFamilyName
+// prefix is the same stable id AppX apps already carry. Windows does not
+// expose whether this was a deliberate user choice vs. an installer-set
+// default with equal confidence for every entry, so this is intentionally
+// treated as modest, corroborating evidence — never a determination — and
+// is not wired into scoring anywhere.
+fn get_default_handlers() -> Vec<DefaultHandlerEvidence> {
+    let ps_script = r#"
+$assocs = @(
+    @{ Name = 'http'; Category = 'browser' },
+    @{ Name = 'https'; Category = 'browser' },
+    @{ Name = 'mailto'; Category = 'mail' }
+)
+$results = foreach ($a in $assocs) {
+    $path = "HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\$($a.Name)\UserChoice"
+    $item = Get-ItemProperty -Path $path -ErrorAction SilentlyContinue
+    if (-not $item -or -not $item.ProgId) { continue }
+    $progId = $item.ProgId
+    $appProps = Get-ItemProperty -Path "HKCU:\Software\Classes\$progId\Application" -ErrorAction SilentlyContinue
+    if (-not $appProps) { $appProps = Get-ItemProperty -Path "HKLM:\SOFTWARE\Classes\$progId\Application" -ErrorAction SilentlyContinue }
+    if (-not $appProps) { continue }
+    $pfn = $null
+    # A real AppX AUMID is always "PackageFamilyName!AppId" — a Win32 app can
+    # also set its own AppUserModelId (e.g. Chrome sets a plain "Chrome",
+    # found via real-data testing), which is NOT a PackageFamilyName and
+    # must not be treated as one. Only split on '!' when present.
+    if ($appProps.AppUserModelId -and $appProps.AppUserModelId -match '!') {
+        $pfn = ($appProps.AppUserModelId -split '!')[0]
+    }
+    if (-not $appProps.ApplicationName -and -not $pfn) { continue }
+    [PSCustomObject]@{
+        Category = $a.Category
+        AppName = $appProps.ApplicationName
+        PackageFamilyName = $pfn
+    }
+}
+$results | ConvertTo-Json
+"#;
+
+    let json = match run_powershell_json(ps_script, "default handler scan") {
+        Some(v) => v,
+        None => return vec![],
+    };
+
+    let mut aggregated: HashMap<(String, bool), (u32, Vec<String>)> = HashMap::new();
+
+    for item in json_as_items(&json) {
+        let category = match item["Category"].as_str() {
+            Some(c) if !c.trim().is_empty() => c.to_string(),
+            _ => continue,
+        };
+        let package_family_name = item["PackageFamilyName"].as_str().filter(|s| !s.trim().is_empty());
+        let app_name = item["AppName"].as_str().filter(|s| !s.trim().is_empty());
+
+        let (key, is_package) = match package_family_name {
+            Some(pfn) => (pfn.to_string(), true),
+            None => match app_name {
+                Some(name) => (normalize_name(name), false),
+                None => continue,
+            },
+        };
+        if key.is_empty() {
+            continue;
+        }
+
+        let entry = aggregated.entry((key, is_package)).or_insert((0, Vec::new()));
+        entry.0 += 1;
+        if !entry.1.contains(&category) {
+            entry.1.push(category);
+        }
+    }
+
+    aggregated
+        .into_iter()
+        .map(|((key, is_package), (count, categories))| DefaultHandlerEvidence {
+            key,
+            is_package,
+            count,
+            categories,
+        })
+        .collect()
+}
+
 // WS4: AppX/MSIX packages, filtered using Get-AppxPackage's own authoritative
 // flags — no hardcoded name-pattern list. IsFramework/IsResourcePackage/
 // IsBundle removes runtime/language/bundle-wrapper noise; SignatureKind
@@ -1102,13 +1584,34 @@ Get-ChildItem -Path $paths -Filter *.lnk -Recurse -ErrorAction SilentlyContinue 
 // individual context-menu shims, WinAppRuntime version-pinned packages) that
 // don't carry any of these flags — accepted as a known, documented
 // imprecision rather than over-built into name-pattern guessing.
+// `Get-AppxPackage`'s own `Name` is a package identifier ("5319275A.WhatsAppDesktop",
+// "7EE7776C.LinkedInforWindows"), not a name a compatibility catalog or a
+// human would recognize — many publishers prefix it with an opaque
+// hash-like ID with no reliable way to strip programmatically. `Get-StartApps`
+// (the same source that powers Start Menu search) already carries the
+// genuinely human-readable name Windows itself displays for the app,
+// correlatable back to the AppX package via its `AppID`'s PackageFamilyName
+// prefix (before the first `!`). Verified against real installs on this
+// machine: "5319275A.WhatsAppDesktop" -> "WhatsApp",
+// "7EE7776C.LinkedInforWindows" -> "LinkedIn". Falls back to the raw
+// package Name when a package has no Start Menu-visible launcher (e.g. a
+// background-only component) — same honest "insufficient evidence" fallback
+// used elsewhere, not a fabricated name.
 fn get_appx_apps() -> Vec<AppEntry> {
     let ps_script = r#"
+$startApps = @{}
+Get-StartApps | ForEach-Object {
+    $pfn = ($_.AppID -split '!')[0]
+    if ($pfn -and -not $startApps.ContainsKey($pfn)) { $startApps[$pfn] = $_.Name }
+}
+
 Get-AppxPackage | Where-Object {
     -not $_.IsFramework -and -not $_.IsResourcePackage -and -not $_.IsBundle -and $_.SignatureKind -ne 'System'
 } | ForEach-Object {
+    $friendly = $startApps[$_.PackageFamilyName]
     [PSCustomObject]@{
-        Name = $_.Name
+        Name = if ($friendly) { $friendly } else { $_.Name }
+        PackageFamilyName = $_.PackageFamilyName
         Publisher = $_.Publisher
         Version = $_.Version
     }
@@ -1127,6 +1630,11 @@ Get-AppxPackage | Where-Object {
             Some(n) if !n.trim().is_empty() => n.to_string(),
             _ => continue,
         };
+        // PackageFamilyName is a genuinely stable per-package identifier —
+        // used as `id` (like winget's package ID) rather than left None, so
+        // Personal Context in the Workspace keys on it instead of falling
+        // back to normalized-name matching, which is more collision-prone.
+        let package_family_name = item["PackageFamilyName"].as_str().map(|s| s.to_string());
         let version = item["Version"].as_str().map(|s| s.to_string());
         // AppX Publisher is a distinguished name, e.g.
         // "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, ...".
@@ -1139,7 +1647,7 @@ Get-AppxPackage | Where-Object {
 
         apps.push(AppEntry {
             name,
-            id: None,
+            id: package_family_name,
             version,
             recently_used: false, // presence-based signal, not a recency claim
             publisher,
@@ -1147,6 +1655,13 @@ Get-AppxPackage | Where-Object {
             is_running: false,
             is_startup: false,
             has_start_menu_entry: false,
+            is_pinned_taskbar: false,
+            launch_count: None,
+            days_since_last_launch: None,
+            focus_count: None,
+            focus_time_ms: None,
+            default_handler_count: None,
+            default_handler_categories: None,
         });
     }
 
@@ -1346,15 +1861,16 @@ fn main() {
     let running = get_running_process_names();
     println!("  Found {} currently running process(es)", running.len());
 
-    let mut apps = get_installed_apps(&mode, &recent, &running);
-    if apps.is_empty() && mode == "quick" {
-        println!("  Quick mode found no apps (Prefetch unavailable) — falling back to standard...");
-        apps = get_installed_apps("standard", &recent, &running);
-    }
+    // Apps are collected identically regardless of mode — see CLAUDE.md,
+    // Assessment levels. The old "Quick mode found no apps, falling back to
+    // standard" retry is gone too: that only ever fired because Quick used
+    // to filter apps down to nothing on a Prefetch-less machine, which can't
+    // happen anymore since nothing filters apps by mode at all now.
+    let mut apps = get_installed_apps(&recent, &running);
     println!("  Found {} apps to check", apps.len());
 
     let arp_apps = get_arp_apps();
-    merge_arp_into_apps(&mut apps, arp_apps, &mode, &recent, &running);
+    merge_arp_into_apps(&mut apps, arp_apps, &recent, &running);
     println!("  {} total apps after ARP merge", apps.len());
 
     println!("\nLooking for additional Guidance Signals (running apps, startup apps, Start Menu, AppX)...");
@@ -1369,9 +1885,14 @@ fn main() {
 
     let startup_names = get_startup_names();
     let start_menu_names = get_start_menu_names();
-    apply_signals(&mut apps, &running, &startup_names, &start_menu_names);
-    apply_signals(&mut appx_apps, &running, &startup_names, &start_menu_names);
-    apply_signals(&mut unlisted_apps, &running, &startup_names, &start_menu_names);
+    let pinned_names = get_taskbar_pinned_names();
+    let userassist = get_userassist_data();
+    println!("  Found UserAssist launch evidence for {} app(s)", userassist.len());
+    let default_handlers = get_default_handlers();
+    println!("  Found default-handler evidence for {} app(s)", default_handlers.len());
+    apply_signals(&mut apps, &running, &startup_names, &start_menu_names, &pinned_names, &userassist, &default_handlers);
+    apply_signals(&mut appx_apps, &running, &startup_names, &start_menu_names, &pinned_names, &userassist, &default_handlers);
+    apply_signals(&mut unlisted_apps, &running, &startup_names, &start_menu_names, &pinned_names, &userassist, &default_handlers);
 
     println!("\nScanning connected devices...");
     let mut devices = get_devices(&mode);

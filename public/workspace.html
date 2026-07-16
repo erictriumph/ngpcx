@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckMyARM — Assessment Workspace</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="/assessment.css">
+    <style>
+        .workspace {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem 5rem 1rem;
+            display: none;
+        }
+
+        /* Sticky header — Confidence ONLY. No Recommendation, Score, or
+           Primary Reasons here, ever. See WORKSPACE.md, Responsibility
+           boundaries and The Recalculate Boundary. */
+        .workspace-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #0f172a;
+            border-bottom: 1px solid #1e293b;
+            padding: 1rem 2rem;
+        }
+
+        .workspace-header-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .confidence-block {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .confidence-top-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+        }
+
+        .confidence-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+        }
+
+        #ws-confidence-label {
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .confidence-bar-wrap {
+            width: 100%;
+            max-width: 340px;
+            height: 6px;
+            background: #1e293b;
+            border-radius: 3px;
+            margin: 0.4rem 0 0.3rem 0;
+            overflow: hidden;
+        }
+
+        #ws-confidence-bar {
+            height: 100%;
+            background: #3b82f6;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .confidence-meaning-row {
+            font-size: 0.75rem;
+            color: #64748b;
+            max-width: 480px;
+            line-height: 1.4;
+        }
+
+        .recalculate-btn {
+            border: 1px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .recalculate-btn:hover {
+            background: rgba(59, 130, 246, 0.25);
+        }
+
+        /* PRIORITY SECTIONS */
+        .item-group {
+            margin-bottom: 2rem;
+        }
+
+        .item-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .item-group-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .item-group-title .count {
+            color: #64748b;
+            font-weight: 400;
+            font-size: 0.85rem;
+        }
+
+        .item-group-toggle {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
+        .item-group-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .item-group-body.collapsed {
+            display: none;
+        }
+
+        .item-group-empty {
+            color: #475569;
+            font-size: 0.85rem;
+            padding: 0.5rem 0;
+        }
+
+        .item-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+        }
+
+        .item-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .item-card-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .item-card-meta {
+            color: #64748b;
+            font-size: 0.78rem;
+        }
+
+        .item-card-controls {
+            margin-top: 0.75rem;
+        }
+
+        .deeper-detail {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #0f172a;
+            display: none;
+        }
+
+        .deeper-mode .deeper-detail {
+            display: block;
+        }
+
+        .section-heading {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin: 2rem 0 0.5rem 0;
+        }
+
+        .deeper-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        /* "This matters to me" / "This device matters to me" — a dedicated
+           class, deliberately NOT .decision-btn, so it can't be caught by
+           the generic .decision-btn click wiring (which reads
+           btn.dataset.decision and would misfire on a button that has none). */
+        .promote-btn {
+            border: 1px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.12);
+            color: #93c5fd;
+            padding: 0.35rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .promote-btn:hover {
+            background: rgba(59, 130, 246, 0.22);
+        }
+
+        .findings-signin-hint {
+            display: none;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.4rem;
+        }
+
+        /* Print — a plain readable snapshot of the assessment as it stands.
+           A sticky header prints oddly (repeats or overlaps), so it's
+           unstuck here rather than hidden outright, since Confidence is
+           still useful information on a printed page. Deeper Research Mode
+           detail is always shown in print regardless of the on-screen
+           toggle state, so a printout is never missing information the
+           screen currently has collapsed. Unselected decision/verified
+           buttons are hidden; a selected one stays visible with a
+           print-friendly style, mirroring how Results already treats this. */
+        @media print {
+
+            nav,
+            .recalculate-btn,
+            .deeper-toggle-row,
+            .workspace-actions,
+            .decision-btn:not(.selected),
+            .verified-status-btn:not(.selected),
+            .findings-block,
+            .critical-checkbox,
+            .promote-btn,
+            a.badge.check {
+                display: none !important;
+            }
+
+            body {
+                background: #fff;
+                color: #111;
+            }
+
+            .workspace-header {
+                position: static;
+            }
+
+            .deeper-detail {
+                display: block !important;
+            }
+
+            .decision-btn.selected,
+            .verified-status-btn.selected {
+                display: inline-block !important;
+                border: 2px solid #333 !important;
+                color: #111 !important;
+                background: #eee !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <span id="auth-status"></span>
+            <a href="/why.html" class="back-link">Why</a>
+            <a href="/how-it-thinks.html" class="back-link">How CheckMyARM Thinks</a>
+            <a href="/about.html" class="back-link">About</a>
+            <a href="#" id="results-link" class="back-link">← Back to Results</a>
+        </div>
+    </nav>
+
+    <!-- LOADING / ERROR STATE -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <h2>Loading your assessment…</h2>
+        <p id="loading-message">Fetching your current results.</p>
+    </div>
+
+    <!-- STICKY CONFIDENCE HEADER -->
+    <div class="workspace-header" id="workspace-header" style="display:none;">
+        <div class="workspace-header-inner">
+            <div class="confidence-block">
+                <div class="confidence-top-row">
+                    <span class="confidence-title">Confidence</span>
+                    <span id="ws-confidence-label">—</span>
+                </div>
+                <div class="confidence-bar-wrap">
+                    <div id="ws-confidence-bar"></div>
+                </div>
+                <div class="confidence-meaning-row">
+                    How well-supported your recommendation is — not a completion percentage. Truthful context can
+                    move this up or down. Recalculate once you've added what you can confidently provide, or you're
+                    comfortable with where this stands.
+                </div>
+            </div>
+            <button class="recalculate-btn" id="recalculate-btn">Recalculate →</button>
+        </div>
+    </div>
+
+    <!-- WORKSPACE BODY -->
+    <div class="workspace" id="workspace">
+        <p style="color:#94a3b8; font-size:0.9rem; max-width:640px; margin-bottom:1.5rem; line-height:1.5;">
+            This is where you add what only you know — what matters most, what you've already confirmed yourself,
+            and what you're comfortable setting aside. Your Recommendation and Score stay on Results until you
+            Recalculate.
+        </p>
+
+        <label class="deeper-toggle-row">
+            <input type="checkbox" id="deeper-mode-toggle" />
+            Deeper Research Mode — show evidence detail and research controls for every item
+        </label>
+
+        <h2 class="section-heading">Applications</h2>
+        <div id="apps-groups"></div>
+
+        <h2 class="section-heading">Devices</h2>
+        <div id="devices-groups"></div>
+
+        <div class="workspace-actions" style="margin-top:2rem;">
+            <button class="action-btn" id="export-btn">⬇ Export</button>
+            <button class="action-btn" id="rescan-btn">↻ Rescan</button>
+        </div>
+    </div>
+
+    <footer>
+        CheckMyARM — Assessment Workspace. Data sourced from Winget, vendor sites, and community reports.
+        Free, no ads — <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
+            style="color:#3b82f6;">buy us a coffee</a> if it helped. ·
+        <a href="/privacy.html" style="color:#64748b;">Privacy</a>
+        <br>© 2026 CheckMyARM. All rights reserved.
+    </footer>
+
+    <script src="/assessment.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get('session');
+        const scanLevelParam = params.get('level');
+        let currentResults = null;
+        let currentPersonalContext = new Map();
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // origin=assessment tells Results this arrival never involved a
+        // physical scanner (Recalculate, or just navigating back) — Results
+        // uses it to show "Preparing Assessment" instead of implying a scan
+        // just connected. See CLAUDE.md, Assessment Pipeline Staging.
+        function resultsUrl() {
+            return '/report.html?session=' + encodeURIComponent(sessionId) + '&level=' + encodeURIComponent(scanLevelParam || '') + '&origin=assessment';
+        }
+        document.getElementById('results-link').href = '#';
+        document.getElementById('results-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = resultsUrl();
+        });
+
+        // ---------------------------------------------------------------------
+        // Decision read/write — the one place Personal Context actually changes.
+        // Persisted continuously to the session-scoped stash (not just on
+        // Recalculate) so an accidental reload never loses in-progress work.
+        // ---------------------------------------------------------------------
+
+        function itemKey(item) {
+            return item.isDevice ? deviceDecisionKey(item.raw) : decisionKey(item.raw);
+        }
+
+        function persistContext() {
+            writeSessionContext(sessionId, personalContextToEntries(currentPersonalContext));
+        }
+
+        function setItemDecision(item, patch) {
+            const key = itemKey(item);
+            const stableId = item.isDevice ? (item.raw.hardware_id || null) : (item.raw.id || null);
+            const existing = currentPersonalContext.get(key) || {
+                app_name: item.raw.name, app_id: stableId,
+                decision: 'research_note', verified_status: undefined,
+                critical_to_me: false, note: '', is_device: item.isDevice,
+            };
+            const entry = {
+                ...existing, ...patch,
+                app_name: item.raw.name, app_id: stableId, is_device: item.isDevice,
+                researched_at: new Date().toISOString(),
+            };
+            if (entry.decision !== 'personally_verified') delete entry.verified_status;
+            currentPersonalContext.set(key, entry);
+            persistContext();
+            return entry;
+        }
+
+        // ---------------------------------------------------------------------
+        // Item collection + bucketing
+        // ---------------------------------------------------------------------
+
+        function collectItems(results) {
+            const apps = [];
+            ['native', 'emulated', 'unsupported', 'unknown'].forEach((bucket) => {
+                (results[bucket] || []).forEach((app) => {
+                    apps.push({ raw: app, isDevice: false, bucket, name: app.name });
+                });
+            });
+            const devices = (results.devices || []).map((device) => ({
+                raw: device, isDevice: true, bucket: null, name: device.name,
+            }));
+            return { apps, devices };
+        }
+
+        // Not Currently Prioritized is checked BEFORE the normal research-status
+        // grouping, and only for apps — Light never deprioritizes devices (a
+        // Light-scanned device list is already just "currently connected,"
+        // which is already the natural Light population; see CLAUDE.md,
+        // Assessment levels). An app promoted via "This matters to me"
+        // (critical_to_me) falls through to the normal grouping below,
+        // exactly as if Light had never deprioritized it.
+        function bucketItems(items) {
+            const groups = { notPrioritized: [], needsAttention: [], alreadyConsidered: [], setAside: [] };
+            const scanMode = currentResults ? currentResults.scan_mode : null;
+            items.forEach((item) => {
+                const decision = currentPersonalContext.get(itemKey(item)) || null;
+                item.decision = decision;
+                if (!item.isDevice && isLightDeprioritized(item.raw, decision, scanMode)) {
+                    groups.notPrioritized.push(item);
+                    return;
+                }
+                const nativeLikely = item.isDevice ? isLikelyNative(item.raw) : null;
+                const state = classifyAssessmentItem({ decision, bucket: item.bucket, isLikelyNativeDevice: nativeLikely });
+                groups[state].push(item);
+            });
+            const order = { high: 0, normal: 1, low: 2 };
+            const importanceOf = (item) => item.isDevice ? defaultImportanceForDevice(item.raw) : defaultImportanceForApp(item.raw);
+            groups.needsAttention.sort((a, b) => order[importanceOf(a).level] - order[importanceOf(b).level]);
+            return groups;
+        }
+
+        // ---------------------------------------------------------------------
+        // Rendering
+        // ---------------------------------------------------------------------
+
+        function statusBadge(item) {
+            if (item.isDevice) {
+                return isLikelyNative(item.raw)
+                    ? '<span class="badge native">✓ Likely native</span>'
+                    : '<span class="badge check">Worth a check</span>';
+            }
+            const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', unknown: '? Unknown' };
+            return `<span class="badge ${item.bucket}">${labels[item.bucket] || item.bucket}</span>`;
+        }
+
+        function reasonChip(item) {
+            const imp = item.isDevice ? defaultImportanceForDevice(item.raw) : defaultImportanceForApp(item.raw);
+            return imp.reason ? `<span class="reason-chip">${escapeHtml(imp.reason)}</span>` : '';
+        }
+
+        // A single-click research action, not "intimidating detail" — shown
+        // by default alongside the status badge, not gated behind Deeper
+        // Research Mode. Previously present on Results but missing here
+        // entirely, even though compatibility research belongs in the
+        // Workspace.
+        function checkLink(item) {
+            if (item.isDevice) {
+                if (isLikelyNative(item.raw)) return '';
+                const url = buildDriverSearchUrl(item.raw);
+                return `<a href="${url}" target="_blank" rel="noopener" class="badge check" style="text-decoration:none;">Check →</a>`;
+            }
+            if (item.bucket !== 'unknown' && item.bucket !== 'emulated') return '';
+            const label = item.bucket === 'unknown' ? 'Check' : 'Check for update';
+            const url = buildAppSearchUrl(item.raw.name || item.raw.id, item.bucket);
+            return `<a href="${url}" target="_blank" rel="noopener" class="badge check" style="text-decoration:none;">${label} →</a>`;
+        }
+
+        function decisionControlsHtml(item, cardId) {
+            const decision = item.decision;
+            const verifiedRowStyle = (decision && decision.decision === 'personally_verified') ? 'flex' : 'none';
+            const verifiedButtons = item.isDevice ? '' : `
+        <div class="verified-status-row findings-actions" style="display:${verifiedRowStyle}; margin-top:0.5rem;" data-role="verified-row">
+          <span style="font-size:0.75rem; color:#64748b; align-self:center;">Verified as:</span>
+          ${VERIFIED_STATUS_VALUES.map((s) => `<button class="verified-status-btn" data-status="${s}"${decision && decision.verified_status === s ? ' data-selected="1"' : ''}>${SUBMISSION_LABELS[s]}</button>`).join('')}
+        </div>`;
+
+            // Labels describe what the app IS TO YOU, distinct from what the
+            // status badge above already says it IS (the catalog/community
+            // verdict) — the two are never mutually exclusive. An app can be
+            // catalog-Unsupported AND privately "won't need it on the new
+            // PC" at the same time; picking one never hides or overwrites
+            // the other, since the badge always reflects the raw evidence
+            // and these buttons only ever write to Personal Context.
+            const decisionBtns = ['personally_verified', 'waiting_for_vendor', 'doesnt_matter', 'no_longer_use'].map((d) => {
+                const labels = {
+                    personally_verified: 'I verified this', waiting_for_vendor: 'Vendor confirmation needed',
+                    doesnt_matter: "I won't need this on the new PC", no_longer_use: 'I no longer use this',
+                };
+                const selected = decision && decision.decision === d ? ' selected' : '';
+                return `<button class="decision-btn${selected}" data-decision="${d}">${labels[d]}</button>`;
+            }).join('');
+
+            return `
+        <div class="item-card-controls">
+          <div style="font-size:0.72rem; color:#64748b; margin-bottom:0.35rem;">🔒 Private to your Workspace — affects only this assessment, never submitted to the community database unless you choose to below.</div>
+          <div class="findings-actions">${decisionBtns}</div>
+          ${verifiedButtons}
+          <label class="critical-label">
+            <input type="checkbox" class="critical-checkbox" ${decision && decision.critical_to_me ? 'checked' : ''} /> Important to my decision
+          </label>
+          <div class="deeper-detail">
+            <input type="text" class="decision-note" placeholder="Private note (optional — never submitted to the community database)" value="${escapeHtml((decision && decision.note) || '')}" />
+            ${item.isDevice ? deviceEvidenceDetailHtml(item.raw) : findingsBlockHtml(item)}
+            ${!item.isDevice ? evidenceDetailHtml(item.raw, decision) : ''}
+          </div>
+        </div>`;
+        }
+
+        function evidenceDetailHtml(app, decision) {
+            const source = escapeHtml(app.source || 'Unknown');
+            const confidence = (app.confidence !== null && app.confidence !== undefined) ? Math.round(app.confidence * 100) + '%' : '—';
+            const notes = escapeHtml(app.notes || '');
+            const sourceUrl = app.source_url ? escapeHtml(app.source_url) : null;
+            const compatNote = notes ? `<div class="compat-note"><strong>Compatibility Notes</strong>${notes}</div>` : '';
+            // The full Importance Evidence stack — every corroborating fact
+            // that applies at once, not a single winner (see CLAUDE.md,
+            // Importance Evidence stack). Interpreted phrases only, never
+            // raw numbers (launch_count, focus_time_ms, etc.) — those stay
+            // internal and in exported sessions only.
+            const evLines = importanceEvidenceStack(app, decision);
+            const importanceEvidence = evLines.length > 0 ? `
+          <div style="margin-top:0.4rem;">
+            <strong style="color:#94a3b8;">Importance Evidence:</strong>
+            ${evLines.map((l) => `<div>✓ ${escapeHtml(l)}</div>`).join('')}
+          </div>` : '';
+            return `
+        <div style="margin-top:0.6rem; font-size:0.82rem; color:#94a3b8;">
+          ${compatNote}
+          <strong style="color:#94a3b8;">Source:</strong> ${source}
+          &nbsp;·&nbsp;
+          <strong style="color:#94a3b8;">Confidence:</strong> ${confidence}
+          ${sourceUrl ? `<br><a href="${sourceUrl}" target="_blank" rel="noopener" style="color:#3b82f6;">View source →</a>` : ''}
+          ${importanceEvidence}
+        </div>`;
+        }
+
+        function deviceEvidenceDetailHtml(device) {
+            const manufacturer = device.manufacturer ? escapeHtml(device.manufacturer) : null;
+            const driverProvider = device.driver_provider ? escapeHtml(device.driver_provider) : null;
+            const driverService = device.driver_service ? escapeHtml(device.driver_service) : null;
+            const recency = device.days_ago === null || device.days_ago === undefined
+                ? '—'
+                : device.days_ago === 0 ? 'Currently connected' : `${device.days_ago}d ago`;
+            return `
+        <div style="margin-top:0.6rem; font-size:0.82rem; color:#94a3b8;">
+          <strong style="color:#94a3b8;">Category:</strong> ${escapeHtml(device.class)}
+          &nbsp;·&nbsp;
+          <strong style="color:#94a3b8;">Last seen:</strong> ${recency}
+          ${manufacturer ? `<br><strong style="color:#94a3b8;">Manufacturer:</strong> ${manufacturer}` : ''}
+          ${driverProvider ? `<br><strong style="color:#94a3b8;">Driver provider:</strong> ${driverProvider}` : ''}
+          ${driverService ? ` &nbsp;·&nbsp; <strong style="color:#94a3b8;">Driver service:</strong> ${driverService}` : ''}
+        </div>`;
+        }
+
+        // "I verified this" above is private — it only ever affects THIS
+        // assessment's Confidence/Score locally, never leaves the browser.
+        // This block is the one place that writes to the shared community
+        // database (POST /api/community/submit) — a deliberately separate,
+        // explicit action, never implied by the private one. When the user
+        // already told their private Workspace what they found, reuse that
+        // exact value as a one-click "share it" action instead of asking
+        // them to pick the same status again — but still surface the raw
+        // 4-button picker (de-emphasized) for the rare case where what they'd
+        // share publicly differs from their private note.
+        function findingsBlockHtml(item) {
+            const type = item.bucket;
+            const intro = type === 'unknown'
+                ? "Researched this app's ARM64 compatibility? Let us know what you found."
+                : 'What did you actually experience with this app?';
+            const decision = item.decision;
+            const hasPrivateVerification = decision && decision.decision === 'personally_verified' && decision.verified_status;
+
+            const reuseRow = hasPrivateVerification ? `
+          <div class="findings-reuse-row" style="margin-bottom:0.6rem;">
+            <span style="font-size:0.78rem; color:#94a3b8;">Your private Workspace note says <strong style="color:#e2e8f0;">${escapeHtml(SUBMISSION_LABELS[decision.verified_status])}</strong>.</span>
+            <button class="findings-btn findings-btn-reuse" data-status="${decision.verified_status}" style="margin-left:0.4rem;">Share this with the community →</button>
+          </div>
+          <div style="font-size:0.72rem; color:#64748b; margin-bottom:0.3rem;">Sharing something different?</div>` : '';
+
+            return `
+        <div class="findings-block" style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #0f172a;">
+          <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.4rem;">
+            Share Compatibility Evidence — ${hasPrivateVerification ? 'confirm what to publish to the CheckMyARM community database.' : intro}
+            <span style="display:block; color:#64748b; font-size:0.72rem; margin-top:0.15rem;">Public and separate from your private Workspace note above — nothing here is shared until you click a button below.</span>
+          </div>
+          ${reuseRow}
+          <input type="text" class="findings-notes" placeholder="Notes (optional)" value="${escapeHtml((decision && decision.note) || '')}" />
+          <div class="findings-actions"${hasPrivateVerification ? ' style="opacity:0.7;"' : ''}>
+            <button class="findings-btn" data-status="native">Native</button>
+            <button class="findings-btn" data-status="x64-emulated">x64 Emulated</button>
+            <button class="findings-btn" data-status="x86-emulated">x86 Emulated</button>
+            <button class="findings-btn" data-status="unsupported">Unsupported</button>
+          </div>
+          <div class="findings-signin-hint"></div>
+        </div>`;
+        }
+
+        function renderGroups(containerId, groups, includeNotPrioritized) {
+            const container = document.getElementById(containerId);
+            const sections = [
+                { key: 'needsAttention', title: 'Needs Attention', collapsedDefault: false, empty: `Nothing needs attention right now.` },
+            ];
+            // Only shown for apps under Light Assessment, and only when
+            // there's actually something to disclose — an always-empty
+            // section in Standard/Advanced would be clutter, not transparency.
+            if (includeNotPrioritized && groups.notPrioritized.length > 0) {
+                sections.push({ key: 'notPrioritized', title: 'Not Currently Prioritized', collapsedDefault: true, empty: '' });
+            }
+            sections.push(
+                { key: 'alreadyConsidered', title: 'Already Considered', collapsedDefault: true, empty: `Nothing here yet.` },
+                { key: 'setAside', title: 'Set Aside', collapsedDefault: true, empty: `Nothing set aside.` },
+            );
+
+            container.innerHTML = sections.map((section) => {
+                const items = groups[section.key];
+                const bodyClass = section.collapsedDefault ? 'item-group-body collapsed' : 'item-group-body';
+                const toggleGlyph = section.collapsedDefault ? '▶' : '▼';
+                const cards = items.length === 0
+                    ? `<div class="item-group-empty">${section.empty}</div>`
+                    : items.map((item) => renderItemCard(item)).join('');
+                return `
+          <div class="item-group">
+            <div class="item-group-header" data-toggle tabindex="0" role="button"
+                 aria-expanded="${section.collapsedDefault ? 'false' : 'true'}"
+                 aria-label="${section.title}, ${items.length} item${items.length === 1 ? '' : 's'}, toggle to expand or collapse">
+              <div class="item-group-title">${section.title} <span class="count">(${items.length})</span></div>
+              <div class="item-group-toggle" aria-hidden="true">${toggleGlyph}</div>
+            </div>
+            <div class="${bodyClass}">${cards}</div>
+          </div>
+        `;
+            }).join('');
+
+            function toggleGroup(header) {
+                const body = header.nextElementSibling;
+                const glyph = header.querySelector('.item-group-toggle');
+                const collapsed = body.classList.toggle('collapsed');
+                glyph.textContent = collapsed ? '▶' : '▼';
+                header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            }
+
+            container.querySelectorAll('[data-toggle]').forEach((header) => {
+                header.addEventListener('click', () => toggleGroup(header));
+                header.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleGroup(header);
+                    }
+                });
+            });
+        }
+
+        // "This matters to me" (apps) / "This device matters to me" (devices)
+        // — a single click that sets critical_to_me, the SAME flag the full
+        // decision panel's "Important to my decision" checkbox already
+        // writes. Not a new importance scale or a second stored concept —
+        // just a second, simpler entry point into one that already exists.
+        // For an app, this is also what promotes it out of Not Currently
+        // Prioritized (see isLightDeprioritized in assessment.js).
+        function promoteButtonHtml(item) {
+            if (item.decision && item.decision.critical_to_me) {
+                return `<span style="font-size:0.75rem; color:#10b981; font-weight:600;">✓ Matters to you</span>`;
+            }
+            const label = item.isDevice ? 'This device matters to me →' : 'This matters to me →';
+            return `<button class="promote-btn" data-promote="1">${label}</button>`;
+        }
+
+        function renderItemCard(item) {
+            const cardId = itemAnchorId(itemKey(item), item.isDevice);
+            const scanMode = currentResults ? currentResults.scan_mode : null;
+            const isDeprioritized = !item.isDevice && isLightDeprioritized(item.raw, item.decision, scanMode);
+
+            // A deliberately minimal card — name, evidence badge, research
+            // link, and the one action that matters (promote). The full
+            // decision panel (findings, evidence detail, notes) is still
+            // there underneath, just behind Deeper Research Mode like
+            // everywhere else — Light's Workspace should feel lighter too,
+            // not just its Results population.
+            if (isDeprioritized) {
+                return `
+        <div class="item-card" id="${cardId}">
+          <div class="item-card-top">
+            <div>
+              <span class="item-card-name">${escapeHtml(item.name)}</span>
+              ${reasonChip(item)}
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              ${statusBadge(item)}
+              ${checkLink(item)}
+            </div>
+          </div>
+          <div class="item-card-controls">
+            ${promoteButtonHtml(item)}
+          </div>
+          <div class="deeper-detail">
+            ${decisionControlsHtml(item, cardId)}
+          </div>
+        </div>
+      `;
+            }
+
+            return `
+        <div class="item-card" id="${cardId}">
+          <div class="item-card-top">
+            <div>
+              <span class="item-card-name">${escapeHtml(item.name)}</span>
+              ${reasonChip(item)}
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              ${statusBadge(item)}
+              ${checkLink(item)}
+              ${item.isDevice ? promoteButtonHtml(item) : ''}
+            </div>
+          </div>
+          ${decisionControlsHtml(item, cardId)}
+        </div>
+      `;
+        }
+
+        function wireItemCard(item) {
+            const cardId = itemAnchorId(itemKey(item), item.isDevice);
+            const card = document.getElementById(cardId);
+            if (!card) return;
+
+            card.querySelectorAll('.decision-btn').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const current = currentPersonalContext.get(itemKey(item));
+                    const already = current && current.decision === btn.dataset.decision;
+                    setItemDecision(item, {
+                        decision: already ? 'research_note' : btn.dataset.decision,
+                        verified_status: (!already && btn.dataset.decision === 'personally_verified') ? (current && current.verified_status) : undefined,
+                    });
+                    rerenderAll();
+                });
+            });
+
+            card.querySelectorAll('.verified-status-btn').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    setItemDecision(item, { decision: 'personally_verified', verified_status: btn.dataset.status });
+                    rerenderAll();
+                });
+            });
+
+            const criticalCheckbox = card.querySelector('.critical-checkbox');
+            if (criticalCheckbox) {
+                criticalCheckbox.addEventListener('change', () => {
+                    setItemDecision(item, { critical_to_me: criticalCheckbox.checked });
+                    updateConfidenceOnly();
+                });
+            }
+
+            // Promotes out of Not Currently Prioritized (apps) or just
+            // flags importance (devices) — full re-render either way since
+            // an app promotion changes which group it belongs to.
+            const promoteBtn = card.querySelector('[data-promote]');
+            if (promoteBtn) {
+                promoteBtn.addEventListener('click', () => {
+                    setItemDecision(item, { critical_to_me: true });
+                    rerenderAll();
+                });
+            }
+
+            const noteInput = card.querySelector('.decision-note');
+            if (noteInput) {
+                let debounce;
+                noteInput.addEventListener('input', () => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(() => {
+                        setItemDecision(item, { note: noteInput.value.trim() });
+                    }, 400);
+                });
+            }
+
+            const findingsButtons = card.querySelectorAll('.findings-btn[data-status]');
+            findingsButtons.forEach((btn) => {
+                btn.addEventListener('click', () => submitFinding(btn, item));
+            });
+        }
+
+        async function submitFinding(btn, item) {
+            const block = btn.closest('.findings-block');
+            const buttons = block.querySelectorAll('.findings-btn');
+            buttons.forEach((b) => (b.disabled = true));
+
+            if (!item.raw.name || !sessionId) {
+                block.innerHTML = '<span style="color:#ef4444; font-size:0.8rem;">Unable to submit — missing app or session info.</span>';
+                return;
+            }
+            const notesInput = block.querySelector('.findings-notes');
+            const notes = notesInput ? notesInput.value.trim() : '';
+
+            try {
+                const res = await fetch('/api/community/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        app_name: item.raw.name,
+                        arm_support: btn.dataset.status,
+                        notes: notes || undefined,
+                    }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+                block.innerHTML = data.updated
+                    ? '<span style="color:#10b981; font-size:0.8rem;">✓ Updated — thanks for the correction.</span>'
+                    : '<span style="color:#10b981; font-size:0.8rem;">✓ Thanks — your findings were shared.</span>';
+            } catch (err) {
+                buttons.forEach((b) => (b.disabled = false));
+                let errorEl = block.querySelector('.findings-error');
+                if (!errorEl) {
+                    errorEl = document.createElement('div');
+                    errorEl.className = 'findings-error';
+                    errorEl.style.cssText = 'color:#ef4444; font-size:0.75rem; margin-top:0.4rem;';
+                    block.appendChild(errorEl);
+                }
+                errorEl.textContent = 'Failed to submit: ' + err.message;
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Confidence — the ONLY live number in this page. Never Score, never
+        // Recommendation, never Primary Reasons. See WORKSPACE.md.
+        // ---------------------------------------------------------------------
+
+        function updateConfidenceOnly() {
+            if (!currentResults) return;
+            const synthesis = computeSynthesis(currentResults, currentPersonalContext);
+            const labelEl = document.getElementById('ws-confidence-label');
+            const barEl = document.getElementById('ws-confidence-bar');
+            if (synthesis.empty) {
+                if (labelEl) { labelEl.textContent = 'No data yet'; labelEl.style.color = '#64748b'; }
+                if (barEl) barEl.style.width = '0%';
+                return;
+            }
+            if (labelEl) {
+                labelEl.textContent = synthesis.confidenceLabel;
+                labelEl.style.color = synthesis.confidenceColor;
+            }
+            if (barEl) {
+                const pct = synthesis.confidenceLabel === 'High Confidence' ? 100
+                    : synthesis.confidenceLabel === 'Moderate Confidence' ? 66
+                        : synthesis.confidenceLabel === 'Limited Data' ? 33 : 10;
+                barEl.style.width = pct + '%';
+                barEl.style.background = synthesis.confidenceColor;
+            }
+        }
+
+        function rerenderAll() {
+            const { apps, devices } = collectItems(currentResults);
+            const appGroups = bucketItems(apps);
+            const deviceGroups = bucketItems(devices);
+            const isLight = currentResults && currentResults.scan_mode === 'quick';
+            renderGroups('apps-groups', appGroups, isLight);
+            renderGroups('devices-groups', deviceGroups, false);
+
+            ['notPrioritized', 'needsAttention', 'alreadyConsidered', 'setAside'].forEach((key) => {
+                appGroups[key].forEach((item) => wireItemCard(item));
+                deviceGroups[key].forEach((item) => wireItemCard(item));
+            });
+
+            updateConfidenceOnly();
+            loadAuthStatusHints();
+        }
+
+        // Expands the item's group if collapsed and scrolls to it — the
+        // landing behavior for a deep link from Results' Primary Reasons or
+        // preview list (see itemAnchorId in assessment.js).
+        function focusHashTarget() {
+            const hash = window.location.hash;
+            if (!hash || hash.length < 2) return;
+            let target;
+            try { target = document.querySelector(hash); } catch (err) { return; }
+            if (!target) return;
+
+            const body = target.closest('.item-group-body');
+            if (body && body.classList.contains('collapsed')) {
+                const header = body.previousElementSibling;
+                body.classList.remove('collapsed');
+                if (header) {
+                    header.setAttribute('aria-expanded', 'true');
+                    const glyph = header.querySelector('.item-group-toggle');
+                    if (glyph) glyph.textContent = '▼';
+                }
+            }
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.style.outline = '2px solid #3b82f6';
+            target.style.outlineOffset = '2px';
+            setTimeout(() => { target.style.outline = ''; target.style.outlineOffset = ''; }, 2000);
+        }
+
+        // ---------------------------------------------------------------------
+        // Deeper Research Mode — a global disclosure, not per-item state.
+        // ---------------------------------------------------------------------
+
+        document.getElementById('deeper-mode-toggle').addEventListener('change', (e) => {
+            document.getElementById('workspace').classList.toggle('deeper-mode', e.target.checked);
+        });
+
+        // ---------------------------------------------------------------------
+        // Toolbar actions
+        // ---------------------------------------------------------------------
+
+        function exportAssessment() {
+            if (!currentResults) return;
+            persistContext(); // capture any not-yet-saved decision edits before the snapshot is built
+            const payload = buildExportPayload(currentResults, currentPersonalContext);
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `checkmyarm-assessment-${new Date().toISOString().slice(0, 10)}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+        document.getElementById('export-btn').addEventListener('click', exportAssessment);
+
+        document.getElementById('rescan-btn').addEventListener('click', () => {
+            if (!confirm('Rescan will replace your current app list with a fresh scan. Your Workspace notes will carry forward for apps that still match. Continue?')) return;
+            persistContext();
+            const entries = personalContextToEntries(currentPersonalContext);
+            sessionStorage.setItem(CARRY_FORWARD_KEY, JSON.stringify({ entries, source: 'rescan' }));
+            window.location.href = '/?rescan=1';
+        });
+
+        // Recalculate is the only way the Recommendation ever changes — see
+        // WORKSPACE.md, The Recalculate Boundary. Always returns to Results.
+        document.getElementById('recalculate-btn').addEventListener('click', () => {
+            persistContext();
+            window.location.href = resultsUrl();
+        });
+
+        async function loadAuthStatusHints() {
+            try {
+                const res = await fetch('/api/auth-status');
+                const data = await res.json();
+                if (!data.enabled || data.user) return;
+                document.querySelectorAll('.findings-signin-hint').forEach((el) => {
+                    el.textContent = 'Sign in to have your contribution carry more weight.';
+                    el.style.display = 'block';
+                });
+            } catch (err) {
+                // best-effort
+            }
+        }
+
+        async function loadAuthStatus() {
+            const authEl = document.getElementById('auth-status');
+            try {
+                const res = await fetch('/api/auth-status');
+                const data = await res.json();
+                if (!data.enabled) { if (authEl) authEl.innerHTML = ''; return; }
+                if (data.user) {
+                    if (authEl) authEl.innerHTML = `<span class="back-link">Signed in as ${escapeHtml(data.user.displayName || 'you')}</span> · <a href="/auth/logout" class="back-link">Log out</a>`;
+                    return;
+                }
+                const returnParam = sessionId ? `?return=${encodeURIComponent(sessionId)}` : '';
+                if (authEl) {
+                    const links = [];
+                    if (data.providers && data.providers.google) links.push(`<a href="/auth/google${returnParam}" class="back-link">Sign in with Google</a>`);
+                    if (data.providers && data.providers.github) links.push(`<a href="/auth/github${returnParam}" class="back-link">GitHub</a>`);
+                    authEl.innerHTML = links.join(' · ');
+                }
+            } catch (err) {
+                // best-effort
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Load
+        // ---------------------------------------------------------------------
+
+        async function init() {
+            if (!sessionId) {
+                document.getElementById('loading-message').innerHTML =
+                    'No session found. <a href="/" style="color:#3b82f6;">Run a new scan</a> to start an assessment.';
+                return;
+            }
+            try {
+                const res = await fetch('/api/session/' + sessionId);
+
+                if (res.status === 404) {
+                    document.getElementById('loading-message').innerHTML =
+                        'We couldn\'t find that assessment. <a href="/" style="color:#3b82f6;">Run a new scan</a> to start one.';
+                    return;
+                }
+                if (res.status === 410) {
+                    document.getElementById('loading-message').innerHTML =
+                        'This assessment has expired. <a href="/" style="color:#3b82f6;">Run a new scan</a> to start a fresh one.';
+                    return;
+                }
+
+                const data = await res.json();
+                if (data.status !== 'complete') {
+                    document.getElementById('loading-message').innerHTML =
+                        'This assessment isn\'t ready yet. <a href="' + resultsUrl() + '" style="color:#3b82f6;">Go to Results</a> to check on it.';
+                    return;
+                }
+                currentResults = data.results;
+                currentPersonalContext = loadPersonalContext(sessionId, params);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('workspace-header').style.display = 'block';
+                document.getElementById('workspace').style.display = 'block';
+
+                rerenderAll();
+                loadAuthStatus();
+                focusHashTarget();
+            } catch (err) {
+                document.getElementById('loading-message').textContent = 'Failed to load your assessment: ' + err.message;
+            }
+        }
+
+        init();
+
+        // Guards against the browser's back-forward cache serving a stale DOM:
+        // if this page is restored from bfcache (event.persisted), Personal
+        // Context in sessionStorage may have changed since it was last shown
+        // (e.g. after a round trip through Results and back). Re-load and
+        // re-render rather than silently showing outdated decisions.
+        window.addEventListener('pageshow', (event) => {
+            if (!event.persisted || !currentResults) return;
+            currentPersonalContext = loadPersonalContext(sessionId, params);
+            rerenderAll();
+        });
+    </script>
+
+</body>
+
+</html>
