@@ -9,6 +9,7 @@
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="/shell.css">
     <style>
         * {
             box-sizing: border-box;
@@ -21,43 +22,6 @@
             background: #0f172a;
             color: #f1f5f9;
             min-height: 100vh;
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            border-bottom: 1px solid #1e293b;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #3b82f6;
-            letter-spacing: -0.5px;
-        }
-
-        .logo img {
-            height: 28px;
-            width: auto;
-            margin-right: 0.5rem;
-        }
-
-        .logo span {
-            color: #f1f5f9;
-        }
-
-        .back-link {
-            color: #64748b;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .back-link:hover {
-            color: #f1f5f9;
         }
 
         .container {
@@ -148,15 +112,7 @@
 </head>
 
 <body>
-    <nav>
-        <a href="/" id="nav-logo-link" style="text-decoration:none;">
-            <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
-        </a>
-        <div style="display:flex; align-items:center; gap:1.25rem;">
-            <a href="/workspace.html" id="nav-workspace-link" class="back-link" style="display:none;">Workspace</a>
-            <a href="/" id="nav-back-link" class="back-link">← Back to scanner</a>
-        </div>
-    </nav>
+    <div id="app-shell"></div>
 
     <div class="container">
         <h1>Privacy</h1>
@@ -291,10 +247,7 @@
         <br>© 2026 CheckMyARM. All rights reserved.
     </footer>
 
-    <script src="/assessment.js"></script>
-    <script>
-        applySessionAwareNav();
-    </script>
+    <script src="/nav.js"></script>
 </body>
 
 </html>

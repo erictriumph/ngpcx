@@ -9,6 +9,7 @@
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="/shell.css">
     <style>
         * {
             box-sizing: border-box;
@@ -21,49 +22,6 @@
             background: #0f172a;
             color: #f1f5f9;
             min-height: 100vh;
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            border-bottom: 1px solid #1e293b;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #3b82f6;
-            letter-spacing: -0.5px;
-        }
-
-        .logo img {
-            height: 28px;
-            width: auto;
-            margin-right: 0.5rem;
-        }
-
-        .logo span {
-            color: #f1f5f9;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 1.25rem;
-        }
-
-        .nav-links a {
-            color: #64748b;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .nav-links a:hover {
-            color: #f1f5f9;
         }
 
         .container {
@@ -176,16 +134,7 @@
 </head>
 
 <body>
-    <nav>
-        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMyARM<span>Admin</span></div>
-        <div class="nav-links" id="nav-links">
-            <a href="/admin-users.html">Users</a>
-            <a href="/admin-community-review.html">Community Review</a>
-            <a href="/admin-research.html">Unknown apps</a>
-            <a href="/admin-revisit.html">Revisit stale apps</a>
-            <a href="/">← Back to scanner</a>
-        </div>
-    </nav>
+    <div id="app-shell"></div>
 
     <div class="container">
         <h1>Admin Dashboard</h1>
@@ -205,6 +154,7 @@
 
     <footer>CheckMyARM Admin — internal tool, not for public use.</footer>
 
+    <script src="/nav.js"></script>
     <script>
         const SECRET_KEY = 'ngpcx_admin_secret';
 

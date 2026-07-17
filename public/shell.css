@@ -1,0 +1,386 @@
+/* shell.css — CheckMyARM application shell: the top nav bar rendered by
+   nav.js into every page's <div id="app-shell"></div>. Page-specific content
+   styling stays wherever it already lives (assessment.css for Results/
+   Workspace, each page's own inline <style> otherwise) — this file is
+   scoped to shell chrome only. See CLAUDE.md, Application Shell milestone. */
+
+.shell-nav {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 2rem;
+    border-bottom: 1px solid #1e293b;
+    position: relative;
+}
+
+.shell-desktop-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 1.25rem;
+}
+
+/* LOGO + SUBTITLE */
+.shell-logo-link {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex-shrink: 0;
+}
+
+.shell-logo {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #3b82f6;
+    letter-spacing: -0.5px;
+}
+
+.shell-logo img {
+    height: 28px;
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+.shell-logo span {
+    color: #f1f5f9;
+}
+
+/* Deliberately only ever rendered on the homepage — see logoMarkup() in nav.js. */
+.shell-logo .tm {
+    font-size: 0.55em;
+    font-weight: 400;
+    vertical-align: super;
+    color: #64748b;
+    margin-left: 0.1em;
+}
+
+/* Subtle, non-clickable, never a verdict — see CLAUDE.md. */
+.shell-subtitle {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-left: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+}
+
+/* MODE MENUS (desktop) */
+.shell-desktop-menus {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.shell-dropdown {
+    position: relative;
+}
+
+.shell-mode-btn {
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.9rem;
+    color: #94a3b8;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+}
+
+.shell-mode-btn:hover {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+.shell-mode-static {
+    color: #94a3b8;
+    cursor: default;
+}
+
+.shell-mode-static:hover {
+    background: none;
+    color: #94a3b8;
+}
+
+.shell-mode-active {
+    color: #93c5fd;
+    font-weight: 700;
+}
+
+.shell-caret {
+    font-size: 0.6rem;
+    opacity: 0.6;
+}
+
+.shell-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    min-width: 220px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    padding: 0.4rem;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+/* [hidden] has the same specificity as the class rule above, and source
+   order alone would let this stylesheet silently win over the UA default
+   (display:none) — spelling it out here removes that ambiguity. */
+.shell-dropdown-panel[hidden] {
+    display: none;
+}
+
+.shell-dropdown-panel-right {
+    left: auto;
+    right: 0;
+}
+
+.shell-menu-item {
+    display: block;
+    padding: 0.55rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.shell-menu-item:hover {
+    background: #263548;
+    color: #f1f5f9;
+}
+
+/* RIGHT CLUSTER (desktop) */
+.shell-desktop-right {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.shell-cta {
+    padding: 0.45rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.shell-cta-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.shell-cta-primary:hover {
+    background: #2563eb;
+}
+
+.shell-cta-secondary {
+    background: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+}
+
+.shell-cta-secondary:hover {
+    border-color: #3b82f6;
+    color: #f1f5f9;
+}
+
+.shell-signin-btn,
+.shell-account-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 20px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.shell-signin-btn:hover,
+.shell-account-btn:hover {
+    border-color: #3b82f6;
+}
+
+.shell-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #2dd4bf);
+    color: #0b1220;
+    font-size: 0.65rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.shell-role-badge {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.1rem 0.4rem;
+    border-radius: 5px;
+}
+
+.shell-role-researcher {
+    background: rgba(45, 212, 191, 0.15);
+    color: #2dd4bf;
+}
+
+.shell-role-admin {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+/* HAMBURGER + MOBILE PANEL — hidden on desktop by default */
+.shell-hamburger {
+    display: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.shell-hamburger span {
+    width: 16px;
+    height: 2px;
+    background: #94a3b8;
+    border-radius: 2px;
+}
+
+.shell-mobile-panel {
+    display: none;
+}
+
+@media (max-width: 860px) {
+    .shell-desktop-menus,
+    .shell-desktop-right {
+        display: none;
+    }
+
+    .shell-subtitle {
+        max-width: 160px;
+    }
+
+    .shell-hamburger {
+        display: flex;
+    }
+
+    .shell-mobile-panel[hidden] {
+        display: none;
+    }
+
+    .shell-mobile-panel:not([hidden]) {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        position: fixed;
+        top: 64px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #0f172a;
+        border-top: 1px solid #1e293b;
+        padding: 1rem;
+        overflow-y: auto;
+        z-index: 70;
+    }
+}
+
+.shell-mobile-subtitle {
+    font-size: 0.78rem;
+    color: #64748b;
+    padding: 0 0.2rem;
+}
+
+.shell-mobile-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 0.65rem 0.8rem;
+    font-size: 0.85rem;
+    color: #f1f5f9;
+}
+
+.shell-mobile-cta-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.shell-mobile-cta-row .shell-cta {
+    flex: 1;
+    text-align: center;
+}
+
+.shell-accordion {
+    border: 1px solid #334155;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.shell-accordion-head {
+    width: 100%;
+    text-align: left;
+    background: #1e293b;
+    border: none;
+    color: #f1f5f9;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.7rem 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.shell-accordion-body {
+    padding: 0.3rem 0.5rem 0.6rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.shell-accordion-body[hidden] {
+    display: none;
+}
+
+.shell-accordion-empty {
+    padding: 0.7rem 0.9rem;
+    font-size: 0.8rem;
+    color: #64748b;
+    font-style: italic;
+}

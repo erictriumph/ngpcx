@@ -9,6 +9,7 @@
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/shell.css">
   <style>
     * {
       box-sizing: border-box;
@@ -21,56 +22,6 @@
       background: #0f172a;
       color: #f1f5f9;
       min-height: 100vh;
-    }
-
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 2rem;
-      border-bottom: 1px solid #1e293b;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: #3b82f6;
-      letter-spacing: -0.5px;
-    }
-
-    .logo img {
-      height: 28px;
-      width: auto;
-      margin-right: 0.5rem;
-    }
-
-    .logo span {
-      color: #f1f5f9;
-    }
-
-    /* Brand group: logo + tagline read as one unit, visually distinct from the
-       utility nav links on the right (which already separate via space-between). */
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .brand-tag {
-      color: #64748b;
-      font-size: 0.75rem;
-      padding-left: 0.75rem;
-      border-left: 1px solid #334155;
-    }
-
-    .tm {
-      font-size: 0.55em;
-      font-weight: 400;
-      vertical-align: super;
-      color: #64748b;
-      margin-left: 0.1em;
     }
 
     /* HERO */
@@ -299,23 +250,7 @@
 
 <body>
 
-  <nav>
-    <div class="brand">
-      <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span><span class="tm">™</span>
-      </div>
-      <div class="brand-tag">ARM Readiness Scanner</div>
-    </div>
-    <div style="display:flex; align-items:center; gap:1.25rem;">
-      <span id="auth-status" style="font-size:0.9rem;"></span>
-      <span id="workspace-nav" style="font-size:0.9rem;"></span>
-      <a href="#" id="continue-session-link" style="color:#64748b; text-decoration:none; font-size:0.9rem;">Import a Workspace</a>
-      <input type="file" id="import-file-input" accept="application/json" style="display:none;">
-      <a href="/my-submissions.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">My Submissions</a>
-      <a href="/why.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">Why</a>
-      <a href="/how-it-thinks.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">How CheckMyARM Thinks</a>
-      <a href="/about.html" style="color:#64748b; text-decoration:none; font-size:0.9rem;">About</a>
-    </div>
-  </nav>
+  <div id="app-shell"></div>
 
   <!-- HERO -->
   <div class="hero">
@@ -470,6 +405,7 @@
   </footer>
 
   <script src="/assessment.js"></script>
+  <script src="/nav.js"></script>
   <script>
     const btn = document.getElementById('run-scan-btn');
     let pollInterval = null;
@@ -575,83 +511,23 @@
       hero.insertBefore(note, hero.firstChild);
     }
 
-    // Import: parses the uploaded export file, validates it defensively via
-    // sanitizeExportPayload() (assessment.js) — never trust a single
-    // validation pass on user-supplied file content — then routes the
-    // preserved observation snapshot through the exact same POST /api/session
-    // + POST /api/scan pair a real scan already uses. No new server endpoint:
-    // classifyApps() re-runs against CURRENT catalog state (the whole point —
-    // an old export gets re-evaluated with today's data/formula, not a
-    // replayed stale verdict), and the community-submission anti-abuse check
-    // (raw_apps must contain the app name) is satisfied automatically, same
-    // as for a physically scanned app. Recognizes both the current
-    // three-layer export format and the older decision-only format (see
-    // sanitizeExportPayload's doc comment) — an old saved file still imports.
-    async function handleImportFile(file) {
-      const navLink = document.getElementById('continue-session-link');
-      const originalText = navLink.textContent;
-      navLink.style.pointerEvents = 'none';
-      navLink.textContent = 'Reading file…';
-      try {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-        const importData = sanitizeExportPayload(parsed);
-        if (!importData) {
-          throw new Error('This doesn\'t look like a CheckMyARM export file, or it has no saved notes.');
-        }
-
-        navLink.textContent = 'Starting…';
-        const sessionRes = await fetch('/api/session', { method: 'POST' });
-        const sessionData = await sessionRes.json();
-        const newSessionId = sessionData.session_id;
-
-        // Preserves the ORIGINAL assessment level (Light/Standard/Advanced)
-        // when the export has one, rather than always forcing the
-        // 'imported' sentinel — otherwise a re-imported Light assessment
-        // would silently stop deprioritizing anything, since that logic
-        // gates strictly on scan_mode === 'quick'. Legacy-format files
-        // (no preserved scan_mode) fall back to the sentinel, unchanged
-        // from before.
-        await fetch('/api/scan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            apps: importData.apps,
-            unlisted_apps: importData.unlistedApps,
-            devices: importData.devices,
-            session_id: newSessionId,
-            scan_mode: importData.scanMode || 'imported',
-            scanner_version: importData.scannerVersion || null,
-          }),
-        });
-
-        sessionStorage.setItem(CARRY_FORWARD_KEY, JSON.stringify({ entries: importData.entries, source: 'import' }));
-        if (importData.assessmentSnapshot) {
-          sessionStorage.setItem('ngpcx_imported_assessment_snapshot_v1', JSON.stringify(importData.assessmentSnapshot));
-        }
-        // origin=assessment: importing never involves a physical scanner —
-        // Results must never claim one "connected" for this arrival.
-        window.location.href = '/report.html?session=' + newSessionId + '&level=' + encodeURIComponent(importData.scanMode || 'imported') + '&carryForward=1&origin=assessment';
-      } catch (err) {
-        alert('Import failed: ' + err.message);
-        navLink.style.pointerEvents = '';
-        navLink.textContent = originalText;
-      }
-    }
-
-    const importFileInput = document.getElementById('import-file-input');
-    function openImportPicker(e) {
-      e.preventDefault();
-      importFileInput.click();
-    }
-    document.getElementById('continue-session-link').addEventListener('click', openImportPicker);
+    // The hero's own "Already started?" import prompt reuses nav.js's single
+    // universal import mechanism (window.NavShell.triggerImport) rather than
+    // a second implementation — the nav-embedded Import link this used to sit
+    // alongside is now nav.js's own header CTA. nav.js's init() is typically
+    // done well before a user reads this far down the hero and clicks, but
+    // the ready-event fallback covers the rare case it isn't.
     const heroContinueLink = document.getElementById('continue-session-link-hero');
-    if (heroContinueLink) heroContinueLink.addEventListener('click', openImportPicker);
-    importFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) handleImportFile(file);
-      e.target.value = ''; // allow re-selecting the same file later
-    });
+    if (heroContinueLink) {
+      heroContinueLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.NavShell && window.NavShell.ready) {
+          window.NavShell.triggerImport();
+        } else {
+          document.addEventListener('navshell:ready', () => window.NavShell.triggerImport(), { once: true });
+        }
+      });
+    }
 
     function showWaitingMessage() {
       const hero = document.querySelector('.hero');
@@ -676,59 +552,6 @@
       hero.appendChild(msg);
     }
 
-    // Sign-in is entirely optional and only shown once OAuth is actually enabled
-    // server-side (not yet validated in production — see CLAUDE.md).
-    fetch('/api/auth-status')
-      .then(res => res.json())
-      .then(data => {
-        const el = document.getElementById('auth-status');
-        if (!el || !data.enabled) return;
-
-        el.textContent = '';
-        if (data.user) {
-          const signedInAs = document.createElement('span');
-          signedInAs.style.color = '#64748b';
-          signedInAs.textContent = `Signed in as ${data.user.displayName || 'you'}`;
-          const sep = document.createTextNode(' · ');
-          const logout = document.createElement('a');
-          logout.href = '/auth/logout';
-          logout.style.cssText = 'color:#64748b; text-decoration:none;';
-          logout.textContent = 'Log out';
-          el.append(signedInAs, sep, logout);
-        } else {
-          const nodes = [];
-          if (data.providers && data.providers.google) {
-            const google = document.createElement('a');
-            google.href = '/auth/google';
-            google.style.cssText = 'color:#64748b; text-decoration:none;';
-            google.textContent = 'Sign in with Google';
-            nodes.push(google);
-          }
-          if (data.providers && data.providers.github) {
-            if (nodes.length) nodes.push(document.createTextNode(' · '));
-            const github = document.createElement('a');
-            github.href = '/auth/github';
-            github.style.cssText = 'color:#64748b; text-decoration:none;';
-            github.textContent = 'GitHub';
-            nodes.push(github);
-          }
-          el.append(...nodes);
-        }
-
-        // Compact contextual nav entry for Researchers/Admins only — never shown to
-        // anonymous visitors or normal users. Convenience only: every admin/research
-        // page and endpoint enforces authorization server-side regardless of this.
-        const workspaceEl = document.getElementById('workspace-nav');
-        if (workspaceEl && data.user && (data.user.role === 'researcher' || data.user.role === 'admin')) {
-          const isAdmin = data.user.role === 'admin';
-          const link = document.createElement('a');
-          link.href = isAdmin ? '/admin-dashboard.html' : '/admin-research.html';
-          link.style.cssText = 'color:#64748b; text-decoration:none;';
-          link.textContent = 'Tools';
-          workspaceEl.appendChild(link);
-        }
-      })
-      .catch(() => {});
   </script>
 
 </body>

@@ -9,6 +9,7 @@
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="/shell.css">
     <style>
         * {
             box-sizing: border-box;
@@ -21,49 +22,6 @@
             background: #0f172a;
             color: #f1f5f9;
             min-height: 100vh;
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            border-bottom: 1px solid #1e293b;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #3b82f6;
-            letter-spacing: -0.5px;
-        }
-
-        .logo img {
-            height: 28px;
-            width: auto;
-            margin-right: 0.5rem;
-        }
-
-        .logo span {
-            color: #f1f5f9;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 1.25rem;
-        }
-
-        .nav-links a {
-            color: #64748b;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .nav-links a:hover {
-            color: #f1f5f9;
         }
 
         .container {
@@ -380,14 +338,7 @@
 </head>
 
 <body>
-    <nav>
-        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMyARM<span>Admin</span></div>
-        <div class="nav-links" id="nav-links">
-            <a href="/admin-research.html">Unknown apps</a>
-            <a href="/admin-revisit.html">Revisit stale apps</a>
-            <a href="/">← Back to scanner</a>
-        </div>
-    </nav>
+    <div id="app-shell"></div>
 
     <div class="container">
         <h1>Community Review</h1>
@@ -410,6 +361,7 @@
 
     <footer>CheckMyARM Admin — internal tool, not for public use.</footer>
 
+    <script src="/nav.js"></script>
     <script>
         const SECRET_KEY = 'ngpcx_admin_secret';
         let currentUserId = null;
@@ -971,30 +923,16 @@ async function refreshCard(card) {
             loadQueue();
         });
 
-        // Same session-cookie-first pattern as the other admin/research pages — a
-        // signed-in Researcher or Admin never needs the secret form. Also captures the
-        // caller's own user id so the recommendation UI can grey out self-review.
+        // nav.js has already fetched /api/auth-status for its own Community/Admin
+        // menus by the time navshell:ready fires — this just reads that same
+        // result to capture the caller's own user id, so the recommendation UI
+        // can grey out self-review, instead of a second duplicate fetch.
         async function loadWorkspaceNav() {
-            try {
-                const res = await fetch('/api/auth-status');
-                const data = await res.json();
-                if (!data.user) return;
-                currentUserId = data.user.id ?? null;
-                const isAdmin = data.user.role === 'admin';
-                if (isAdmin) {
-                    const navLinks = document.getElementById('nav-links');
-                    const dashboard = document.createElement('a');
-                    dashboard.href = '/admin-dashboard.html';
-                    dashboard.textContent = 'Dashboard';
-                    navLinks.prepend(dashboard);
-                    const users = document.createElement('a');
-                    users.href = '/admin-users.html';
-                    users.textContent = 'Users';
-                    navLinks.prepend(users);
-                }
-            } catch {
-                // best-effort — page still works via the secret form either way
-            }
+            const state = await new Promise((resolve) => {
+                if (window.NavShell && window.NavShell.ready) resolve(window.NavShell);
+                else document.addEventListener('navshell:ready', () => resolve(window.NavShell), { once: true });
+            });
+            currentUserId = (state.auth && state.auth.user && state.auth.user.id) ?? null;
         }
 
         loadWorkspaceNav().then(() => loadQueue());

@@ -10,6 +10,7 @@
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="/assessment.css">
+    <link rel="stylesheet" href="/shell.css">
     <style>
         /* REPORT — Results-specific layout only; shared visual language lives
            in assessment.css. */
@@ -321,18 +322,7 @@
 
 <body>
 
-    <nav>
-        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
-        <div style="display:flex; align-items:center; gap:1.25rem;">
-            <span id="auth-status"></span>
-            <span id="workspace-nav"></span>
-            <a href="/my-submissions.html" data-info-link class="back-link">My Submissions</a>
-            <a href="/why.html" data-info-link class="back-link">Why</a>
-            <a href="/how-it-thinks.html" data-info-link class="back-link">How CheckMyARM Thinks</a>
-            <a href="/about.html" data-info-link class="back-link">About</a>
-            <a href="/" class="back-link">← Run another scan</a>
-        </div>
-    </nav>
+    <div id="app-shell"></div>
 
     <!-- LOADING STATE — two distinct stages, never blended (see CLAUDE.md,
          Assessment Pipeline Staging): "Scanner connected" only appears when
@@ -550,6 +540,7 @@
     </footer>
 
     <script src="/assessment.js"></script>
+    <script src="/nav.js"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get('session');
@@ -561,10 +552,6 @@
         // name the actual count instead of a generic "some apps" (see
         // CLAUDE.md, Community contribution).
         let currentDeservesAttentionCount = 0;
-        // Results is already the active session's own page — its outgoing
-        // nav links to the informational pages just need to carry that same
-        // session forward (see CLAUDE.md, session-aware navigation).
-        decorateInfoLinks(sessionId, scanLevelParam);
         // Consumed exactly once here (not inside renderReport(), which can
         // legitimately run more than once per page load on refresh) — a
         // second consume would find the sessionStorage key already gone and
@@ -628,48 +615,6 @@
 
         document.getElementById('export-btn').addEventListener('click', exportAssessment);
         document.getElementById('print-btn').addEventListener('click', () => window.print());
-
-        // Populates the nav sign-in/account indicator. Login is entirely
-        // optional and unrelated to the assessment itself.
-        async function loadAuthStatus() {
-            const authEl = document.getElementById('auth-status');
-            try {
-                const res = await fetch('/api/auth-status');
-                const data = await res.json();
-
-                if (!data.enabled) {
-                    if (authEl) authEl.innerHTML = '';
-                    return;
-                }
-
-                if (data.user) {
-                    if (authEl) {
-                        authEl.innerHTML = `<span class="back-link">Signed in as ${escapeHtml(data.user.displayName || 'you')}</span> · <a href="/auth/logout" class="back-link">Log out</a>`;
-                    }
-                    const toolsEl = document.getElementById('workspace-nav');
-                    if (toolsEl && (data.user.role === 'researcher' || data.user.role === 'admin')) {
-                        const isAdmin = data.user.role === 'admin';
-                        const href = isAdmin ? '/admin-dashboard.html' : '/admin-research.html';
-                        toolsEl.innerHTML = `<a href="${href}" class="back-link">Tools</a>`;
-                    }
-                    return;
-                }
-
-                const returnParam = sessionId ? `?return=${encodeURIComponent(sessionId)}` : '';
-                if (authEl) {
-                    const links = [];
-                    if (data.providers && data.providers.google) {
-                        links.push(`<a href="/auth/google${returnParam}" class="back-link">Sign in with Google</a>`);
-                    }
-                    if (data.providers && data.providers.github) {
-                        links.push(`<a href="/auth/github${returnParam}" class="back-link">GitHub</a>`);
-                    }
-                    authEl.innerHTML = links.join(' · ');
-                }
-            } catch (err) {
-                // best-effort — anonymous workflow still works without this
-            }
-        }
 
         function animateScore(target) {
             const circle = document.getElementById('gauge-circle');
@@ -1394,7 +1339,6 @@
             renderConfidenceNextStep(synthesis);
             renderNotPrioritized(synthesis);
             renderHistoricalComparison(importedAssessmentSnapshot, synthesis);
-            loadAuthStatus();
             renderRefreshBanner(results);
 
             document.getElementById('loading').style.display = 'none';

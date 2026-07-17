@@ -9,6 +9,7 @@
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="/shell.css">
     <style>
         * {
             box-sizing: border-box;
@@ -21,43 +22,6 @@
             background: #0f172a;
             color: #f1f5f9;
             min-height: 100vh;
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            border-bottom: 1px solid #1e293b;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #3b82f6;
-            letter-spacing: -0.5px;
-        }
-
-        .logo img {
-            height: 28px;
-            width: auto;
-            margin-right: 0.5rem;
-        }
-
-        .logo span {
-            color: #f1f5f9;
-        }
-
-        .back-link {
-            color: #64748b;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .back-link:hover {
-            color: #f1f5f9;
         }
 
         .container {
@@ -356,16 +320,7 @@
 </head>
 
 <body>
-    <nav>
-        <a href="/" id="nav-logo-link" style="text-decoration:none;">
-            <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
-        </a>
-        <div style="display:flex; align-items:center; gap:1.25rem;">
-            <span id="workspace-nav"></span>
-            <a href="/workspace.html" id="nav-workspace-link" class="back-link" style="display:none;">Workspace</a>
-            <a href="/" id="nav-back-link" class="back-link">← Back to scanner</a>
-        </div>
-    </nav>
+    <div id="app-shell"></div>
 
     <div class="container">
         <h1>My Submissions <span id="pending-request-badge" class="state-badge state-Pending"
@@ -407,9 +362,8 @@
         <br>© 2026 CheckMyARM. All rights reserved.
     </footer>
 
-    <script src="/assessment.js"></script>
+    <script src="/nav.js"></script>
     <script>
-        applySessionAwareNav();
         function escapeHtml(str) {
             if (str === null || str === undefined) return '';
             const div = document.createElement('div');
@@ -707,26 +661,14 @@
             }
         }
 
-        async function loadWorkspaceNav(user) {
-            if (user.role !== 'researcher' && user.role !== 'admin') return;
-            const el = document.getElementById('workspace-nav');
-            const isAdmin = user.role === 'admin';
-            const link = document.createElement('a');
-            link.href = isAdmin ? '/admin-dashboard.html' : '/admin-research.html';
-            link.className = 'back-link';
-            link.textContent = 'Tools';
-            el.appendChild(link);
-        }
-
         const ROLE_LABELS = { admin: 'Admin', researcher: 'Researcher', user: 'Not yet a Researcher' };
 
-        async function loadResearcherWorkflow() {
+        // Reuses nav.js's already-fetched auth state (window.NavShell.auth)
+        // instead of a second /api/auth-status call — nav.js itself now owns
+        // the Community-menu "Tools" links this used to inject manually.
+        async function loadResearcherWorkflow(authData) {
             try {
-                const authRes = await fetch('/api/auth-status');
-                const authData = await authRes.json();
                 if (!authData.enabled || !authData.user) return;
-
-                loadWorkspaceNav(authData.user);
 
                 document.getElementById('researcher-status-card').style.display = 'block';
                 document.getElementById('stat-researcher-status').textContent =
@@ -743,7 +685,11 @@
             }
         }
 
-        loadResearcherWorkflow();
+        if (window.NavShell && window.NavShell.ready) {
+            loadResearcherWorkflow(window.NavShell.auth);
+        } else {
+            document.addEventListener('navshell:ready', () => loadResearcherWorkflow(window.NavShell.auth), { once: true });
+        }
     </script>
 </body>
 

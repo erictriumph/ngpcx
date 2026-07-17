@@ -10,6 +10,7 @@
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="/assessment.css">
+    <link rel="stylesheet" href="/shell.css">
     <style>
         .workspace {
             max-width: 900px;
@@ -281,16 +282,7 @@
 
 <body>
 
-    <nav>
-        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
-        <div style="display:flex; align-items:center; gap:1.25rem;">
-            <span id="auth-status"></span>
-            <a href="/why.html" data-info-link class="back-link">Why</a>
-            <a href="/how-it-thinks.html" data-info-link class="back-link">How CheckMyARM Thinks</a>
-            <a href="/about.html" data-info-link class="back-link">About</a>
-            <a href="#" id="results-link" class="back-link">← Back to Results</a>
-        </div>
-    </nav>
+    <div id="app-shell"></div>
 
     <!-- LOADING / ERROR STATE -->
     <div class="loading" id="loading">
@@ -354,16 +346,13 @@
     </footer>
 
     <script src="/assessment.js"></script>
+    <script src="/nav.js"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const sessionId = params.get('session');
         const scanLevelParam = params.get('level');
         let currentResults = null;
         let currentPersonalContext = new Map();
-        // Workspace is already the active session's own page — its outgoing
-        // nav links to the informational pages just need to carry that same
-        // session forward (see CLAUDE.md, session-aware navigation).
-        decorateInfoLinks(sessionId, scanLevelParam);
 
         function escapeHtml(str) {
             if (str === null || str === undefined) return '';
@@ -379,11 +368,6 @@
         function resultsUrl() {
             return '/report.html?session=' + encodeURIComponent(sessionId) + '&level=' + encodeURIComponent(scanLevelParam || '') + '&origin=assessment';
         }
-        document.getElementById('results-link').href = '#';
-        document.getElementById('results-link').addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = resultsUrl();
-        });
 
         // ---------------------------------------------------------------------
         // Decision read/write — the one place Personal Context actually changes.
@@ -1035,28 +1019,6 @@
             }
         }
 
-        async function loadAuthStatus() {
-            const authEl = document.getElementById('auth-status');
-            try {
-                const res = await fetch('/api/auth-status');
-                const data = await res.json();
-                if (!data.enabled) { if (authEl) authEl.innerHTML = ''; return; }
-                if (data.user) {
-                    if (authEl) authEl.innerHTML = `<span class="back-link">Signed in as ${escapeHtml(data.user.displayName || 'you')}</span> · <a href="/auth/logout" class="back-link">Log out</a>`;
-                    return;
-                }
-                const returnParam = sessionId ? `?return=${encodeURIComponent(sessionId)}` : '';
-                if (authEl) {
-                    const links = [];
-                    if (data.providers && data.providers.google) links.push(`<a href="/auth/google${returnParam}" class="back-link">Sign in with Google</a>`);
-                    if (data.providers && data.providers.github) links.push(`<a href="/auth/github${returnParam}" class="back-link">GitHub</a>`);
-                    authEl.innerHTML = links.join(' · ');
-                }
-            } catch (err) {
-                // best-effort
-            }
-        }
-
         // ---------------------------------------------------------------------
         // Load
         // ---------------------------------------------------------------------
@@ -1095,7 +1057,6 @@
                 document.getElementById('workspace').style.display = 'block';
 
                 rerenderAll();
-                loadAuthStatus();
                 focusHashTarget();
             } catch (err) {
                 document.getElementById('loading-message').textContent = 'Failed to load your assessment: ' + err.message;
