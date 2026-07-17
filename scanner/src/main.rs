@@ -1798,6 +1798,11 @@ fn main() {
     let cli_mode = get_cli_scan_mode();
     let base_url = get_server_url();
 
+    // Cargo.toml's [package] version is the one canonical source — already
+    // read the same way into ScanPayload's scanner_version field below, so
+    // the console and the submitted payload can never drift apart.
+    println!("  Version: v{}", env!("CARGO_PKG_VERSION"));
+
     // Step 1: System info
     println!("\n[1/4] Collecting system information...");
     let system = get_system_info();
