@@ -241,6 +241,38 @@
             line-height: 1.4;
         }
 
+        .confidence-improve-note {
+            font-size: 0.75rem;
+            color: #93c5fd;
+            max-width: 260px;
+            text-align: center;
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        /* NEXT STEP — same calm, informational blue as the confidence-improve
+           note above, deliberately not reusing .refine-cta's more assertive
+           bordered-button treatment; this is a nudge, not a primary action. */
+        .confidence-next-step {
+            display: block;
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 0.9rem 1.25rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            text-decoration: none;
+        }
+
+        .confidence-next-step:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .confidence-next-step strong {
+            color: #f1f5f9;
+        }
+
         /* Print — a plain readable snapshot, ~one page where content allows. */
         @media print {
 
@@ -322,19 +354,30 @@
         <div class="report-header">
             <div style="max-width: 480px;">
                 <h1>Your ARM Readiness Results</h1>
-                <p style="color:#94a3b8; font-size:0.9rem; margin-top:0.4rem; line-height:1.5;">
-                    The current assessment, using everything the scan and compatibility database can honestly
-                    support — no action required to trust what's here.
+                <p id="results-tagline" style="color:#94a3b8; font-size:0.95rem; margin-top:0.5rem; line-height:1.5;">
                 </p>
-                <p id="scan-time"></p>
-                <p id="scan-level-display"
-                    style="color:#94a3b8; font-size:0.95rem; font-weight:600; margin-top:0.6rem;"></p>
-                <p id="printer-note" style="color:#64748b; font-size:0.8rem; margin-top:0.3rem;"></p>
-                <p style="color:#64748b; font-size:0.8rem; margin-top:0.3rem;">
-                    CheckMyARM is free and we intend to keep it that way — with no ads. If it saved you some
-                    research, consider <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
-                        style="color:#3b82f6;">buying us a coffee</a>.
-                </p>
+                <!-- Progressive disclosure — nothing below was removed, just
+                     collapsed by default so a first-time reader isn't asked
+                     to read six explanatory lines before seeing their
+                     recommendation. See CLAUDE.md. -->
+                <details class="collapsible-details" style="margin-top:0.6rem;">
+                    <summary style="cursor:pointer; color:#64748b; font-size:0.85rem;">About this assessment</summary>
+                    <div style="margin-top:0.5rem;">
+                        <p style="color:#94a3b8; font-size:0.9rem; line-height:1.5;">
+                            The current assessment, using everything the scan and compatibility database can honestly
+                            support — no action required to trust what's here.
+                        </p>
+                        <p id="scan-time"></p>
+                        <p id="scan-level-display"
+                            style="color:#94a3b8; font-size:0.95rem; font-weight:600; margin-top:0.6rem;"></p>
+                        <p id="printer-note" style="color:#64748b; font-size:0.8rem; margin-top:0.3rem;"></p>
+                        <p style="color:#64748b; font-size:0.8rem; margin-top:0.3rem;">
+                            CheckMyARM is free and we intend to keep it that way — with no ads. If it saved you some
+                            research, consider <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
+                                style="color:#3b82f6;">buying us a coffee</a>.
+                        </p>
+                    </div>
+                </details>
             </div>
             <div class="gauge-wrap">
                 <div id="readiness-label" style="font-size:1.05rem; font-weight:800; margin-bottom:0.4rem;"></div>
@@ -354,9 +397,9 @@
                     style="font-size:0.7rem; color:#475569; text-transform:uppercase; letter-spacing:0.05em; margin-top:0.5rem;">
                     Confidence</div>
                 <div id="confidence-bar-wrap"
-                    style="width:120px; height:6px; background:#1e293b; border-radius:3px; margin:0.5rem auto 0.3rem auto; overflow:hidden;">
+                    style="width:96px; height:4px; background:#1e293b; border-radius:2px; margin:0.5rem auto 0.3rem auto; overflow:hidden;">
                     <div id="confidence-bar"
-                        style="height:100%; background:#3b82f6; border-radius:3px; width:0%; transition:width 0.8s ease;">
+                        style="height:100%; background:#3b82f6; border-radius:2px; width:0%; transition:width 0.8s ease;">
                     </div>
                 </div>
                 <div id="confidence-label"
@@ -365,34 +408,21 @@
                     Confidence measures how well-supported this recommendation is — not whether it favors or
                     disfavors Windows on ARM.
                 </p>
+                <!-- Shown only when there's room to improve (hidden at High
+                     Confidence) — reframes Confidence as something to act on,
+                     not a grade already handed down. -->
+                <p class="confidence-improve-note" id="confidence-improve-note" style="display:none;">
+                    Refining a few items may substantially improve confidence.
+                </p>
             </div>
         </div>
 
         <div id="historical-comparison" style="display:none;"></div>
 
-        <p class="recommendation-explanation" id="recommendation-explanation"></p>
-
-        <!-- PRIMARY REASONS -->
-        <div class="primary-reasons" id="primary-reasons" style="display:none;">
-            <div class="primary-reasons-title">Primary Reasons</div>
-            <div class="reason-list" id="reason-list"></div>
-        </div>
-
-        <div class="workspace-actions">
-            <a class="action-btn" id="refine-link" href="#" style="text-decoration:none;">→ Refine Assessment</a>
-            <button class="action-btn" id="export-btn">⬇ Export</button>
-            <button class="action-btn" id="print-btn">🖨 Print</button>
-        </div>
-
-        <!-- ARM WARNING -->
-        <div class="arm-warning" id="arm-warning" style="display:none">
-            ⚡ This machine is already running ARM Windows — you're ahead of the curve!
-        </div>
-
-        <!-- SYSTEM INFO -->
-        <div class="system-info" id="system-info"></div>
-
-        <!-- SUMMARY -->
+        <!-- SUMMARY — moved directly under the header (was previously much
+             further down, after System Info) so concrete positive counts
+             are visible before any caveat text. Purely a position change —
+             same counts, same computation, see CLAUDE.md. -->
         <div class="summary">
             <div class="summary-card native">
                 <div class="summary-count" id="count-native">0</div>
@@ -435,6 +465,32 @@
             </a>
         </div>
 
+        <!-- NEXT STEP — a lightweight, calm reframe of counts already shown
+             above and in the reduction narrative below (synthesis.materialCount,
+             currentDeservesAttentionCount) — leads with what's already
+             understood before naming what's left, so Confidence reads as
+             an invitation, not a verdict. No new computation. -->
+        <a id="confidence-next-step" class="confidence-next-step" href="#" style="display:none;"></a>
+
+        <p class="recommendation-explanation" id="recommendation-explanation"></p>
+
+        <!-- PRIMARY REASONS -->
+        <div class="primary-reasons" id="primary-reasons" style="display:none;">
+            <div class="primary-reasons-title">Primary Reasons</div>
+            <div class="reason-list" id="reason-list"></div>
+        </div>
+
+        <div class="workspace-actions">
+            <a class="action-btn" id="refine-link" href="#" style="text-decoration:none;">→ Refine Assessment</a>
+            <button class="action-btn" id="export-btn">⬇ Export</button>
+            <button class="action-btn" id="print-btn">🖨 Print</button>
+        </div>
+
+        <!-- ARM WARNING -->
+        <div class="arm-warning" id="arm-warning" style="display:none">
+            ⚡ This machine is already running ARM Windows — you're ahead of the curve!
+        </div>
+
         <!-- REDUCTION NARRATIVE -->
         <div class="reduction-summary" id="reduction-summary" style="display:none;">
             <p id="reduction-text"></p>
@@ -473,6 +529,15 @@
 
         <!-- DEVICES -->
         <div id="devices-section"></div>
+
+        <!-- TECHNICAL DETAILS — reference material (OS/CPU/RAM/Architecture),
+             not part of the recommendation itself; collapsed and placed last
+             so it doesn't compete with or get mistaken for part of the
+             Unknown/device sections above it. -->
+        <details class="collapsible-details" style="margin-top:1.5rem;">
+            <summary class="section-title" style="cursor:pointer; display:list-item;">Technical Details</summary>
+            <div class="system-info" id="system-info"></div>
+        </details>
 
     </div>
 
@@ -914,6 +979,47 @@
             }
         }
 
+        // Confidence's underlying tier/value/label is untouched (still
+        // synthesis.confidenceLabel, still the same computeSynthesis() math)
+        // — only the DISPLAY color changes. Red previously meant "Limited
+        // Data" felt like a blocking failure state, when it really just
+        // means "hasn't been personally confirmed yet." Red stays reserved
+        // for genuinely blocking findings (Unsupported), so this is a
+        // deliberately calmer, separate palette from synthesis.confidenceColor.
+        function confidenceDisplayColor(label) {
+            if (label === 'High Confidence') return '#10b981';
+            if (label === 'Moderate Confidence') return '#f59e0b';
+            return '#93c5fd'; // Limited Data / Very Limited Data — calm, not alarming
+        }
+
+        // A lightweight, calm reframe of counts already shown elsewhere on
+        // this page (synthesis.materialCount, currentDeservesAttentionCount
+        // from renderReductionSummary above) — leads with what's already
+        // understood before naming what's left, so Confidence reads as an
+        // invitation, not a verdict. No new computation; must run AFTER
+        // renderReductionSummary() so currentDeservesAttentionCount is
+        // current for this render pass.
+        function renderConfidenceNextStep(synthesis) {
+            const el = document.getElementById('confidence-next-step');
+            if (!el) return;
+            if (!synthesis || synthesis.empty || currentDeservesAttentionCount <= 0) {
+                el.style.display = 'none';
+                el.innerHTML = '';
+                return;
+            }
+            el.href = workspaceUrl();
+            el.style.display = 'block';
+            // Deliberately qualitative ("Most items...") rather than stating
+            // the understood count as a number — a raw count next to the
+            // exact "review N more" figure reads as if the two together
+            // covered every detected application, which they don't (the
+            // detailed counts are already broken out in the sections below).
+            const understood = Math.max(synthesis.materialCount - currentDeservesAttentionCount, 0);
+            el.innerHTML = understood > 0
+                ? `Most items shaping this recommendation are already understood. Review <strong>${currentDeservesAttentionCount}</strong> more to strengthen confidence. →`
+                : `Review <strong>${currentDeservesAttentionCount}</strong> item${currentDeservesAttentionCount === 1 ? '' : 's'} to strengthen confidence. →`;
+        }
+
         function renderPrimaryReasons(synthesis) {
             const wrap = document.getElementById('primary-reasons');
             const list = document.getElementById('reason-list');
@@ -1050,6 +1156,22 @@
       `;
         }
 
+        // Windows reports usable memory, a bit below the physically installed
+        // size (some is reserved for hardware/firmware) — e.g. a real 32GB
+        // machine often reports ~31. Purely a display rounding for the
+        // System Info card; the scanner-observed value is never used in
+        // scoring, so no scanner/server change is needed for this.
+        function friendlyRamGb(raw) {
+            const commonSizes = [2, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128];
+            let closest = commonSizes[0];
+            for (const size of commonSizes) {
+                if (Math.abs(size - raw) < Math.abs(closest - raw)) closest = size;
+            }
+            // Only snap to a common size when close enough — an actually
+            // unusual amount shouldn't get silently bumped to a nearby one.
+            return Math.abs(closest - raw) <= 1.5 ? closest : Math.round(raw);
+        }
+
         function renderReport(data) {
             const results = data.results;
             currentResults = results;
@@ -1066,7 +1188,7 @@
                 document.getElementById('system-info').innerHTML = `
           <div class="sys-item"><label>OS</label><span>${escapeHtml(s.os_version)}</span></div>
           <div class="sys-item"><label>CPU</label><span>${escapeHtml(s.cpu)}</span></div>
-          <div class="sys-item"><label>RAM</label><span>${s.ram_gb} GB</span></div>
+          <div class="sys-item"><label>RAM</label><span>${friendlyRamGb(s.ram_gb)} GB</span></div>
           <div class="sys-item"><label>Architecture</label><span>${escapeHtml(s.architecture)}</span></div>
         `;
                 if (s.is_arm) {
@@ -1095,6 +1217,8 @@
             if (level) {
                 document.getElementById('scan-level-display').innerHTML =
                     `${level.title} <span style="font-weight:400; color:#64748b;">— ${level.detail}</span>`;
+                const taglineEl = document.getElementById('results-tagline');
+                if (taglineEl) taglineEl.textContent = `${level.title} complete — here's what we found.`;
             }
 
             document.getElementById('printer-note').textContent = 'Installed printers are always included, regardless of assessment level.';
@@ -1229,6 +1353,7 @@
             const explanationEl = document.getElementById('recommendation-explanation');
             const confLabelEl = document.getElementById('confidence-label');
             const confBarEl = document.getElementById('confidence-bar');
+            const confImproveEl = document.getElementById('confidence-improve-note');
 
             if (synthesis.empty) {
                 if (readinessEl) { readinessEl.textContent = 'Nothing to Assess'; readinessEl.style.color = '#64748b'; }
@@ -1241,6 +1366,7 @@
                 }
                 if (confLabelEl) { confLabelEl.textContent = ''; }
                 if (confBarEl) confBarEl.style.width = '0%';
+                if (confImproveEl) confImproveEl.style.display = 'none';
             } else {
                 if (readinessEl) {
                     readinessEl.textContent = synthesis.readiness.label;
@@ -1249,19 +1375,23 @@
                 if (explanationEl) explanationEl.textContent = synthesis.explanation;
                 if (confLabelEl) {
                     confLabelEl.textContent = synthesis.confidenceLabel;
-                    confLabelEl.style.color = synthesis.confidenceColor;
+                    confLabelEl.style.color = confidenceDisplayColor(synthesis.confidenceLabel);
                 }
                 if (confBarEl) {
                     const pctForBar = synthesis.confidenceLabel === 'High Confidence' ? 100
                         : synthesis.confidenceLabel === 'Moderate Confidence' ? 66
                             : synthesis.confidenceLabel === 'Limited Data' ? 33 : 10;
                     confBarEl.style.width = pctForBar + '%';
-                    confBarEl.style.background = synthesis.confidenceColor;
+                    confBarEl.style.background = confidenceDisplayColor(synthesis.confidenceLabel);
+                }
+                if (confImproveEl) {
+                    confImproveEl.style.display = synthesis.confidenceLabel === 'High Confidence' ? 'none' : 'block';
                 }
             }
 
             renderPrimaryReasons(synthesis);
             renderReductionSummary(results, synthesis, classified);
+            renderConfidenceNextStep(synthesis);
             renderNotPrioritized(synthesis);
             renderHistoricalComparison(importedAssessmentSnapshot, synthesis);
             loadAuthStatus();
