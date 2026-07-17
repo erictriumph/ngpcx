@@ -517,10 +517,21 @@
         function decisionControlsHtml(item, cardId) {
             const decision = item.decision;
             const verifiedRowStyle = (decision && decision.decision === 'personally_verified') ? 'flex' : 'none';
-            const verifiedButtons = item.isDevice ? '' : `
+            // Devices get a narrower picker than apps — 'x64-emulated'/'x86-emulated'
+            // describe app instruction-set emulation, which has no equivalent for a
+            // driver: on Windows on ARM a driver either has an ARM64 build (native)
+            // or it doesn't load at all (unsupported), with no emulation fallback.
+            // Both draw from the same shared VERIFIED_STATUS_VALUES/SUBMISSION_LABELS
+            // so imported/exported entries stay valid regardless of which subset
+            // produced them.
+            const verifiedStatusOptions = item.isDevice ? ['native', 'unsupported'] : VERIFIED_STATUS_VALUES;
+            const verifiedButtons = `
         <div class="verified-status-row findings-actions" style="display:${verifiedRowStyle}; margin-top:0.5rem;" data-role="verified-row">
           <span style="font-size:0.75rem; color:#64748b; align-self:center;">Verified as:</span>
-          ${VERIFIED_STATUS_VALUES.map((s) => `<button class="verified-status-btn" data-status="${s}"${decision && decision.verified_status === s ? ' data-selected="1"' : ''}>${SUBMISSION_LABELS[s]}</button>`).join('')}
+          ${verifiedStatusOptions.map((s) => {
+                const isSelected = decision && decision.verified_status === s;
+                return `<button class="verified-status-btn${isSelected ? ' selected' : ''}" data-status="${s}">${SUBMISSION_LABELS[s]}</button>`;
+            }).join('')}
         </div>`;
 
             // Labels describe what the app IS TO YOU, distinct from what the
