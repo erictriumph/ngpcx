@@ -561,10 +561,12 @@
         const activeAssessment = currentMode() === 'assessment' ? ' shell-mode-active' : '';
 
         return `
-      <a href="${logoHref(state)}" class="shell-logo-link">
-        <div class="shell-logo">${logoMarkup()}</div>
-      </a>
-      <div class="shell-subtitle">${escapeHtml(subtitleText(state.session))}</div>
+      <div class="shell-brand">
+        <a href="${logoHref(state)}" class="shell-logo-link">
+          <div class="shell-logo">${logoMarkup()}</div>
+        </a>
+        <div class="shell-subtitle">${escapeHtml(subtitleText(state.session))}</div>
+      </div>
       <nav class="shell-desktop-menus" aria-label="Primary">
         ${assessmentItems
                 ? dropdownHtml('assessment', 'Assessment', assessmentItems, 'assessment')

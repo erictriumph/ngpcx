@@ -20,13 +20,20 @@
     gap: 1.25rem;
 }
 
-/* LOGO + SUBTITLE */
-.shell-logo-link {
-    text-decoration: none;
+/* LOGO + SUBTITLE — stacked, not side-by-side, so the assessment context
+   never has to compete with the primary nav for horizontal space at
+   intermediate widths (see CLAUDE.md, Application Shell milestone). The
+   subtitle stays a sibling of the logo <a>, not a child of it, so it never
+   becomes part of the clickable link — it must stay informational only. */
+.shell-brand {
     display: flex;
     flex-direction: column;
     gap: 0.1rem;
     flex-shrink: 0;
+}
+
+.shell-logo-link {
+    text-decoration: none;
 }
 
 .shell-logo {
@@ -61,7 +68,6 @@
 .shell-subtitle {
     font-size: 0.72rem;
     color: #64748b;
-    margin-left: 1px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
