@@ -461,7 +461,7 @@
                 // can never disagree (see CLAUDE.md, Canonical Effective Status).
                 const effectiveBucket = item.isDevice ? item.bucket : effectiveBucketFor(item.raw, item.bucket, decision, items);
                 item.effectiveBucket = effectiveBucket;
-                item.pwaNote = item.isDevice ? null : pwaInheritanceNote(item.raw, item.bucket, items);
+                item.pwaNote = item.isDevice ? null : pwaSupportedNote(item.raw, item.bucket);
 
                 // Background status is a structural TYPE fact (Microsoft
                 // platform/shell AppX software, browser-hosted PWAs) that
@@ -489,11 +489,11 @@
         // ---------------------------------------------------------------------
 
         // Always the EFFECTIVE status (item.effectiveBucket, set by
-        // bucketItems() above) — never the raw catalog bucket. A browser-
-        // hosted PWA that inherited Native from its host browser is labeled
-        // Native here, not left showing "? Unknown" while a separate note
-        // claims otherwise. "(inherited)" only for the PWA-inheritance case
-        // — a personal verification already has its own separate badge
+        // bucketItems() above) — never the raw catalog bucket. A confidently-
+        // detected browser-hosted PWA renders its own distinct "Browser-
+        // Hosted (Supported)" badge (see CLAUDE.md, browser-hosted PWA
+        // compatibility) — self-explanatory on its own, no "(inherited)"
+        // suffix needed. A personal verification has its own separate badge
         // treatment in decisionControlsHtml and shouldn't also claim it.
         function statusBadge(item) {
             if (item.isDevice) {
@@ -501,11 +501,9 @@
                     ? '<span class="badge native">✓ Likely native</span>'
                     : '<span class="badge check">Worth a check</span>';
             }
-            const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', unknown: '? Unknown' };
+            const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', unknown: '? Unknown', supported: '✓ Browser-Hosted (Supported)' };
             const bucket = item.effectiveBucket || item.bucket;
-            const isInherited = bucket !== item.bucket && !(item.decision && item.decision.decision === 'personally_verified');
-            const inheritedTag = isInherited ? ' <span style="font-size:0.72rem; color:#93c5fd;">(inherited)</span>' : '';
-            return `<span class="badge ${bucket}">${labels[bucket] || bucket}${inheritedTag}</span>`;
+            return `<span class="badge ${bucket}">${labels[bucket] || bucket}</span>`;
         }
 
         function reasonChip(item) {

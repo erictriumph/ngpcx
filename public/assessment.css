@@ -258,6 +258,16 @@ nav {
     color: #94a3b8;
 }
 
+/* Browser-hosted PWAs, confidently detected — a resolved, positive status
+   that's deliberately NOT the same green as .badge.native (it isn't a
+   literal ARM64 binary verdict), and not the same blue as .badge.check
+   (nothing here needs further research). See CLAUDE.md, browser-hosted
+   PWA compatibility. */
+.badge.supported {
+    background: rgba(45, 212, 191, 0.2);
+    color: #2dd4bf;
+}
+
 .badge.check {
     background: rgba(59, 130, 246, 0.2);
     color: #93c5fd;

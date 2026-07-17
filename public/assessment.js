@@ -333,6 +333,11 @@ function computeSynthesis(results, personalContext) {
     let deprioritizedCount = 0;
     const deprioritized = [];
     let nativeCount = 0;
+    // Confidently-detected browser-hosted PWAs (effectiveBucket === 'supported')
+    // — tracked separately from nativeCount so the explanation sentence never
+    // claims a browser-hosted app "runs natively," even though it contributes
+    // the same 100 points (a genuinely resolved, positive compatibility fact).
+    let supportedCount = 0;
     let unresolvedCount = 0;
     let unresolvedCriticalCount = 0;
     let verifiedCount = 0;
@@ -391,9 +396,10 @@ function computeSynthesis(results, personalContext) {
         if (decision && decision.critical_to_me) weight *= CRITICAL_WEIGHT_MULTIPLIER;
 
         if (effectiveBucket === 'native') nativeCount++;
+        if (effectiveBucket === 'supported') supportedCount++;
         if (decisionValue === 'waiting_for_vendor') waitingCount++;
 
-        const points = effectiveBucket === 'native' ? 100
+        const points = (effectiveBucket === 'native' || effectiveBucket === 'supported') ? 100
             : effectiveBucket === 'unsupported' ? -20
                 : 60; // emulated + unknown, matches classifyApps() exactly
 
@@ -436,6 +442,9 @@ function computeSynthesis(results, personalContext) {
     const parts = [];
     const countedTotal = classified.length - excludedCount - deprioritizedCount;
     parts.push(`${nativeCount} of ${countedTotal} app${countedTotal === 1 ? '' : 's'} run${countedTotal === 1 ? 's' : ''} natively${verifiedCount > 0 ? `, including ${verifiedCount} you personally verified` : ''}`);
+    if (supportedCount > 0) {
+        parts.push(`${supportedCount} more ${supportedCount === 1 ? 'is' : 'are'} browser-hosted and supported through a compatible ARM64 browser`);
+    }
     if (unresolvedCount > 0) {
         parts.push(`${unresolvedCount} unresolved app${unresolvedCount === 1 ? '' : 's'}${unresolvedCriticalCount > 0 ? ` (${unresolvedCriticalCount} marked critical)` : ''} ${unresolvedCount === 1 ? 'is' : 'are'} holding back a higher confidence rating`);
     }
@@ -490,7 +499,7 @@ function computeSynthesis(results, personalContext) {
             if (effectiveBucket === 'unknown') return null;
             const weight = (decision && decision.critical_to_me) ? CRITICAL_WEIGHT_MULTIPLIER
                 : (decision && decision.decision === 'doesnt_matter') ? DOESNT_MATTER_WEIGHT : 1.0;
-            const points = effectiveBucket === 'native' ? 100 : effectiveBucket === 'unsupported' ? -20 : 60;
+            const points = (effectiveBucket === 'native' || effectiveBucket === 'supported') ? 100 : effectiveBucket === 'unsupported' ? -20 : 60;
             const importanceRank = { high: 0, normal: 1, low: 2 }[defaultImportanceForApp(app).level];
             return { app, bucket: effectiveBucket, impact: Math.abs(points - 60) * weight, importanceRank, kind: 'score' };
         })
@@ -517,7 +526,7 @@ function computeSynthesis(results, personalContext) {
 
     const reasons = [...scoreReasons, ...confidenceReasons];
 
-    return { empty: false, score, readiness, confidenceLabel, confidenceColor, confidencePct, explanation, reasons, deprioritizedCount, deprioritized, totalAppCount: classified.length, countedTotal, materialCount, backgroundCount };
+    return { empty: false, score, readiness, confidenceLabel, confidenceColor, confidencePct, explanation, reasons, deprioritizedCount, deprioritized, totalAppCount: classified.length, countedTotal, materialCount, backgroundCount, supportedCount };
 }
 
 // ─────────────────────────────────────────
@@ -797,38 +806,34 @@ function importanceEvidenceStack(app, decision) {
 // ─────────────────────────────────────────
 
 // ─────────────────────────────────────────
-//  Browser-hosted PWA detection (used below by the background classifier,
-//  and further down by effectiveBucketFor()/pwaInheritanceNote() for
-//  compatibility inheritance).
+//  Browser-hosted PWA detection and compatibility (used below by the
+//  background classifier, and further down by effectiveBucketFor()/
+//  pwaSupportedNote()).
 //
-//  A browser-installed PWA (messages.google.com, TripIt, etc.) has no
-//  independent ARM64 binary of its own to be compatible or incompatible —
-//  it runs entirely inside its host browser's rendering engine. Detected
-//  via the same per-user ARP Publisher string the scanner already reports
-//  for Chrome/Edge-installed apps (see CLAUDE.md, Scanner Enrichment
+//  Core product rule: a browser-hosted application (messages.google.com,
+//  TripIt, etc.) has no independent Windows ARM64 binary of its own — it
+//  runs entirely inside whatever browser hosts it. That's an architectural
+//  fact about the APPLICATION TYPE, not a claim about any one specific
+//  browser on the user's CURRENT x86/x64 machine. Chrome, Edge, Firefox,
+//  and Brave all ship real ARM64-native builds today, so "this can be
+//  installed or used through a compatible ARM64 browser on the future ARM
+//  PC" is true for any confidently-detected browser-hosted app regardless
+//  of which browser happens to be in this scan, or whether that specific
+//  browser is present at all. Earlier versions of this logic tried to
+//  inherit the SPECIFIC installed browser's own classified bucket ("Runs
+//  inside Google Chrome — treated as Native") — that both silently reverted
+//  to Unknown whenever the host browser wasn't in the scan population, and
+//  implied the user must keep using that exact browser, neither of which
+//  the buying-decision conclusion actually depends on. Detected via the
+//  same per-user ARP Publisher string the scanner already reports for
+//  Chrome/Edge-installed apps (see CLAUDE.md, Scanner Enrichment
 //  milestone) — no new scanner signal needed.
 // ─────────────────────────────────────────
 
 const BROWSER_HOST_PUBLISHER_PATTERN = /^(Google\\Chrome|Microsoft\\Edge|Mozilla\\Firefox|BraveSoftware\\Brave-Browser)/i;
-// The real, installed browser app each host-publisher prefix corresponds
-// to — used to look up that browser's own classified bucket in the same
-// scan population, never guessed or hardcoded per-PWA.
-const BROWSER_HOST_APP_NAMES = {
-    'google\\chrome': 'Google Chrome',
-    'microsoft\\edge': 'Microsoft Edge',
-    'mozilla\\firefox': 'Mozilla Firefox',
-    'bravesoftware\\brave-browser': 'Brave',
-};
 
 function isBrowserHostedPWA(app) {
     return app.discovery_source === 'arp' && typeof app.publisher === 'string' && BROWSER_HOST_PUBLISHER_PATTERN.test(app.publisher);
-}
-
-function hostBrowserNameFor(app) {
-    if (!isBrowserHostedPWA(app)) return null;
-    const key = app.publisher.toLowerCase();
-    const match = Object.keys(BROWSER_HOST_APP_NAMES).find((k) => key.startsWith(k));
-    return match ? BROWSER_HOST_APP_NAMES[match] : null;
 }
 
 // ─────────────────────────────────────────
@@ -919,54 +924,38 @@ function isBackgroundApp(app, decision) {
     return isBackgroundCandidate(app) && !hasBackgroundOverride(app, decision);
 }
 
-// Finds the host browser's OWN entry within the current scan population, if
-// present. Accepts either a computeSynthesis()-style {app, bucket}[] list or
-// workspace.html's {name, bucket, ...}[] item list — both already carry a
-// per-entry .bucket, just shaped differently, so this unwraps whichever it's
-// handed rather than requiring every caller to normalize first.
-function findHostBrowserEntry(app, appList) {
-    const hostName = hostBrowserNameFor(app);
-    if (!hostName || !Array.isArray(appList)) return null;
-    const normalizedHost = normalizeAppName(hostName);
-    for (const entry of appList) {
-        const candidate = entry.app || entry;
-        const bucket = entry.bucket !== undefined ? entry.bucket : candidate.bucket;
-        if (normalizeAppName(candidate.name || '') === normalizedHost) {
-            return { app: candidate, bucket };
-        }
-    }
-    return null;
-}
-
 // The single source of truth for "what bucket should this app actually be
 // evaluated under right now" — personal verification wins first (an
-// explicit human claim), then browser inheritance for an Unknown PWA
-// (an architectural fact), then the raw catalog bucket. computeSynthesis()
-// and every attention-grouping call site (report.html, workspace.html) call
-// this so scoring and grouping can never silently disagree about an app's
-// effective bucket.
+// explicit human claim), then the 'supported' status for a confidently-
+// detected browser-hosted PWA whose raw catalog entry is Unknown (an
+// architectural fact about the app TYPE — see the section above; never
+// contingent on any specific browser being present in the scan), then the
+// raw catalog bucket. computeSynthesis() and every attention-grouping call
+// site (report.html, workspace.html) call this so scoring and grouping can
+// never silently disagree about an app's effective bucket. `allApps` is
+// unused here now (kept for call-site stability — several callers already
+// pass it for other purposes).
 function effectiveBucketFor(app, bucket, decision, allApps) {
     if (decision && decision.decision === 'personally_verified' && decision.verified_status) {
         return decision.verified_status === 'native' ? 'native'
             : decision.verified_status === 'unsupported' ? 'unsupported' : 'emulated';
     }
-    if (bucket === 'unknown') {
-        const hostEntry = findHostBrowserEntry(app, allApps);
-        if (hostEntry && hostEntry.bucket !== 'unknown') return hostEntry.bucket;
+    if (bucket === 'unknown' && isBrowserHostedPWA(app)) {
+        return 'supported';
     }
     return bucket;
 }
 
-// A short, honest, always-visible explanation for why a PWA's Score
-// contribution differs from its own "? Unknown" catalog badge — additive,
-// like the existing "✓ You verified" badge, never a silent override of the
-// row's own status badge.
-function pwaInheritanceNote(app, bucket, allApps) {
-    if (bucket !== 'unknown') return null;
-    const hostEntry = findHostBrowserEntry(app, allApps);
-    if (!hostEntry || hostEntry.bucket === 'unknown') return null;
-    const labels = { native: 'Native ARM64', emulated: 'Emulated', unsupported: 'Unsupported' };
-    return `Runs inside ${hostEntry.app.name} — treated as ${labels[hostEntry.bucket] || hostEntry.bucket} for your Score, since it has no separate ARM64 binary of its own.`;
+// A short, honest, always-visible explanation for why a browser-hosted PWA
+// shows "Supported" instead of "Unknown" — additive, like the existing
+// "✓ You verified" badge, never a silent override of the row's own status
+// badge. Deliberately never names a specific browser or claims the
+// CURRENT browser is ARM64 — the conclusion is architectural (this class
+// of app doesn't need its own ARM64 binary), not a claim about today's
+// x86/x64 install.
+function pwaSupportedNote(app, bucket) {
+    if (bucket !== 'unknown' || !isBrowserHostedPWA(app)) return null;
+    return 'This browser-hosted application does not require a separate ARM64 binary. It can be installed or used through a compatible ARM64 browser on your ARM PC.';
 }
 
 function defaultImportanceForDevice(device) {

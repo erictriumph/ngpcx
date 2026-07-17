@@ -457,6 +457,7 @@
             head to the Workspace for the complete picture.
         </p>
         <div id="native-section"></div>
+        <div id="supported-section"></div>
         <div id="emulated-section"></div>
         <div id="unsupported-section"></div>
         <div id="unknown-section"></div>
@@ -644,16 +645,11 @@
                 emulated: '⚡ Emulated',
                 unsupported: '✗ Unsupported',
                 unknown: '? Unknown',
+                supported: '✓ Browser-Hosted (Supported)',
                 system: '⚙ System Component'
             };
 
             const colCount = 4;
-
-            // Only ever needed when a row's raw bucket is 'unknown' — a
-            // browser-hosted PWA looks up its host browser's own bucket here
-            // to explain WHY its badge differs from a plain catalog lookup.
-            const allAppsFlat = ['native', 'emulated', 'unsupported', 'unknown']
-                .flatMap((b) => (currentResults[b] || []).map((a) => ({ app: a, bucket: b })));
 
             const rows = entries.map(({ app, rawBucket, decision }, idx) => {
                 const name = escapeHtml(app.name || app.id);
@@ -682,16 +678,10 @@
                 const verifiedBadge = (decision && decision.decision === 'personally_verified' && decision.verified_status)
                     ? `<span class="verified-badge">✓ You verified: ${escapeHtml(SUBMISSION_LABELS[decision.verified_status] || decision.verified_status)}</span>`
                     : '';
-                const pwaNoteText = pwaInheritanceNote(app, rawBucket, allAppsFlat);
+                const pwaNoteText = pwaSupportedNote(app, rawBucket);
                 const pwaNote = pwaNoteText
                     ? `<div style="font-size:0.75rem; color:#93c5fd; margin-top:0.15rem;">${escapeHtml(pwaNoteText)}</div>`
                     : '';
-
-                // "(inherited)" only for the PWA-inheritance case — a
-                // personal verification already has its own "✓ You
-                // verified" badge and shouldn't also claim inheritance.
-                const isInherited = rawBucket !== type && !(decision && decision.decision === 'personally_verified');
-                const inheritedTag = isInherited ? ' <span style="font-size:0.72rem; color:#93c5fd;">(inherited)</span>' : '';
                 const rawStatusLine = rawBucket !== type
                     ? `<br><strong style="color:#94a3b8;">Raw catalog status:</strong> ${escapeHtml(labels[rawBucket] || rawBucket)}`
                     : '';
@@ -717,7 +707,7 @@
           </td>
           <td style="color:#64748b;font-size:0.8rem">${packageId}</td>
           <td>${version}</td>
-          <td><span class="badge ${type}"${type === 'unknown' ? ' title="Emulation likely, but not yet verified."' : ''}>${labels[type]}${inheritedTag}</span></td>
+          <td><span class="badge ${type}"${type === 'unknown' ? ' title="Emulation likely, but not yet verified."' : ''}>${labels[type]}</span></td>
         </tr>
         ${detailRow}
       `;
@@ -926,7 +916,7 @@
             }
             wrap.style.display = 'block';
             list.innerHTML = synthesis.reasons.map(({ app, bucket, kind }) => {
-                const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported' };
+                const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', supported: '✓ Browser-Hosted (Supported)' };
                 const anchor = itemAnchorId(decisionKey(app), false);
                 // Two visually distinct kinds, never blended into one badge
                 // style — a score-driving app (native/unsupported) vs. an
@@ -993,7 +983,7 @@
                 container.innerHTML = '';
                 return;
             }
-            const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', unknown: '? Unknown' };
+            const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', unknown: '? Unknown', supported: '✓ Browser-Hosted (Supported)' };
             const rows = synthesis.deprioritized.map(({ app, bucket }) => {
                 const anchor = itemAnchorId(decisionKey(app), false);
                 return `
@@ -1029,7 +1019,7 @@
                 container.innerHTML = '';
                 return;
             }
-            const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', unknown: '? Unknown' };
+            const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', unknown: '? Unknown', supported: '✓ Browser-Hosted (Supported)' };
             const rows = items.map(({ app, bucket }) => {
                 const anchor = itemAnchorId(decisionKey(app), false);
                 return `
@@ -1144,7 +1134,13 @@
                 document.getElementById('printer-note').insertAdjacentElement('afterend', standardAppsNote);
             }
 
-            if (results.systemComponents && results.systemComponents.length > 0) {
+            // System Components is a server-side mechanism, independent of
+            // client-side Background Items (see CLAUDE.md, System component
+            // classification vs Background / reference classification) — on
+            // an ordinary Light/Standard Report both read as "Microsoft
+            // plumbing you don't need to worry about," so showing both is
+            // redundant. Advanced (full) Report keeps full categorization.
+            if (results.scan_mode === 'full' && results.systemComponents && results.systemComponents.length > 0) {
                 const systemNote = document.createElement('p');
                 systemNote.id = 'system-component-note';
                 systemNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
@@ -1161,7 +1157,15 @@
             // primary counts/tables, so an item is never simultaneously
             // "not currently prioritized" AND part of the counted inventory
             // (see CLAUDE.md, Canonical Effective Status).
-            const materialByBucket = { native: [], emulated: [], unsupported: [], unknown: [] };
+            // 'supported' (a browser-hosted PWA whose raw catalog bucket is
+            // 'unknown') is background by default — see isBackgroundApp() —
+            // so it normally never reaches this material set. It's included
+            // here only for the override case (critical_to_me, personally
+            // verified, or real deliberate-use evidence): a pinned/running
+            // PWA can still materially influence the assessment, and must
+            // render with its honest "Browser-Hosted (Supported)" badge, not
+            // be lost or thrown on for lacking a bucket to push into.
+            const materialByBucket = { native: [], emulated: [], unsupported: [], unknown: [], supported: [] };
             classified.forEach((entry) => {
                 if (entry.isBackground) return;
                 if (isDeprioritized(entry.app, entry.decision, results.scan_mode)) return;
@@ -1172,10 +1176,15 @@
             document.getElementById('count-emulated').textContent = materialByBucket.emulated.length;
             document.getElementById('count-unsupported').textContent = materialByBucket.unsupported.length;
             document.getElementById('count-unknown').textContent = materialByBucket.unknown.length;
-            document.getElementById('system-section').innerHTML = buildTable(
-                (results.systemComponents || []).map((app) => ({ app, rawBucket: 'system', effectiveBucket: 'system', decision: null })),
-                'system'
-            );
+            document.getElementById('supported-section').innerHTML = buildTable(materialByBucket.supported, 'supported');
+            if (results.scan_mode === 'full') {
+                document.getElementById('system-section').innerHTML = buildTable(
+                    (results.systemComponents || []).map((app) => ({ app, rawBucket: 'system', effectiveBucket: 'system', decision: null })),
+                    'system'
+                );
+            } else {
+                document.getElementById('system-section').innerHTML = '';
+            }
 
             const deviceList = results.devices || [];
             const nativeCount = deviceList.filter(d => isLikelyNative(d)).length;
