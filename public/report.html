@@ -398,6 +398,14 @@
                 <div class="summary-count" id="count-native">0</div>
                 <div class="summary-label">Native ARM64</div>
             </div>
+            <!-- Browser-hosted PWAs (see CLAUDE.md, browser-hosted PWA
+                 compatibility) — without this card, a fixed PWA was only
+                 visible inside a collapsed table further down the page;
+                 nothing at a glance told you it wasn't still Unknown. -->
+            <div class="summary-card supported" id="supported-summary-card" style="display:none;">
+                <div class="summary-count" id="count-supported">0</div>
+                <div class="summary-label">Browser-Hosted (Supported)</div>
+            </div>
             <div class="summary-card emulated">
                 <div class="summary-count" id="count-emulated">0</div>
                 <div class="summary-label">Emulated</div>
@@ -1176,6 +1184,13 @@
             document.getElementById('count-emulated').textContent = materialByBucket.emulated.length;
             document.getElementById('count-unsupported').textContent = materialByBucket.unsupported.length;
             document.getElementById('count-unknown').textContent = materialByBucket.unknown.length;
+            // Hidden when zero (the common case: most scans have no material
+            // browser-hosted PWA) rather than always showing "0" — a 5th card
+            // permanently in the summary row would read as a compatibility
+            // category that usually doesn't apply, not a conditional one.
+            const supportedCard = document.getElementById('supported-summary-card');
+            if (supportedCard) supportedCard.style.display = materialByBucket.supported.length > 0 ? '' : 'none';
+            document.getElementById('count-supported').textContent = materialByBucket.supported.length;
             document.getElementById('supported-section').innerHTML = buildTable(materialByBucket.supported, 'supported');
             if (results.scan_mode === 'full') {
                 document.getElementById('system-section').innerHTML = buildTable(

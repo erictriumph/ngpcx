@@ -133,6 +133,17 @@ nav {
     border-color: rgba(16, 185, 129, 0.3);
 }
 
+/* Browser-hosted PWAs — same teal as .badge.supported, deliberately not
+   native's green (not a literal ARM64 binary verdict). */
+.summary-card.supported {
+    background: rgba(45, 212, 191, 0.1);
+    border-color: rgba(45, 212, 191, 0.3);
+}
+
+.supported .summary-count {
+    color: #2dd4bf;
+}
+
 .summary-card.emulated {
     background: rgba(245, 158, 11, 0.1);
     border-color: rgba(245, 158, 11, 0.3);
