@@ -182,8 +182,13 @@
 
 <body>
     <nav>
-        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
-        <a href="/" class="back-link">← Back to scanner</a>
+        <a href="/" id="nav-logo-link" style="text-decoration:none;">
+            <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        </a>
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <a href="/workspace.html" id="nav-workspace-link" class="back-link" style="display:none;">Workspace</a>
+            <a href="/" id="nav-back-link" class="back-link">← Back to scanner</a>
+        </div>
     </nav>
 
     <div class="container">
@@ -242,7 +247,7 @@
                 work well on Windows on ARM, not just launch — are best answered by someone who's already
                 running it. CheckMyARM combines what it can observe on your machine with what real people have
                 found on theirs, so the recommendation reflects more than one source of truth. See the
-                <a href="/about.html">About page</a> for how that community actually works.
+                <a href="/about.html" data-info-link>About page</a> for how that community actually works.
             </p>
         </section>
 
@@ -273,7 +278,7 @@
             <p>
                 What CheckMyARM looks at is scoped tightly to one question: is this software or device part of
                 your computing environment? That boundary was drawn before anything was built, not added
-                afterward to answer a complaint. See the <a href="/privacy.html">Privacy page</a> for exactly
+                afterward to answer a complaint. See the <a href="/privacy.html" data-info-link>Privacy page</a> for exactly
                 where that line is drawn.
             </p>
         </section>
@@ -288,6 +293,11 @@
     </div>
 
     <footer>CheckMyARM — ARM Readiness Scanner. © 2026 CheckMyARM. All rights reserved.</footer>
+
+    <script src="/assessment.js"></script>
+    <script>
+        applySessionAwareNav();
+    </script>
 </body>
 
 </html>

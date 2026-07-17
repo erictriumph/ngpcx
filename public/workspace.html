@@ -285,9 +285,9 @@
         <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
         <div style="display:flex; align-items:center; gap:1.25rem;">
             <span id="auth-status"></span>
-            <a href="/why.html" class="back-link">Why</a>
-            <a href="/how-it-thinks.html" class="back-link">How CheckMyARM Thinks</a>
-            <a href="/about.html" class="back-link">About</a>
+            <a href="/why.html" data-info-link class="back-link">Why</a>
+            <a href="/how-it-thinks.html" data-info-link class="back-link">How CheckMyARM Thinks</a>
+            <a href="/about.html" data-info-link class="back-link">About</a>
             <a href="#" id="results-link" class="back-link">← Back to Results</a>
         </div>
     </nav>
@@ -360,6 +360,10 @@
         const scanLevelParam = params.get('level');
         let currentResults = null;
         let currentPersonalContext = new Map();
+        // Workspace is already the active session's own page — its outgoing
+        // nav links to the informational pages just need to carry that same
+        // session forward (see CLAUDE.md, session-aware navigation).
+        decorateInfoLinks(sessionId, scanLevelParam);
 
         function escapeHtml(str) {
             if (str === null || str === undefined) return '';
@@ -439,22 +443,44 @@
         // (critical_to_me) falls through to the normal grouping below,
         // exactly as if Light had never deprioritized it.
         function bucketItems(items) {
-            const groups = { notPrioritized: [], needsAttention: [], alreadyConsidered: [], setAside: [] };
+            const groups = { notPrioritized: [], deservesAttention: [], background: [], alreadyConsidered: [], setAside: [] };
             const scanMode = currentResults ? currentResults.scan_mode : null;
             items.forEach((item) => {
                 const decision = currentPersonalContext.get(itemKey(item)) || null;
                 item.decision = decision;
-                if (!item.isDevice && isLightDeprioritized(item.raw, decision, scanMode)) {
+                const nativeLikely = item.isDevice ? isLikelyNative(item.raw) : null;
+                // Effective bucket (personal verification / browser-hosted-PWA
+                // inheritance applied) — must match what computeSynthesis()
+                // itself would use, or an inherited/verified item could stay
+                // stuck in Deserves Attention while already contributing to
+                // the score. `items` doubles as the population
+                // effectiveBucketFor() searches for a host browser entry
+                // (see assessment.js). This is the ONE canonical bucket for
+                // the item — statusBadge()/checkLink() below read it too,
+                // never the raw item.bucket, so the badge and the grouping
+                // can never disagree (see CLAUDE.md, Canonical Effective Status).
+                const effectiveBucket = item.isDevice ? item.bucket : effectiveBucketFor(item.raw, item.bucket, decision, items);
+                item.effectiveBucket = effectiveBucket;
+                item.pwaNote = item.isDevice ? null : pwaInheritanceNote(item.raw, item.bucket, items);
+
+                // Background status is a structural TYPE fact (Microsoft
+                // platform/shell AppX software, browser-hosted PWAs) that
+                // holds at every assessment level — checked BEFORE
+                // deprioritization, so a background item always lands in
+                // Background Items, never gets folded into Not Currently
+                // Prioritized just because it also happens to lack Light/
+                // Standard footprint evidence.
+                const appIsBackground = !item.isDevice && isBackgroundApp(item.raw, decision);
+                if (!appIsBackground && !item.isDevice && isDeprioritized(item.raw, decision, scanMode)) {
                     groups.notPrioritized.push(item);
                     return;
                 }
-                const nativeLikely = item.isDevice ? isLikelyNative(item.raw) : null;
-                const state = classifyAssessmentItem({ decision, bucket: item.bucket, isLikelyNativeDevice: nativeLikely });
+                const state = classifyAssessmentItem({ decision, bucket: effectiveBucket, isLikelyNativeDevice: nativeLikely, app: item.isDevice ? null : item.raw });
                 groups[state].push(item);
             });
             const order = { high: 0, normal: 1, low: 2 };
             const importanceOf = (item) => item.isDevice ? defaultImportanceForDevice(item.raw) : defaultImportanceForApp(item.raw);
-            groups.needsAttention.sort((a, b) => order[importanceOf(a).level] - order[importanceOf(b).level]);
+            groups.deservesAttention.sort((a, b) => order[importanceOf(a).level] - order[importanceOf(b).level]);
             return groups;
         }
 
@@ -462,6 +488,13 @@
         // Rendering
         // ---------------------------------------------------------------------
 
+        // Always the EFFECTIVE status (item.effectiveBucket, set by
+        // bucketItems() above) — never the raw catalog bucket. A browser-
+        // hosted PWA that inherited Native from its host browser is labeled
+        // Native here, not left showing "? Unknown" while a separate note
+        // claims otherwise. "(inherited)" only for the PWA-inheritance case
+        // — a personal verification already has its own separate badge
+        // treatment in decisionControlsHtml and shouldn't also claim it.
         function statusBadge(item) {
             if (item.isDevice) {
                 return isLikelyNative(item.raw)
@@ -469,7 +502,10 @@
                     : '<span class="badge check">Worth a check</span>';
             }
             const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', unknown: '? Unknown' };
-            return `<span class="badge ${item.bucket}">${labels[item.bucket] || item.bucket}</span>`;
+            const bucket = item.effectiveBucket || item.bucket;
+            const isInherited = bucket !== item.bucket && !(item.decision && item.decision.decision === 'personally_verified');
+            const inheritedTag = isInherited ? ' <span style="font-size:0.72rem; color:#93c5fd;">(inherited)</span>' : '';
+            return `<span class="badge ${bucket}">${labels[bucket] || bucket}${inheritedTag}</span>`;
         }
 
         function reasonChip(item) {
@@ -481,16 +517,18 @@
         // by default alongside the status badge, not gated behind Deeper
         // Research Mode. Previously present on Results but missing here
         // entirely, even though compatibility research belongs in the
-        // Workspace.
+        // Workspace. Uses the EFFECTIVE bucket — an inherited-Native PWA is
+        // already resolved and shouldn't offer a "Check" link at all.
         function checkLink(item) {
             if (item.isDevice) {
                 if (isLikelyNative(item.raw)) return '';
                 const url = buildDriverSearchUrl(item.raw);
                 return `<a href="${url}" target="_blank" rel="noopener" class="badge check" style="text-decoration:none;">Check →</a>`;
             }
-            if (item.bucket !== 'unknown' && item.bucket !== 'emulated') return '';
-            const label = item.bucket === 'unknown' ? 'Check' : 'Check for update';
-            const url = buildAppSearchUrl(item.raw.name || item.raw.id, item.bucket);
+            const bucket = item.effectiveBucket || item.bucket;
+            if (bucket !== 'unknown' && bucket !== 'emulated') return '';
+            const label = bucket === 'unknown' ? 'Check' : 'Check for update';
+            const url = buildAppSearchUrl(item.raw.name || item.raw.id, bucket);
             return `<a href="${url}" target="_blank" rel="noopener" class="badge check" style="text-decoration:none;">${label} →</a>`;
         }
 
@@ -504,12 +542,12 @@
         </div>`;
 
             // Labels describe what the app IS TO YOU, distinct from what the
-            // status badge above already says it IS (the catalog/community
-            // verdict) — the two are never mutually exclusive. An app can be
-            // catalog-Unsupported AND privately "won't need it on the new
-            // PC" at the same time; picking one never hides or overwrites
-            // the other, since the badge always reflects the raw evidence
-            // and these buttons only ever write to Personal Context.
+            // status badge above already says it IS (the effective
+            // assessment verdict) — the two are never mutually exclusive. An
+            // app can be effectively Unsupported AND privately "won't need
+            // it on the new PC" at the same time; picking one never hides or
+            // overwrites the other, since these buttons only ever write to
+            // Personal Context.
             const decisionBtns = ['personally_verified', 'waiting_for_vendor', 'doesnt_matter', 'no_longer_use'].map((d) => {
                 const labels = {
                     personally_verified: 'I verified this', waiting_for_vendor: 'Vendor confirmation needed',
@@ -530,17 +568,24 @@
           <div class="deeper-detail">
             <input type="text" class="decision-note" placeholder="Private note (optional — never submitted to the community database)" value="${escapeHtml((decision && decision.note) || '')}" />
             ${item.isDevice ? deviceEvidenceDetailHtml(item.raw) : findingsBlockHtml(item)}
-            ${!item.isDevice ? evidenceDetailHtml(item.raw, decision) : ''}
+            ${!item.isDevice ? evidenceDetailHtml(item.raw, decision, item.bucket, item.effectiveBucket) : ''}
           </div>
         </div>`;
         }
 
-        function evidenceDetailHtml(app, decision) {
+        function evidenceDetailHtml(app, decision, rawBucket, effectiveBucket) {
             const source = escapeHtml(app.source || 'Unknown');
             const confidence = (app.confidence !== null && app.confidence !== undefined) ? Math.round(app.confidence * 100) + '%' : '—';
             const notes = escapeHtml(app.notes || '');
             const sourceUrl = app.source_url ? escapeHtml(app.source_url) : null;
             const compatNote = notes ? `<div class="compat-note"><strong>Compatibility Notes</strong>${notes}</div>` : '';
+            const labels = { native: 'Native ARM64', emulated: 'Emulated', unsupported: 'Unsupported', unknown: 'Unknown' };
+            // Only ever shown here (Deeper Research Mode) — the status badge
+            // above always shows the EFFECTIVE status, never this. See
+            // CLAUDE.md, Canonical Effective Status.
+            const rawStatusLine = (rawBucket && effectiveBucket && rawBucket !== effectiveBucket)
+                ? `<br><strong style="color:#94a3b8;">Raw catalog status:</strong> ${escapeHtml(labels[rawBucket] || rawBucket)}`
+                : '';
             // The full Importance Evidence stack — every corroborating fact
             // that applies at once, not a single winner (see CLAUDE.md,
             // Importance Evidence stack). Interpreted phrases only, never
@@ -559,6 +604,7 @@
           &nbsp;·&nbsp;
           <strong style="color:#94a3b8;">Confidence:</strong> ${confidence}
           ${sourceUrl ? `<br><a href="${sourceUrl}" target="_blank" rel="noopener" style="color:#3b82f6;">View source →</a>` : ''}
+          ${rawStatusLine}
           ${importanceEvidence}
         </div>`;
         }
@@ -627,13 +673,22 @@
         function renderGroups(containerId, groups, includeNotPrioritized) {
             const container = document.getElementById(containerId);
             const sections = [
-                { key: 'needsAttention', title: 'Needs Attention', collapsedDefault: false, empty: `Nothing needs attention right now.` },
+                { key: 'deservesAttention', title: 'Deserves Attention', collapsedDefault: false, empty: `Nothing deserves attention right now.` },
             ];
             // Only shown for apps under Light Assessment, and only when
             // there's actually something to disclose — an always-empty
             // section in Standard/Advanced would be clutter, not transparency.
             if (includeNotPrioritized && groups.notPrioritized.length > 0) {
                 sections.push({ key: 'notPrioritized', title: 'Not Currently Prioritized', collapsedDefault: true, empty: '' });
+            }
+            // Apps only (groups.background is always empty for the devices
+            // call) — Microsoft platform/shell AppX software and
+            // browser-hosted PWAs, structurally presumed background
+            // regardless of resolved bucket. See CLAUDE.md, Background /
+            // reference classification. Only shown when non-empty, same as
+            // Not Currently Prioritized above.
+            if (groups.background && groups.background.length > 0) {
+                sections.push({ key: 'background', title: 'Background Items', collapsedDefault: true, empty: '' });
             }
             sections.push(
                 { key: 'alreadyConsidered', title: 'Already Considered', collapsedDefault: true, empty: `Nothing here yet.` },
@@ -685,7 +740,7 @@
         // writes. Not a new importance scale or a second stored concept —
         // just a second, simpler entry point into one that already exists.
         // For an app, this is also what promotes it out of Not Currently
-        // Prioritized (see isLightDeprioritized in assessment.js).
+        // Prioritized (see isDeprioritized in assessment.js).
         function promoteButtonHtml(item) {
             if (item.decision && item.decision.critical_to_me) {
                 return `<span style="font-size:0.75rem; color:#10b981; font-weight:600;">✓ Matters to you</span>`;
@@ -697,7 +752,7 @@
         function renderItemCard(item) {
             const cardId = itemAnchorId(itemKey(item), item.isDevice);
             const scanMode = currentResults ? currentResults.scan_mode : null;
-            const isDeprioritized = !item.isDevice && isLightDeprioritized(item.raw, item.decision, scanMode);
+            const itemDeprioritized = !item.isDevice && isDeprioritized(item.raw, item.decision, scanMode);
 
             // A deliberately minimal card — name, evidence badge, research
             // link, and the one action that matters (promote). The full
@@ -705,13 +760,14 @@
             // there underneath, just behind Deeper Research Mode like
             // everywhere else — Light's Workspace should feel lighter too,
             // not just its Results population.
-            if (isDeprioritized) {
+            if (itemDeprioritized) {
                 return `
         <div class="item-card" id="${cardId}">
           <div class="item-card-top">
             <div>
               <span class="item-card-name">${escapeHtml(item.name)}</span>
               ${reasonChip(item)}
+              ${item.pwaNote ? `<div style="font-size:0.75rem; color:#93c5fd; margin-top:0.15rem;">${escapeHtml(item.pwaNote)}</div>` : ''}
             </div>
             <div style="display:flex; align-items:center; gap:0.5rem;">
               ${statusBadge(item)}
@@ -734,6 +790,7 @@
             <div>
               <span class="item-card-name">${escapeHtml(item.name)}</span>
               ${reasonChip(item)}
+              ${item.pwaNote ? `<div style="font-size:0.75rem; color:#93c5fd; margin-top:0.15rem;">${escapeHtml(item.pwaNote)}</div>` : ''}
             </div>
             <div style="display:flex; align-items:center; gap:0.5rem;">
               ${statusBadge(item)}
@@ -879,11 +936,18 @@
             const { apps, devices } = collectItems(currentResults);
             const appGroups = bucketItems(apps);
             const deviceGroups = bucketItems(devices);
-            const isLight = currentResults && currentResults.scan_mode === 'quick';
-            renderGroups('apps-groups', appGroups, isLight);
+            // Not Currently Prioritized applies under Light AND Standard now
+            // (see isDeprioritized() in assessment.js) — Advanced never
+            // deprioritizes, so it stays the one level that never shows this.
+            const showNotPrioritized = currentResults && (currentResults.scan_mode === 'quick' || currentResults.scan_mode === 'standard');
+            renderGroups('apps-groups', appGroups, showNotPrioritized);
             renderGroups('devices-groups', deviceGroups, false);
 
-            ['notPrioritized', 'needsAttention', 'alreadyConsidered', 'setAside'].forEach((key) => {
+            // 'background' was missing here in an earlier pass — its cards
+            // rendered but their decision buttons/checkboxes never got
+            // wired up. Found while auditing this exact line for the
+            // needsAttention→deservesAttention rename.
+            ['notPrioritized', 'deservesAttention', 'background', 'alreadyConsidered', 'setAside'].forEach((key) => {
                 appGroups[key].forEach((item) => wireItemCard(item));
                 deviceGroups[key].forEach((item) => wireItemCard(item));
             });

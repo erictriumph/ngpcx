@@ -188,8 +188,13 @@
 
 <body>
     <nav>
-        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
-        <a href="/" class="back-link">← Back to scanner</a>
+        <a href="/" id="nav-logo-link" style="text-decoration:none;">
+            <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        </a>
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <a href="/workspace.html" id="nav-workspace-link" class="back-link" style="display:none;">Workspace</a>
+            <a href="/" id="nav-back-link" class="back-link">← Back to scanner</a>
+        </div>
     </nav>
 
     <div class="container">
@@ -219,7 +224,7 @@
                 CheckMyARM maintains an evolving, evidence-based compatibility database. Applications without
                 verified compatibility data are marked Unknown rather than assumed broken — most
                 conventional x86/x64 Windows applications are expected to run under emulation until confirmed
-                native or unsupported. See <a href="/how-it-thinks.html">How CheckMyARM Thinks</a> for the
+                native or unsupported. See <a href="/how-it-thinks.html" data-info-link>How CheckMyARM Thinks</a> for the
                 reasoning behind how a scan turns into a recommendation.
             </p>
             <p>
@@ -241,7 +246,7 @@
             </p>
             <p>
                 Want to dig deeper into <em>why</em> compatibility works the way it does? See the
-                <a href="/why.html">Why page</a>.
+                <a href="/why.html" data-info-link>Why page</a>.
             </p>
         </section>
 
@@ -254,7 +259,7 @@
                 any other website.
             </p>
             <p>
-                <a href="/privacy.html">Read the full privacy page →</a>
+                <a href="/privacy.html" data-info-link>Read the full privacy page →</a>
             </p>
         </section>
 
@@ -292,6 +297,11 @@
     </div>
 
     <footer>CheckMyARM — ARM Readiness Scanner. © 2026 CheckMyARM. All rights reserved.</footer>
+
+    <script src="/assessment.js"></script>
+    <script>
+        applySessionAwareNav();
+    </script>
 </body>
 
 </html>

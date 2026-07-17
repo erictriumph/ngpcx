@@ -140,8 +140,13 @@
 
 <body>
     <nav>
-        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
-        <a href="/" class="back-link">← Back to scanner</a>
+        <a href="/" id="nav-logo-link" style="text-decoration:none;">
+            <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        </a>
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <a href="/workspace.html" id="nav-workspace-link" class="back-link" style="display:none;">Workspace</a>
+            <a href="/" id="nav-back-link" class="back-link">← Back to scanner</a>
+        </div>
     </nav>
 
     <div class="container">
@@ -234,7 +239,7 @@
                 CheckMyARM combines automated sources with real reports from real people — and a small group of
                 volunteer Researchers who dig into the harder, ambiguous cases — because compatibility knowledge
                 genuinely gets better the more people contribute what they've found. See the
-                <a href="/about.html">About page</a> for how that community model actually works.
+                <a href="/about.html" data-info-link>About page</a> for how that community model actually works.
             </p>
         </section>
 
@@ -242,11 +247,16 @@
             None of this is meant to talk you into anything — just to explain why "will my stuff work?" doesn't
             have a simple yes-or-no answer, and why a real scan of your real PC is more useful than a guess.
             For the reasoning behind how CheckMyARM turns that scan into an actual recommendation, see
-            <a href="/how-it-thinks.html">How CheckMyARM Thinks</a>.
+            <a href="/how-it-thinks.html" data-info-link>How CheckMyARM Thinks</a>.
         </p>
     </div>
 
     <footer>CheckMyARM — ARM Readiness Scanner. © 2026 CheckMyARM. All rights reserved.</footer>
+
+    <script src="/assessment.js"></script>
+    <script>
+        applySessionAwareNav();
+    </script>
 </body>
 
 </html>

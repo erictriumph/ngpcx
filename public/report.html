@@ -294,10 +294,10 @@
         <div style="display:flex; align-items:center; gap:1.25rem;">
             <span id="auth-status"></span>
             <span id="workspace-nav"></span>
-            <a href="/my-submissions.html" class="back-link">My Submissions</a>
-            <a href="/why.html" class="back-link">Why</a>
-            <a href="/how-it-thinks.html" class="back-link">How CheckMyARM Thinks</a>
-            <a href="/about.html" class="back-link">About</a>
+            <a href="/my-submissions.html" data-info-link class="back-link">My Submissions</a>
+            <a href="/why.html" data-info-link class="back-link">Why</a>
+            <a href="/how-it-thinks.html" data-info-link class="back-link">How CheckMyARM Thinks</a>
+            <a href="/about.html" data-info-link class="back-link">About</a>
             <a href="/" class="back-link">← Run another scan</a>
         </div>
     </nav>
@@ -441,7 +441,21 @@
              like everything else on Results; promotion happens in Workspace. -->
         <div id="not-prioritized-section"></div>
 
-        <!-- APP TABLES -->
+        <!-- BACKGROUND ITEMS — every assessment level. Microsoft platform/
+             shell AppX software and browser-hosted PWAs, structurally
+             presumed background/reference regardless of resolved bucket —
+             see CLAUDE.md, Background / reference classification.
+             Orthogonal to Not Currently Prioritized above (that's
+             Light-only scoring exclusion; this applies at every level). -->
+        <div id="background-section"></div>
+
+        <!-- APP TABLES — collapsed by default (see CLAUDE.md, Report vs
+             Workspace): the full inventory stays one click away, it just
+             isn't presented as if every row were an equal decision driver. -->
+        <p style="color:#64748b; font-size:0.8rem; margin:1.5rem 0 0.75rem 0;">
+            Full application inventory, by compatibility bucket — expand any category below to review it, or
+            head to the Workspace for the complete picture.
+        </p>
         <div id="native-section"></div>
         <div id="emulated-section"></div>
         <div id="unsupported-section"></div>
@@ -468,6 +482,15 @@
         const scanLevelParam = params.get('level');
         let currentResults = null;
         let currentPersonalContext = new Map();
+        // Set by renderReductionSummary() — the same small, curated "worth a
+        // closer look" list, reused by renderRefreshBanner() so its copy can
+        // name the actual count instead of a generic "some apps" (see
+        // CLAUDE.md, Community contribution).
+        let currentDeservesAttentionCount = 0;
+        // Results is already the active session's own page — its outgoing
+        // nav links to the informational pages just need to carry that same
+        // session forward (see CLAUDE.md, session-aware navigation).
+        decorateInfoLinks(sessionId, scanLevelParam);
         // Consumed exactly once here (not inside renderReport(), which can
         // legitimately run more than once per page load on refresh) — a
         // second consume would find the sessionStorage key already gone and
@@ -602,8 +625,19 @@
         // Results). Inspecting evidence (Source/Confidence/notes) is fine
         // here; editing or researching it is not. Each row instead links
         // into its corresponding Workspace item — a doorway, not a control.
-        function buildTable(apps, type) {
-            if (!apps || apps.length === 0) return '';
+        // entries: classified-shape objects — {app, rawBucket, effectiveBucket,
+        // decision} — every entry's effectiveBucket must equal `type` (the
+        // 'system' call site has no bucket concept and passes a compatible
+        // shape with rawBucket === effectiveBucket === 'system'). The badge
+        // shown is always `type` (the EFFECTIVE status) — never the raw
+        // catalog bucket — so a browser-hosted PWA that inherited Native
+        // from its host browser is labeled Native here, not left showing
+        // "? Unknown" while a separate note claims otherwise. Raw catalog
+        // status, when it differs, only ever appears in the expandable
+        // detail row below, clearly labeled as such. See CLAUDE.md,
+        // Canonical Effective Status.
+        function buildTable(entries, type) {
+            if (!entries || entries.length === 0) return '';
 
             const labels = {
                 native: '✓ Native ARM64',
@@ -615,13 +649,19 @@
 
             const colCount = 4;
 
-            const rows = apps.map((app, idx) => {
+            // Only ever needed when a row's raw bucket is 'unknown' — a
+            // browser-hosted PWA looks up its host browser's own bucket here
+            // to explain WHY its badge differs from a plain catalog lookup.
+            const allAppsFlat = ['native', 'emulated', 'unsupported', 'unknown']
+                .flatMap((b) => (currentResults[b] || []).map((a) => ({ app: a, bucket: b })));
+
+            const rows = entries.map(({ app, rawBucket, decision }, idx) => {
                 const name = escapeHtml(app.name || app.id);
                 const packageId = escapeHtml(app.id || '');
                 const version = escapeHtml(app.version || '—');
 
                 // System components have no Personal Context/decision concept
-                // (excluded from the Workspace's Needs Attention/Already
+                // (excluded from the Workspace's Deserves Attention/Already
                 // Considered grouping entirely, per WORKSPACE.md) — no link.
                 const workspaceLink = type !== 'system'
                     ? ` <a class="workspace-link" href="${workspaceUrl()}#${itemAnchorId(decisionKey(app), false)}" style="font-size:0.72rem; color:#3b82f6; text-decoration:none; margin-left:0.5rem; white-space:nowrap;">Workspace →</a>`
@@ -639,9 +679,21 @@
                     ? `<div class="compat-note"><strong>Compatibility Notes</strong>${notes}</div>`
                     : '';
 
-                const decision = type !== 'system' ? currentPersonalContext.get(decisionKey(app)) : null;
                 const verifiedBadge = (decision && decision.decision === 'personally_verified' && decision.verified_status)
                     ? `<span class="verified-badge">✓ You verified: ${escapeHtml(SUBMISSION_LABELS[decision.verified_status] || decision.verified_status)}</span>`
+                    : '';
+                const pwaNoteText = pwaInheritanceNote(app, rawBucket, allAppsFlat);
+                const pwaNote = pwaNoteText
+                    ? `<div style="font-size:0.75rem; color:#93c5fd; margin-top:0.15rem;">${escapeHtml(pwaNoteText)}</div>`
+                    : '';
+
+                // "(inherited)" only for the PWA-inheritance case — a
+                // personal verification already has its own "✓ You
+                // verified" badge and shouldn't also claim inheritance.
+                const isInherited = rawBucket !== type && !(decision && decision.decision === 'personally_verified');
+                const inheritedTag = isInherited ? ' <span style="font-size:0.72rem; color:#93c5fd;">(inherited)</span>' : '';
+                const rawStatusLine = rawBucket !== type
+                    ? `<br><strong style="color:#94a3b8;">Raw catalog status:</strong> ${escapeHtml(labels[rawBucket] || rawBucket)}`
                     : '';
 
                 const detailRow = `
@@ -652,6 +704,7 @@
             &nbsp;·&nbsp;
             <strong style="color:#94a3b8;">Confidence:</strong> ${confidence}
             ${sourceUrl ? `<br><a href="${sourceUrl}" target="_blank" rel="noopener" style="color:#3b82f6;">View source →</a>` : ''}
+            ${rawStatusLine}
           </td>
         </tr>
       `;
@@ -660,10 +713,11 @@
         <tr id="row-${type}-${idx}">
           <td>
             <button onclick="toggleAppDetail('${detailId}', this)" aria-expanded="false" aria-label="Show evidence detail for ${name}" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:0.75rem;padding:0;margin-right:0.5rem;">▶</button>${name}${verifiedBadge}${workspaceLink}
+            ${pwaNote}
           </td>
           <td style="color:#64748b;font-size:0.8rem">${packageId}</td>
           <td>${version}</td>
-          <td><span class="badge ${type}"${type === 'unknown' ? ' title="Emulation likely, but not yet verified."' : ''}>${labels[type]}</span></td>
+          <td><span class="badge ${type}"${type === 'unknown' ? ' title="Emulation likely, but not yet verified."' : ''}>${labels[type]}${inheritedTag}</span></td>
         </tr>
         ${detailRow}
       `;
@@ -688,22 +742,18 @@
         </table>
       `;
 
-            // System components are excluded from scoring and from the Workspace's
-            // Needs Attention queue entirely — collapsed by default so they read as
-            // "here for reference" rather than something needing the same attention
-            // as the four scored buckets above. Still fully inspectable on request.
-            if (type === 'system') {
-                return `
+            // The Report curates; the Workspace exposes (see CLAUDE.md,
+            // Report vs Workspace). Every bucket's full inventory — not just
+            // System Components — is collapsed by default: it stays exactly
+            // as discoverable as before (one click), it just isn't presented
+            // as if every row were an equal decision driver. System
+            // Components additionally note they don't affect the score at all.
+            const summaryExtra = type === 'system' ? ' — not evaluated, does not affect your score' : '';
+            return `
         <details class="collapsible-details">
-          <summary class="section-title" style="cursor:pointer; display:list-item;">${labels[type]} (${apps.length}) — not evaluated, does not affect your score</summary>
+          <summary class="section-title" style="cursor:pointer; display:list-item;">${labels[type]} (${entries.length})${summaryExtra}</summary>
           ${table}
         </details>
-      `;
-            }
-
-            return `
-        <div class="section-title">${labels[type]} (${apps.length})</div>
-        ${table}
       `;
         }
 
@@ -760,24 +810,36 @@
         // Reduction narrative + Primary Reasons — the "already did the work"
         // moment. Deliberately non-interactive: each preview item is text and
         // a reason chip, never a control. See WORKSPACE.md, The Assessment Loop.
-        function renderReductionSummary(results, synthesis) {
-            const apps = [];
-            ['native', 'emulated', 'unsupported', 'unknown'].forEach((bucket) => {
-                (results[bucket] || []).forEach((app) => apps.push({ app, bucket }));
-            });
+        // `classified` is the ONE canonical per-app classification (see
+        // classifyPopulation() in assessment.js) — every state check here
+        // reads effectiveBucket/isBackground from it, never re-derives them.
+        function renderReductionSummary(results, synthesis, classified) {
             const devices = results.devices || [];
 
-            const needsAttention = [];
-            let alreadyCount = 0;
+            const deservesAttention = [];
+            const backgroundItems = [];
 
-            apps.forEach(({ app, bucket }) => {
-                const decision = currentPersonalContext.get(decisionKey(app));
-                const state = classifyAssessmentItem({ decision, bucket, isLikelyNativeDevice: null });
-                if (state === 'needsAttention') {
+            const scanMode = results.scan_mode;
+            classified.forEach(({ app, effectiveBucket, decision, isBackground }) => {
+                // Background status (structural — Microsoft platform/shell
+                // AppX software, browser-hosted PWAs) is checked BEFORE
+                // deprioritization, so a background app is never folded into
+                // Not Currently Prioritized just because it also lacks
+                // Light/Standard footprint evidence — see CLAUDE.md,
+                // Canonical Effective Status. Deprioritized (non-background)
+                // apps are covered by their own separate "Not Currently
+                // Prioritized" section below (a different axis — scoring
+                // inclusion, not attention) — they must not also count
+                // toward this preview's "deserves attention" tally, or the
+                // same app reads as needing attention in one place and
+                // already set aside in another.
+                if (!isBackground && isDeprioritized(app, decision, scanMode)) return;
+                const state = classifyAssessmentItem({ decision, bucket: effectiveBucket, isLikelyNativeDevice: null, app });
+                if (state === 'deservesAttention') {
                     const imp = defaultImportanceForApp(app);
-                    needsAttention.push({ name: app.name, reason: imp.reason, level: imp.level, anchor: itemAnchorId(decisionKey(app), false) });
-                } else {
-                    alreadyCount++;
+                    deservesAttention.push({ name: app.name, reason: imp.reason, level: imp.level, anchor: itemAnchorId(decisionKey(app), false) });
+                } else if (state === 'background') {
+                    backgroundItems.push({ app, bucket: effectiveBucket });
                 }
             });
 
@@ -785,15 +847,15 @@
                 const decision = currentPersonalContext.get(deviceDecisionKey(device));
                 const nativeLikely = isLikelyNative(device);
                 const state = classifyAssessmentItem({ decision, bucket: null, isLikelyNativeDevice: nativeLikely });
-                if (state === 'needsAttention') {
+                if (state === 'deservesAttention') {
                     const imp = defaultImportanceForDevice(device);
-                    needsAttention.push({ name: device.name, reason: imp.reason, level: imp.level, anchor: itemAnchorId(deviceDecisionKey(device), true) });
-                } else {
-                    alreadyCount++;
+                    deservesAttention.push({ name: device.name, reason: imp.reason, level: imp.level, anchor: itemAnchorId(deviceDecisionKey(device), true) });
                 }
             });
 
-            const total = apps.length + devices.length;
+            renderBackgroundItems(backgroundItems);
+
+            const total = classified.length + devices.length;
             const summaryEl = document.getElementById('reduction-summary');
             const textEl = document.getElementById('reduction-text');
             const listEl = document.getElementById('preview-list');
@@ -805,37 +867,44 @@
 
             if (total === 0) {
                 if (summaryEl) summaryEl.style.display = 'none';
+                currentDeservesAttentionCount = 0;
                 return;
             }
 
             if (summaryEl) summaryEl.style.display = 'block';
-            const openCount = needsAttention.length;
+            const openCount = deservesAttention.length;
+            currentDeservesAttentionCount = openCount;
             if (textEl) {
-                // Two distinct sentences, deliberately not merged: the first
-                // is about RESEARCH STATUS (how much is already resolved vs.
-                // worth a closer look — unchanged from before). The second,
-                // shown only when Light Assessment actually deprioritized
-                // something, is about SCORING INFLUENCE — how many observed
-                // apps are shaping the recommendation vs. sitting visible but
-                // not currently counted. Same underlying data as the
-                // "Not Currently Prioritized" section below; this is the
-                // one-sentence version of that distinction. Omitted entirely
-                // under Standard/Advanced, where nothing is deprioritized and
-                // the sentence would just restate the app count.
-                const influenceSentence = (synthesis && !synthesis.empty && synthesis.deprioritizedCount > 0)
-                    ? ` Of <strong>${synthesis.totalAppCount}</strong> application${synthesis.totalAppCount === 1 ? '' : 's'} identified, <strong>${synthesis.countedTotal}</strong> show${synthesis.countedTotal === 1 ? 's' : ''} strong evidence of being part of your workflow and ${synthesis.countedTotal === 1 ? 'is' : 'are'} shaping this recommendation — <strong>${synthesis.deprioritizedCount}</strong> more ${synthesis.deprioritizedCount === 1 ? 'is' : 'are'} not currently prioritized, but stay${synthesis.deprioritizedCount === 1 ? 's' : ''} visible and can be promoted anytime.`
+                // The Report curates; the Workspace exposes. This headline is
+                // the curated framing: how many applications were analyzed,
+                // then the honest, smaller number that actually drove today's
+                // recommendation — not a software-inventory count. See
+                // CLAUDE.md, "the catalog supports the assessment, it does
+                // not become the assessment." synthesis.materialCount already
+                // excludes background/platform software (isBackgroundApp) —
+                // this sentence just states the same math in plain language.
+                const appTotal = (synthesis && !synthesis.empty) ? synthesis.totalAppCount : classified.length;
+                const material = (synthesis && !synthesis.empty) ? synthesis.materialCount : appTotal;
+                const closerLookSentence = openCount > 0
+                    ? ` <strong>${openCount}</strong> ${openCount === 1 ? 'is' : 'are'} worth a closer look — sharing what you know about ${openCount === 1 ? 'it' : 'them'} helps you and the next person.`
                     : '';
-                textEl.innerHTML = `We evaluated <strong>${total}</strong> application${total === 1 ? '' : 's'} and device${total === 1 ? '' : 's'}. ` +
-                    `<strong>${alreadyCount}</strong> already provide${alreadyCount === 1 ? 's' : ''} enough information to support this assessment. ` +
-                    (openCount > 0
-                        ? `Only <strong>${openCount}</strong> could benefit from additional context or a closer look.`
-                        : `Nothing else needs a closer look right now.`) +
-                    influenceSentence;
+                // Shown only when this assessment actually deprioritized
+                // something (Light or Standard) — omitted under Advanced,
+                // where nothing is deprioritized and the sentence would just
+                // restate the app count.
+                const influenceSentence = (synthesis && !synthesis.empty && synthesis.deprioritizedCount > 0)
+                    ? ` <strong>${synthesis.deprioritizedCount}</strong> more ${synthesis.deprioritizedCount === 1 ? 'is' : 'are'} not currently prioritized by this assessment, but stay${synthesis.deprioritizedCount === 1 ? 's' : ''} visible and can be promoted anytime.`
+                    : '';
+                textEl.innerHTML = `We analyzed <strong>${appTotal}</strong> application${appTotal === 1 ? '' : 's'}. ` +
+                    `<strong>${material}</strong> materially influenced today's recommendation.` +
+                    closerLookSentence +
+                    influenceSentence +
+                    ` Everything else — including Microsoft platform software and browser-hosted apps — stays fully available in the Workspace to review or contribute to.`;
             }
 
             const order = { high: 0, normal: 1, low: 2 };
-            needsAttention.sort((a, b) => order[a.level] - order[b.level]);
-            const preview = needsAttention.slice(0, 6);
+            deservesAttention.sort((a, b) => order[a.level] - order[b.level]);
+            const preview = deservesAttention.slice(0, 6);
 
             if (listEl) {
                 listEl.innerHTML = preview.map((item) => `
@@ -945,10 +1014,53 @@
       `;
         }
 
+        // Microsoft platform/shell AppX software and browser-hosted PWAs
+        // (see CLAUDE.md, Background / reference classification) — a
+        // structural TYPE verdict, not "unresolved." Still fully classified,
+        // discoverable, and (at reduced weight) counted toward the score;
+        // just kept out of the curated Needs Attention / Primary Reasons
+        // that drive the Report's headline. Same read-only preview-list
+        // pattern as Not Currently Prioritized; a different reason, so a
+        // separate section.
+        function renderBackgroundItems(items) {
+            const container = document.getElementById('background-section');
+            if (!container) return;
+            if (!items || items.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            const labels = { native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported', unknown: '? Unknown' };
+            const rows = items.map(({ app, bucket }) => {
+                const anchor = itemAnchorId(decisionKey(app), false);
+                return `
+          <a class="preview-item" href="${workspaceUrl()}#${anchor}">
+            <span class="preview-item-name">${escapeHtml(app.name)}</span>
+            <span class="badge ${bucket}">${labels[bucket] || bucket}</span>
+          </a>
+        `;
+            }).join('');
+            container.innerHTML = `
+        <details class="collapsible-details">
+          <summary class="section-title" style="cursor:pointer; display:list-item;">Background Items (${items.length})</summary>
+          <p style="color:#94a3b8; font-size:0.85rem; margin:0.5rem 0 0.75rem 0;">
+            Microsoft platform software (codecs, shell integrations, helper packages, Windows infrastructure) and
+            browser-hosted apps — real findings, rarely a purchase-decision driver. Still counted in your app
+            totals; promote any that genuinely matter to you from the Workspace.
+          </p>
+          <div class="preview-list">${rows}</div>
+        </details>
+      `;
+        }
+
         function renderReport(data) {
             const results = data.results;
             currentResults = results;
             currentPersonalContext = loadPersonalContext(sessionId, params);
+            // The ONE canonical per-app classification for this render pass —
+            // every downstream consumer (counts, tables, background section,
+            // reduction summary) reads bucket/background status from here,
+            // never re-derives it. See CLAUDE.md, Canonical Effective Status.
+            const classified = classifyPopulation(results, currentPersonalContext);
 
             // System info
             if (results.system) {
@@ -992,6 +1104,7 @@
             document.getElementById('quick-mode-note')?.remove();
             document.getElementById('quick-apps-note')?.remove();
             document.getElementById('standard-mode-note')?.remove();
+            document.getElementById('standard-apps-note')?.remove();
             document.getElementById('system-component-note')?.remove();
 
             if (results.scan_mode === 'quick') {
@@ -1019,6 +1132,16 @@
                 standardNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
                 standardNote.textContent = 'Standard Assessment checks most device types used in the last 14 days, and docks/network adapters used in the last 60 days.';
                 document.getElementById('printer-note').insertAdjacentElement('afterend', standardNote);
+
+                // Standard is broader than Light, never equal to it — a real
+                // Start Menu entry is enough on top of everything Light
+                // already counts, but a catalog match with no footprint at
+                // all still isn't. See CLAUDE.md, isStandardPriorityApp().
+                const standardAppsNote = document.createElement('p');
+                standardAppsNote.id = 'standard-apps-note';
+                standardAppsNote.style.cssText = 'color:#64748b; font-size:0.8rem; margin-top:0.3rem;';
+                standardAppsNote.textContent = 'Standard Assessment builds your Score and Confidence from apps with a real footprint — installed with a Start Menu entry, currently running, or used often. Everything else the scan found is still listed below under "Not Currently Prioritized" — nothing is hidden, and you can promote anything that matters to you from the Workspace.';
+                document.getElementById('printer-note').insertAdjacentElement('afterend', standardAppsNote);
             }
 
             if (results.systemComponents && results.systemComponents.length > 0) {
@@ -1029,11 +1152,30 @@
                 document.getElementById('printer-note').insertAdjacentElement('afterend', systemNote);
             }
 
-            document.getElementById('count-native').textContent = results.native?.length || 0;
-            document.getElementById('count-emulated').textContent = results.emulated?.length || 0;
-            document.getElementById('count-unsupported').textContent = results.unsupported?.length || 0;
-            document.getElementById('count-unknown').textContent = results.unknown?.length || 0;
-            document.getElementById('system-section').innerHTML = buildTable(results.systemComponents, 'system');
+            // Material (non-background, non-deprioritized) apps grouped by
+            // EFFECTIVE bucket — this IS the primary Report inventory now,
+            // and the exact same population computeSynthesis() counts as
+            // materialCount. Background apps live only in Background Items;
+            // deprioritized apps (Light/Standard footprint gate) live only
+            // in Not Currently Prioritized — neither duplicates into these
+            // primary counts/tables, so an item is never simultaneously
+            // "not currently prioritized" AND part of the counted inventory
+            // (see CLAUDE.md, Canonical Effective Status).
+            const materialByBucket = { native: [], emulated: [], unsupported: [], unknown: [] };
+            classified.forEach((entry) => {
+                if (entry.isBackground) return;
+                if (isDeprioritized(entry.app, entry.decision, results.scan_mode)) return;
+                materialByBucket[entry.effectiveBucket].push(entry);
+            });
+
+            document.getElementById('count-native').textContent = materialByBucket.native.length;
+            document.getElementById('count-emulated').textContent = materialByBucket.emulated.length;
+            document.getElementById('count-unsupported').textContent = materialByBucket.unsupported.length;
+            document.getElementById('count-unknown').textContent = materialByBucket.unknown.length;
+            document.getElementById('system-section').innerHTML = buildTable(
+                (results.systemComponents || []).map((app) => ({ app, rawBucket: 'system', effectiveBucket: 'system', decision: null })),
+                'system'
+            );
 
             const deviceList = results.devices || [];
             const nativeCount = deviceList.filter(d => isLikelyNative(d)).length;
@@ -1052,10 +1194,10 @@
             const deviceLevelEl = document.getElementById('device-assessment-level');
             if (deviceLevelEl) deviceLevelEl.textContent = deviceAssessmentLevels[results.scan_mode] || '';
 
-            document.getElementById('native-section').innerHTML = buildTable(results.native, 'native');
-            document.getElementById('emulated-section').innerHTML = buildTable(results.emulated, 'emulated');
-            document.getElementById('unsupported-section').innerHTML = buildTable(results.unsupported, 'unsupported');
-            document.getElementById('unknown-section').innerHTML = buildTable(results.unknown, 'unknown');
+            document.getElementById('native-section').innerHTML = buildTable(materialByBucket.native, 'native');
+            document.getElementById('emulated-section').innerHTML = buildTable(materialByBucket.emulated, 'emulated');
+            document.getElementById('unsupported-section').innerHTML = buildTable(materialByBucket.unsupported, 'unsupported');
+            document.getElementById('unknown-section').innerHTML = buildTable(materialByBucket.unknown, 'unknown');
             document.getElementById('devices-section').innerHTML = buildDeviceTable(results.devices);
 
             const synthesis = computeSynthesis(results, currentPersonalContext);
@@ -1095,7 +1237,7 @@
             }
 
             renderPrimaryReasons(synthesis);
-            renderReductionSummary(results, synthesis);
+            renderReductionSummary(results, synthesis, classified);
             renderNotPrioritized(synthesis);
             renderHistoricalComparison(importedAssessmentSnapshot, synthesis);
             loadAuthStatus();
@@ -1138,8 +1280,16 @@
             }
 
             banner.style.display = 'flex';
+            // Names the actual small, curated count where one exists — a
+            // concrete, honest ask beats a generic "some apps" (see
+            // CLAUDE.md, Community contribution: align user benefit with
+            // community benefit around the few apps that are genuinely
+            // unresolved AND worth this user's attention, not every Unknown row).
+            const contributionText = currentDeservesAttentionCount > 0
+                ? `🔍 ${currentDeservesAttentionCount} application${currentDeservesAttentionCount === 1 ? '' : 's'} worth your attention ${currentDeservesAttentionCount === 1 ? "doesn't" : "don't"} have a confirmed verdict yet. A check already ran automatically — refresh for updates, or share what you know about ${currentDeservesAttentionCount === 1 ? 'it' : 'them'} in the Workspace.`
+                : `🔍 Some background/reference software doesn't have a confirmed verdict yet. A check already ran automatically — refresh for updates, or review it in the Workspace.`;
             banner.innerHTML = `
-                <span>🔍 Some apps don't have a confirmed verdict yet. A check already ran automatically — refresh for updates, or share what you know in the Workspace.</span>
+                <span>${contributionText}</span>
                 <button class="refresh-btn" id="refresh-results-btn">Refresh results</button>
                 <div class="refresh-status-msg" id="refresh-status-msg"></div>
             `;

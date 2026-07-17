@@ -34,6 +34,12 @@ const CMA_VERSION = '1.0.0';
 const CARRY_FORWARD_KEY = 'ngpcx_carry_forward_v1';
 const DOESNT_MATTER_WEIGHT = 0.25;
 const CRITICAL_WEIGHT_MULTIPLIER = 2;
+// Same order of magnitude as DOESNT_MATTER_WEIGHT (a distinct concept, not
+// reused directly, so each can be retuned independently later): a
+// background-typed app (see isBackgroundApp()) isn't excluded outright —
+// still counted, still honest — just not weighted as a real assessment
+// driver by default.
+const BACKGROUND_WEIGHT = 0.25;
 
 function sessionContextKey(sessionId) {
     return 'ngpcx_session_context_' + sessionId;
@@ -262,10 +268,52 @@ function isLightPriorityApp(app) {
         || hasFrequentUserAssistLaunches(app) || hasRecentUserAssistLaunch(app) || hasMeaningfulDefaultHandler(app));
 }
 
-function isLightDeprioritized(app, decision, scanMode) {
-    if (scanMode !== 'quick') return false;
+// Standard's material bar is deliberately looser than Light's, never equal
+// to it — Standard's whole premise is "broader app coverage" (CLAUDE.md,
+// Assessment levels), but "broader" still isn't "everything with a catalog
+// match, no matter how thin its footprint." A real Start Menu entry (an
+// actual installed program with a launcher, not just a bare registry row)
+// clears it, on top of everything Light already counts.
+function isStandardPriorityApp(app) {
+    return !!(app.has_start_menu_entry || isLightPriorityApp(app));
+}
+
+// Deprioritizes an app from the SCORING/material population for Light and
+// Standard alike — Advanced never deprioritizes (CLAUDE.md: "maximum
+// visibility — every app... exposed"). Different thresholds per level, same
+// mechanism: excluded from Score/Confidence/materialCount, but still fully
+// visible and promotable ("This matters to me" / critical_to_me always
+// overrides) — see the "Not Currently Prioritized" section on Results/
+// Workspace, which now applies under Standard too, not just Light.
+function isDeprioritized(app, decision, scanMode) {
     if (decision && decision.critical_to_me) return false;
-    return !isLightPriorityApp(app);
+    if (scanMode === 'quick') return !isLightPriorityApp(app);
+    if (scanMode === 'standard') return !isStandardPriorityApp(app);
+    return false; // full/advanced — everything stays in the scoring population
+}
+
+// The one canonical per-app classification. Every UI surface — Report
+// tables/counts/badges, Workspace grouping/badges, Score, Confidence,
+// Primary Reasons, Deserves Attention, Already Considered, Not Currently
+// Prioritized, Background/Platform sections — must derive its bucket and
+// background status from THIS, never re-derive effectiveBucketFor()/
+// isBackgroundApp() independently. That independent re-derivation (several
+// call sites each computing their own answer) was the root cause of raw
+// catalog status silently contradicting effective assessment treatment in
+// the UI — see CLAUDE.md, Canonical Effective Status milestone. Apps only
+// (native/emulated/unsupported/unknown buckets) — devices have no bucket
+// concept and are classified separately (isLikelyNative()).
+function classifyPopulation(results, personalContext) {
+    const allApps = [];
+    ['native', 'emulated', 'unsupported', 'unknown'].forEach((bucket) => {
+        (results[bucket] || []).forEach((app) => allApps.push({ app, bucket }));
+    });
+    return allApps.map(({ app, bucket }) => {
+        const decision = personalContext.get(decisionKey(app)) || null;
+        const effectiveBucket = effectiveBucketFor(app, bucket, decision, allApps);
+        const isBackground = isBackgroundApp(app, decision);
+        return { app, rawBucket: bucket, effectiveBucket, isBackground, decision };
+    });
 }
 
 // Weighted, decision-adjusted synthesis. Reuses the exact score-formula SHAPE
@@ -276,10 +324,7 @@ function isLightDeprioritized(app, decision, scanMode) {
 // decision state and catalog readiness data actually meet.
 function computeSynthesis(results, personalContext) {
     const scanMode = results.scan_mode;
-    const allApps = [];
-    ['native', 'emulated', 'unsupported', 'unknown'].forEach((bucket) => {
-        (results[bucket] || []).forEach((app) => allApps.push({ app, bucket }));
-    });
+    const classified = classifyPopulation(results, personalContext);
 
     let weightedNumerator = 0;
     let weightedTotal = 0;
@@ -292,9 +337,17 @@ function computeSynthesis(results, personalContext) {
     let unresolvedCriticalCount = 0;
     let verifiedCount = 0;
     let waitingCount = 0;
+    // "The catalog supports the assessment — it does not become the
+    // assessment." materialCount is what actually drove today's
+    // recommendation; backgroundCount is Microsoft platform/shell software
+    // and browser-hosted PWAs that stayed in a background/reference role
+    // (see isBackgroundApp()) — both counted here so the Report can state
+    // the distinction honestly instead of presenting a full inventory as
+    // if every item were an equal decision driver.
+    let materialCount = 0;
+    let backgroundCount = 0;
 
-    for (const { app, bucket } of allApps) {
-        const decision = personalContext.get(decisionKey(app)) || null;
+    for (const { app, effectiveBucket, isBackground: appIsBackground, decision } of classified) {
         const decisionValue = decision ? decision.decision : null;
 
         if (decisionValue === 'no_longer_use') {
@@ -302,30 +355,40 @@ function computeSynthesis(results, personalContext) {
             continue;
         }
 
-        // Light doesn't touch the evidence tables (every app the scanner
-        // found still shows in its normal bucket, unchanged) — it only
-        // removes low-signal apps from THIS loop, i.e., from what counts
-        // toward the recommendation. "This matters to me" (critical_to_me)
-        // is the one-click override, checked inside isLightDeprioritized().
-        if (isLightDeprioritized(app, decision, scanMode)) {
+        // Background status is a structural TYPE fact (Microsoft platform/
+        // shell AppX software, browser-hosted PWAs) that holds at every
+        // assessment level — checked BEFORE deprioritization, so a
+        // background app always counts as background, never gets folded
+        // into Not Currently Prioritized just because it also happens to
+        // lack Light/Standard footprint evidence. Deprioritization (the
+        // Light/Standard footprint gate) only ever applies to genuinely
+        // non-background apps. "This matters to me" (critical_to_me) is the
+        // one-click override, checked inside isDeprioritized().
+        if (!appIsBackground && isDeprioritized(app, decision, scanMode)) {
             deprioritizedCount++;
-            deprioritized.push({ app, bucket });
+            deprioritized.push({ app, bucket: effectiveBucket });
             continue;
         }
 
-        let weight = 1.0;
-        if (decisionValue === 'doesnt_matter') weight *= DOESNT_MATTER_WEIGHT;
-        if (decision && decision.critical_to_me) weight *= CRITICAL_WEIGHT_MULTIPLIER;
-
-        let effectiveBucket = bucket;
-        let isKnown = bucket !== 'unknown';
+        const isKnown = effectiveBucket !== 'unknown';
         if (decisionValue === 'personally_verified' && decision.verified_status) {
-            effectiveBucket = decision.verified_status === 'native' ? 'native'
-                : decision.verified_status === 'unsupported' ? 'unsupported'
-                    : 'emulated'; // x64/x86-emulated both map to the same weight bucket
-            isKnown = true;
             verifiedCount++;
         }
+
+        // A structural TYPE verdict, independent of whether the bucket
+        // ended up resolved — Microsoft platform/shell AppX software and
+        // browser-hosted PWAs stay background-weighted even when the
+        // catalog does have a real native/emulated/unsupported verdict for
+        // them, since the whole point is that this kind of software rarely
+        // drives a purchase decision either way. hasBackgroundOverride
+        // (critical_to_me / personally_verified / deliberate-use evidence)
+        // is the one way out, and it already applies per-app, never a type.
+        if (appIsBackground) backgroundCount++; else materialCount++;
+
+        let weight = 1.0;
+        if (decisionValue === 'doesnt_matter') weight *= DOESNT_MATTER_WEIGHT;
+        if (appIsBackground) weight *= BACKGROUND_WEIGHT;
+        if (decision && decision.critical_to_me) weight *= CRITICAL_WEIGHT_MULTIPLIER;
 
         if (effectiveBucket === 'native') nativeCount++;
         if (decisionValue === 'waiting_for_vendor') waitingCount++;
@@ -338,14 +401,19 @@ function computeSynthesis(results, personalContext) {
         weightedTotal += weight;
         if (isKnown) {
             knownWeighted += weight;
-        } else {
+        } else if (!appIsBackground) {
+            // Background-typed unresolved apps are deliberately excluded
+            // from this count — at BACKGROUND_WEIGHT they barely move
+            // Confidence, and the "N unresolved apps are holding back a
+            // higher confidence rating" sentence below would overstate
+            // their real impact if it counted them at face value.
             unresolvedCount++;
             if (decision && decision.critical_to_me) unresolvedCriticalCount++;
         }
     }
 
     if (weightedTotal === 0) {
-        return { empty: true, excludedCount, deprioritizedCount, deprioritized, totalAppCount: allApps.length, countedTotal: 0 };
+        return { empty: true, excludedCount, deprioritizedCount, deprioritized, totalAppCount: classified.length, countedTotal: 0, materialCount: 0, backgroundCount: 0 };
     }
 
     const score = Math.round((weightedNumerator / (weightedTotal * 100)) * 100);
@@ -366,7 +434,7 @@ function computeSynthesis(results, personalContext) {
     // native app is never silently counted in a sentence describing what's
     // actually driving the number.
     const parts = [];
-    const countedTotal = allApps.length - excludedCount - deprioritizedCount;
+    const countedTotal = classified.length - excludedCount - deprioritizedCount;
     parts.push(`${nativeCount} of ${countedTotal} app${countedTotal === 1 ? '' : 's'} run${countedTotal === 1 ? 's' : ''} natively${verifiedCount > 0 ? `, including ${verifiedCount} you personally verified` : ''}`);
     if (unresolvedCount > 0) {
         parts.push(`${unresolvedCount} unresolved app${unresolvedCount === 1 ? '' : 's'}${unresolvedCriticalCount > 0 ? ` (${unresolvedCriticalCount} marked critical)` : ''} ${unresolvedCount === 1 ? 'is' : 'are'} holding back a higher confidence rating`);
@@ -381,7 +449,7 @@ function computeSynthesis(results, personalContext) {
         parts.push(`${excludedCount} excluded because you said you no longer use ${excludedCount === 1 ? 'it' : 'them'}`);
     }
     if (deprioritizedCount > 0) {
-        parts.push(`${deprioritizedCount} not currently prioritized by this Light Assessment`);
+        parts.push(`${deprioritizedCount} not currently prioritized by this assessment`);
     }
     const explanation = `${readiness.label}, ${confidenceLabel} — ${parts.join('; ')}.`;
 
@@ -410,16 +478,15 @@ function computeSynthesis(results, personalContext) {
     // installed. This is Guidance Signals doing their documented job
     // (prioritization/sorting), never inclusion — every native/unsupported/
     // personally-verified app was already eligible before this tiebreak runs.
-    const scoreReasons = allApps
-        .map(({ app, bucket }) => {
-            const decision = personalContext.get(decisionKey(app)) || null;
+    const scoreReasons = classified
+        .map(({ app, effectiveBucket, isBackground, decision }) => {
             if (decision && decision.decision === 'no_longer_use') return null;
-            if (isLightDeprioritized(app, decision, scanMode)) return null;
-            let effectiveBucket = bucket;
-            if (decision && decision.decision === 'personally_verified' && decision.verified_status) {
-                effectiveBucket = decision.verified_status === 'native' ? 'native'
-                    : decision.verified_status === 'unsupported' ? 'unsupported' : 'emulated';
-            }
+            if (isDeprioritized(app, decision, scanMode)) return null;
+            // Background software (see isBackgroundApp()) shouldn't headline
+            // "why this recommendation" even when it happens to carry a big
+            // raw point swing — that's exactly the noise this concept exists
+            // to keep out of the curated Report.
+            if (isBackground) return null;
             if (effectiveBucket === 'unknown') return null;
             const weight = (decision && decision.critical_to_me) ? CRITICAL_WEIGHT_MULTIPLIER
                 : (decision && decision.decision === 'doesnt_matter') ? DOESNT_MATTER_WEIGHT : 1.0;
@@ -438,21 +505,19 @@ function computeSynthesis(results, personalContext) {
     // as material to Confidence as a native/unsupported app is to Score, so
     // they're surfaced here too rather than only in prose. Capped at 2: a
     // secondary callout, not a replacement for the score-driven list above.
-    const confidenceReasons = allApps
-        .map(({ app, bucket }) => {
-            const decision = personalContext.get(decisionKey(app)) || null;
+    const confidenceReasons = classified
+        .map(({ app, effectiveBucket, decision }) => {
             if (!decision || !decision.critical_to_me) return null;
             if (decision.decision === 'no_longer_use') return null;
-            const isKnownNow = bucket !== 'unknown' || (decision.decision === 'personally_verified' && !!decision.verified_status);
-            if (isKnownNow) return null;
-            return { app, bucket, kind: 'confidence' };
+            if (effectiveBucket !== 'unknown') return null;
+            return { app, bucket: effectiveBucket, kind: 'confidence' };
         })
         .filter(Boolean)
         .slice(0, 2);
 
     const reasons = [...scoreReasons, ...confidenceReasons];
 
-    return { empty: false, score, readiness, confidenceLabel, confidenceColor, confidencePct, explanation, reasons, deprioritizedCount, deprioritized, totalAppCount: allApps.length, countedTotal };
+    return { empty: false, score, readiness, confidenceLabel, confidenceColor, confidencePct, explanation, reasons, deprioritizedCount, deprioritized, totalAppCount: classified.length, countedTotal, materialCount, backgroundCount };
 }
 
 // ─────────────────────────────────────────
@@ -643,7 +708,7 @@ function sanitizeExportPayload(parsed) {
 //
 //  Deliberately NOT a persisted second axis — derived from the existing
 //  single `decision` field plus evidence confidence. Functionally the same
-//  Needs Attention / Already Considered / Set Aside grouping WORKSPACE.md
+//  Deserves Attention / Already Considered / Set Aside grouping WORKSPACE.md
 //  describes, without doubling the data model. One assessment item per
 //  entity — no clustering — matches the v1 scope in WORKSPACE.md.
 // ─────────────────────────────────────────
@@ -713,6 +778,197 @@ function importanceEvidenceStack(app, decision) {
     return lines;
 }
 
+// ─────────────────────────────────────────
+//  Attention eligibility — "deserves the user's attention"
+//
+//  Evidence should support importance; evidence alone should not
+//  automatically create importance. is_running and has_start_menu_entry are
+//  the two most passive signals in the whole evidence set — true of nearly
+//  any OS-shell process or Windows-inbox utility, not just a genuine
+//  application a user chose and cares about (a codec extension or an
+//  identity-provider helper package can be "running" and "in the Start
+//  Menu" too). This gate asks a prior question before evidence gets to
+//  matter at all: does this item plausibly qualify as something worth
+//  independently assessing? Apps that pass are grouped/sorted by
+//  defaultImportanceForApp()/importanceEvidenceStack() exactly as before;
+//  apps that fail stay fully classified, scored, visible, and promotable —
+//  this never touches computeSynthesis() or the compatibility bucket, only
+//  where an item is grouped for attention (classifyAssessmentItem below).
+// ─────────────────────────────────────────
+
+// ─────────────────────────────────────────
+//  Browser-hosted PWA detection (used below by the background classifier,
+//  and further down by effectiveBucketFor()/pwaInheritanceNote() for
+//  compatibility inheritance).
+//
+//  A browser-installed PWA (messages.google.com, TripIt, etc.) has no
+//  independent ARM64 binary of its own to be compatible or incompatible —
+//  it runs entirely inside its host browser's rendering engine. Detected
+//  via the same per-user ARP Publisher string the scanner already reports
+//  for Chrome/Edge-installed apps (see CLAUDE.md, Scanner Enrichment
+//  milestone) — no new scanner signal needed.
+// ─────────────────────────────────────────
+
+const BROWSER_HOST_PUBLISHER_PATTERN = /^(Google\\Chrome|Microsoft\\Edge|Mozilla\\Firefox|BraveSoftware\\Brave-Browser)/i;
+// The real, installed browser app each host-publisher prefix corresponds
+// to — used to look up that browser's own classified bucket in the same
+// scan population, never guessed or hardcoded per-PWA.
+const BROWSER_HOST_APP_NAMES = {
+    'google\\chrome': 'Google Chrome',
+    'microsoft\\edge': 'Microsoft Edge',
+    'mozilla\\firefox': 'Mozilla Firefox',
+    'bravesoftware\\brave-browser': 'Brave',
+};
+
+function isBrowserHostedPWA(app) {
+    return app.discovery_source === 'arp' && typeof app.publisher === 'string' && BROWSER_HOST_PUBLISHER_PATTERN.test(app.publisher);
+}
+
+function hostBrowserNameFor(app) {
+    if (!isBrowserHostedPWA(app)) return null;
+    const key = app.publisher.toLowerCase();
+    const match = Object.keys(BROWSER_HOST_APP_NAMES).find((k) => key.startsWith(k));
+    return match ? BROWSER_HOST_APP_NAMES[match] : null;
+}
+
+// ─────────────────────────────────────────
+//  Background / reference classification
+//
+//  Core principle (from real post-deploy testing feedback, twice now): the
+//  catalog supports the assessment — it does not become the assessment.
+//  Everything the scanner and catalog find stays fully discoverable
+//  (Workspace, especially Advanced); not everything needs to be surfaced as
+//  if it were a candidate purchase-decision driver. Two structural TYPES of
+//  software are presumed background/reference, independent of which
+//  compatibility bucket they land in:
+//    - Microsoft-published AppX/Store software — inbox apps, codecs, shell
+//      integrations, helper/sparse packages, Windows infrastructure
+//      utilities (Power Automate Desktop, Command Palette, WindowsScan,
+//      PowerToys, VP9/AV1 extensions, XboxIdentityProvider, Winget.Source,
+//      Solitaire, and the like).
+//    - Browser-hosted PWAs (see above) — valuable observations, rarely
+//      valuable assessment drivers, whether or not their bucket could be
+//      inherited from their host browser.
+//  This is deliberately a TYPE test (publisher/discovery_source), never a
+//  per-app name list — "Evidence should support importance. Evidence alone
+//  should not automatically create importance" now extends one step
+//  further: a structural type of software can itself be presumed
+//  background, with genuine deliberate-use evidence (or the user's own
+//  explicit word about THIS app) as the one way out.
+// ─────────────────────────────────────────
+
+// Microsoft-published AppX/Store software. Deliberately publisher-based,
+// not a package-ID keyword list — "is this Microsoft's own first-party
+// AppX software" is the durable, principled question, not "does this
+// specific name look like plumbing" (a narrower, earlier version of this
+// check missed Power Automate Desktop and Command Palette for exactly this
+// reason). Only ever applied to discovery_source === 'appx' entries — this
+// convention has no meaning for a win32/EXE publisher, and winget/ARP
+// Microsoft software (Teams, 365, Visual Studio) is deliberately NOT swept
+// in here: that's real, chosen, third-party-feeling software reviewed
+// separately and kept on full evidence treatment.
+// Checks BOTH publisher and the package-family-name prefix, not publisher
+// alone — found during validation: classifyApps()'s fuzzy name-matching can
+// pair an AppX package with an unrelated third-party catalog entry, and
+// mergeEntryWithApp() lets that catalog row's publisher win over the
+// scanner's own reported one (a real Windows Notepad AppX package matched a
+// same-named but unrelated catalog app and inherited ITS publisher). The
+// package family name (app.id) is scanner-reported and never overwritten by
+// the catalog merge, so it survives that failure mode.
+function isMicrosoftAppxPackage(app) {
+    if (app.discovery_source !== 'appx') return false;
+    const publisherIsMicrosoft = typeof app.publisher === 'string' && app.publisher.toLowerCase().includes('microsoft');
+    const idIsMicrosoft = typeof app.id === 'string' && /^microsoft\./i.test(app.id);
+    return publisherIsMicrosoft || idIsMicrosoft;
+}
+
+// Structural TYPE check — background by nature, independent of evidence or
+// which compatibility bucket the app resolved to.
+function isBackgroundCandidate(app) {
+    return isMicrosoftAppxPackage(app) || isBrowserHostedPWA(app);
+}
+
+// Deliberate-use evidence — signals of an actual human choice (pinned it,
+// set it to start automatically, launched it repeatedly/recently through
+// Explorer, made it a default handler) as distinct from the two weakest,
+// most passive signals in the whole set (is_running, has_start_menu_entry),
+// which are just as true of a background OS component or hosted PWA as a
+// real, chosen application.
+function hasDeliberateUseEvidence(app) {
+    return !!(app.is_startup || app.is_pinned_taskbar || hasFrequentUserAssistLaunches(app)
+        || hasRecentUserAssistLaunch(app) || hasMeaningfulDefaultHandler(app));
+}
+
+// The one way a background-typed item earns its way back to full
+// treatment: real deliberate-use evidence, the user's own explicit
+// verification of THIS app, or "This matters to me." Passive-only evidence
+// (is_running / has_start_menu_entry alone) is deliberately NOT an
+// override — that's exactly the evidence this whole concept exists to stop
+// treating as sufficient on its own.
+function hasBackgroundOverride(app, decision) {
+    if (decision && (decision.critical_to_me || decision.decision === 'personally_verified')) return true;
+    return hasDeliberateUseEvidence(app);
+}
+
+// The final verdict: should this item recede into a background/reference
+// role for THIS assessment? Used identically for attention grouping
+// (classifyAssessmentItem), score/confidence weighting (computeSynthesis),
+// and the Report's "materially influenced" framing — one verdict, three
+// consumers, so they can never silently disagree.
+function isBackgroundApp(app, decision) {
+    return isBackgroundCandidate(app) && !hasBackgroundOverride(app, decision);
+}
+
+// Finds the host browser's OWN entry within the current scan population, if
+// present. Accepts either a computeSynthesis()-style {app, bucket}[] list or
+// workspace.html's {name, bucket, ...}[] item list — both already carry a
+// per-entry .bucket, just shaped differently, so this unwraps whichever it's
+// handed rather than requiring every caller to normalize first.
+function findHostBrowserEntry(app, appList) {
+    const hostName = hostBrowserNameFor(app);
+    if (!hostName || !Array.isArray(appList)) return null;
+    const normalizedHost = normalizeAppName(hostName);
+    for (const entry of appList) {
+        const candidate = entry.app || entry;
+        const bucket = entry.bucket !== undefined ? entry.bucket : candidate.bucket;
+        if (normalizeAppName(candidate.name || '') === normalizedHost) {
+            return { app: candidate, bucket };
+        }
+    }
+    return null;
+}
+
+// The single source of truth for "what bucket should this app actually be
+// evaluated under right now" — personal verification wins first (an
+// explicit human claim), then browser inheritance for an Unknown PWA
+// (an architectural fact), then the raw catalog bucket. computeSynthesis()
+// and every attention-grouping call site (report.html, workspace.html) call
+// this so scoring and grouping can never silently disagree about an app's
+// effective bucket.
+function effectiveBucketFor(app, bucket, decision, allApps) {
+    if (decision && decision.decision === 'personally_verified' && decision.verified_status) {
+        return decision.verified_status === 'native' ? 'native'
+            : decision.verified_status === 'unsupported' ? 'unsupported' : 'emulated';
+    }
+    if (bucket === 'unknown') {
+        const hostEntry = findHostBrowserEntry(app, allApps);
+        if (hostEntry && hostEntry.bucket !== 'unknown') return hostEntry.bucket;
+    }
+    return bucket;
+}
+
+// A short, honest, always-visible explanation for why a PWA's Score
+// contribution differs from its own "? Unknown" catalog badge — additive,
+// like the existing "✓ You verified" badge, never a silent override of the
+// row's own status badge.
+function pwaInheritanceNote(app, bucket, allApps) {
+    if (bucket !== 'unknown') return null;
+    const hostEntry = findHostBrowserEntry(app, allApps);
+    if (!hostEntry || hostEntry.bucket === 'unknown') return null;
+    const labels = { native: 'Native ARM64', emulated: 'Emulated', unsupported: 'Unsupported' };
+    return `Runs inside ${hostEntry.app.name} — treated as ${labels[hostEntry.bucket] || hostEntry.bucket} for your Score, since it has no separate ARM64 binary of its own.`;
+}
+
 function defaultImportanceForDevice(device) {
     if (device.days_ago === 0) return { level: 'high', reason: 'Currently connected' };
     if (device.days_ago !== null && device.days_ago !== undefined && device.days_ago <= 14) return { level: 'normal', reason: 'Used recently' };
@@ -757,9 +1013,83 @@ function buildAppSearchUrl(appName, mode) {
     return 'https://www.google.com/search?q=' + encodeURIComponent(query);
 }
 
+// ─────────────────────────────────────────
+//  Session-aware navigation
+//
+//  Once an assessment session exists, it becomes the user's effective
+//  "home" — navigating to an informational page should never feel like
+//  leaving that assessment behind. Two halves:
+//   - decorateInfoLinks(): called by report.html/workspace.html, which
+//     already know their own session id synchronously — just appends
+//     ?session=&level= to their outgoing links to About/Why/Privacy/How.
+//   - applySessionAwareNav(): called by the informational pages themselves
+//     (about/why/privacy/how-it-thinks/my-submissions), which start with NO
+//     session context of their own — reads ?session= off their OWN url,
+//     validates it's still a real, COMPLETE session (not missing, not
+//     expired, not still mid-scan), and only then rewrites the logo/
+//     back-link to point at Results, reveals a Workspace shortcut, and
+//     propagates the session onto every other data-info-link on the page.
+//  A missing or invalid session degrades gracefully to whatever plain
+//  homepage/back-link default already sits in the page's markup — nothing
+//  here ever assumes a session exists.
+// ─────────────────────────────────────────
+
+function decorateInfoLinks(sessionId, level) {
+    if (!sessionId) return;
+    document.querySelectorAll('[data-info-link]').forEach((a) => {
+        const path = a.getAttribute('href').split('?')[0];
+        a.href = path + '?session=' + encodeURIComponent(sessionId) + '&level=' + encodeURIComponent(level || '');
+    });
+}
+
+// Reads ?session= off the CURRENT page's own URL and checks it against the
+// server — a stale bookmark or an expired/never-finished session must never
+// be presented as "your assessment," so only a status:'complete' session
+// counts as valid here.
+async function resolveActiveSession() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sid = urlParams.get('session');
+    if (!sid) return null;
+    const level = urlParams.get('level') || '';
+    try {
+        const res = await fetch('/api/session/' + encodeURIComponent(sid));
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data || data.status !== 'complete') return null;
+        return { sessionId: sid, level };
+    } catch (err) {
+        return null;
+    }
+}
+
+async function applySessionAwareNav() {
+    const session = await resolveActiveSession();
+    if (!session) return;
+    const resultsHref = '/report.html?session=' + encodeURIComponent(session.sessionId) + '&level=' + encodeURIComponent(session.level) + '&origin=assessment';
+    const workspaceHref = '/workspace.html?session=' + encodeURIComponent(session.sessionId) + '&level=' + encodeURIComponent(session.level);
+    const logoLink = document.getElementById('nav-logo-link');
+    if (logoLink) logoLink.href = resultsHref;
+    const backLink = document.getElementById('nav-back-link');
+    if (backLink) {
+        backLink.href = resultsHref;
+        backLink.textContent = '← Back to Results';
+    }
+    const workspaceLink = document.getElementById('nav-workspace-link');
+    if (workspaceLink) {
+        workspaceLink.href = workspaceHref;
+        workspaceLink.style.display = '';
+    }
+    decorateInfoLinks(session.sessionId, session.level);
+}
+
 // bucket is only meaningful for apps ('native'|'emulated'|'unsupported'|'unknown');
-// pass null for devices and supply isLikelyNativeDevice instead.
-function classifyAssessmentItem({ decision, bucket, isLikelyNativeDevice }) {
+// pass null for devices and supply isLikelyNativeDevice instead. `bucket`
+// should already be the EFFECTIVE bucket (personal verification / PWA
+// inheritance already applied via effectiveBucketFor) — callers must not
+// pass the raw catalog bucket here, or an inherited/verified item can
+// wrongly stay in Deserves Attention while contributing nothing to the score.
+// `app` (apps only) enables the background gate below.
+function classifyAssessmentItem({ decision, bucket, isLikelyNativeDevice, app }) {
     const decisionValue = decision ? decision.decision : null;
 
     if (decisionValue === 'doesnt_matter' || decisionValue === 'no_longer_use') {
@@ -770,19 +1100,35 @@ function classifyAssessmentItem({ decision, bucket, isLikelyNativeDevice }) {
     // is a dangling mid-flow click, not a settled decision — computeSynthesis()
     // already requires decision.verified_status before it'll override the
     // effective bucket, so the grouping here must agree or an item can leave
-    // Needs Attention while still contributing nothing to the recommendation.
+    // Deserves Attention while still contributing nothing to the recommendation.
     // Devices have no verified_status concept (bucket === null signals device
     // per this function's own convention), so personally_verified alone settles them.
     const isSettledVerification = decisionValue === 'personally_verified' &&
         (bucket === null || !!(decision && decision.verified_status));
     const hasSettlingDecision = isSettledVerification || decisionValue === 'waiting_for_vendor';
+
+    if (hasSettlingDecision) {
+        return 'alreadyConsidered';
+    }
+
+    // Apps only: background-typed software (Microsoft AppX platform/shell
+    // software, browser-hosted PWAs — see isBackgroundApp()) recedes into
+    // its own quiet, always-discoverable tier — a structural TYPE verdict,
+    // checked BEFORE the resolved/unresolved check below, since background
+    // software should rarely drive the recommendation regardless of
+    // whether its compatibility bucket happens to be resolved. Devices
+    // skip this gate entirely (bucket === null).
+    if (bucket !== null && app && isBackgroundApp(app, decision)) {
+        return 'background';
+    }
+
     const evidenceIsEnough = bucket !== null
         ? (bucket !== 'unknown')
         : !!isLikelyNativeDevice;
 
-    if (hasSettlingDecision || evidenceIsEnough) {
+    if (evidenceIsEnough) {
         return 'alreadyConsidered';
     }
 
-    return 'needsAttention';
+    return 'deservesAttention';
 }

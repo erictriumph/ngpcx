@@ -357,10 +357,13 @@
 
 <body>
     <nav>
-        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        <a href="/" id="nav-logo-link" style="text-decoration:none;">
+            <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        </a>
         <div style="display:flex; align-items:center; gap:1.25rem;">
             <span id="workspace-nav"></span>
-            <a href="/" class="back-link">← Back to scanner</a>
+            <a href="/workspace.html" id="nav-workspace-link" class="back-link" style="display:none;">Workspace</a>
+            <a href="/" id="nav-back-link" class="back-link">← Back to scanner</a>
         </div>
     </nav>
 
@@ -404,7 +407,9 @@
         <br>© 2026 CheckMyARM. All rights reserved.
     </footer>
 
+    <script src="/assessment.js"></script>
     <script>
+        applySessionAwareNav();
         function escapeHtml(str) {
             if (str === null || str === undefined) return '';
             const div = document.createElement('div');

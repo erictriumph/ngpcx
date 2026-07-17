@@ -149,16 +149,21 @@
 
 <body>
     <nav>
-        <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
-        <a href="/" class="back-link">← Back to scanner</a>
+        <a href="/" id="nav-logo-link" style="text-decoration:none;">
+            <div class="logo"><img src="/logo-64.png" alt="CheckMyARM logo">CheckMy<span>ARM</span></div>
+        </a>
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <a href="/workspace.html" id="nav-workspace-link" class="back-link" style="display:none;">Workspace</a>
+            <a href="/" id="nav-back-link" class="back-link">← Back to scanner</a>
+        </div>
     </nav>
 
     <div class="container">
         <h1>Privacy</h1>
         <p class="intro">
             This isn't a legal document — it's a plain description of what CheckMyARM actually does with your
-            data today, based directly on how the app is built. See <a href="/about.html">About</a> for how
-            compatibility classification works, or <a href="/how-it-thinks.html">How CheckMyARM Thinks</a> for
+            data today, based directly on how the app is built. See <a href="/about.html" data-info-link>About</a> for how
+            compatibility classification works, or <a href="/how-it-thinks.html" data-info-link>How CheckMyARM Thinks</a> for
             the reasoning behind the recommendation itself.
         </p>
 
@@ -285,6 +290,11 @@
     <footer>CheckMyARM — ARM Readiness Scanner.
         <br>© 2026 CheckMyARM. All rights reserved.
     </footer>
+
+    <script src="/assessment.js"></script>
+    <script>
+        applySessionAwareNav();
+    </script>
 </body>
 
 </html>
