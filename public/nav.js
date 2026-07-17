@@ -184,6 +184,24 @@
         // exactly the "no access" behavior wanted, so no extra ?? needed.
     }
 
+    // Single fetch/parse of /api/session/:id, shared by the one-shot check
+    // below and the background poll in watchForSessionCompletion(). Returns
+    // one of three outcomes rather than a plain session-or-null, because the
+    // caller needs to tell "genuinely no session here" (404/410/network
+    // error — stop looking) apart from "a real session that just isn't
+    // finished yet" (status:'waiting' — worth checking again).
+    async function fetchSession(sid) {
+        try {
+            const res = await fetch('/api/session/' + encodeURIComponent(sid));
+            if (!res.ok) return { state: 'invalid' };
+            const data = await res.json();
+            if (data && data.status === 'complete') return { state: 'complete', results: data.results || null };
+            return { state: 'waiting' };
+        } catch (err) {
+            return { state: 'invalid' };
+        }
+    }
+
     // Reads ?session= off the CURRENT page's own URL and checks it against
     // the server — a stale bookmark or an expired/never-finished session
     // must never be presented as "your assessment," so only a
@@ -192,20 +210,51 @@
     // knew their session synchronously; the five informational pages relied
     // on an async resolveActiveSession()/applySessionAwareNav() pair in
     // assessment.js) into the one mechanism every page now uses the same way.
+    //
+    // This is deliberately still a single check, not a poll — see
+    // watchForSessionCompletion() below for why a still-waiting session
+    // needs a second, separate mechanism rather than looping in here.
     async function resolveActiveSession() {
         const urlParams = new URLSearchParams(window.location.search);
         const sid = urlParams.get('session');
         if (!sid) return null;
         const level = urlParams.get('level') || '';
-        try {
-            const res = await fetch('/api/session/' + encodeURIComponent(sid));
-            if (!res.ok) return null;
-            const data = await res.json();
-            if (!data || data.status !== 'complete') return null;
-            return { sessionId: sid, level, results: data.results || null };
-        } catch (err) {
-            return null;
-        }
+        const result = await fetchSession(sid);
+        if (result.state !== 'complete') return null;
+        return { sessionId: sid, level, results: result.results };
+    }
+
+    // Covers a real gap the one-shot check above can't: a session freshly
+    // created right after "Run Scan" sits in status:'waiting' for anywhere
+    // from seconds to well over a minute while the physical scanner runs on
+    // the user's machine — report.html/workspace.html already poll this same
+    // endpoint on a 1500ms interval to know when to leave their own loading
+    // state, but nav.js previously checked exactly once, at page load. That
+    // left the shell permanently believing "no assessment is active" for the
+    // rest of that page view even after the underlying page finished and
+    // showed a real report — the logo, subtitle, and Assessment menu never
+    // recovered. Scoped to fire only when the URL actually names a session
+    // the initial check couldn't yet resolve; a session-less page or an
+    // already-resolved session never starts this poll.
+    function watchForSessionCompletion(state) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sid = urlParams.get('session');
+        if (!sid || state.session) return;
+        const level = urlParams.get('level') || '';
+        const intervalHandle = setInterval(async () => {
+            const result = await fetchSession(sid);
+            if (result.state === 'invalid') {
+                clearInterval(intervalHandle);
+                return;
+            }
+            if (result.state === 'complete') {
+                clearInterval(intervalHandle);
+                state.session = { sessionId: sid, level, results: result.results };
+                render(state);
+                decorateInfoLinks(state);
+                window.NavShell.session = state.session;
+            }
+        }, 1500);
     }
 
     // ─────────────────────────────────────
@@ -676,24 +725,31 @@
             });
         });
 
-        // Click-outside dismissal
-        document.addEventListener('click', (e) => {
-            if (!root.contains(e.target)) { closeAllDropdowns(root); }
-        });
-
-        // Escape dismissal
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeAllDropdowns(root);
-                closeMobilePanel(root);
-            }
-        });
-
         // Any plain link click inside the mobile panel should close it before
         // navigating, so a bfcache-restored back-navigation doesn't show a
         // stale open panel.
         root.querySelectorAll('#shell-mobile-panel a[href]:not([data-action])').forEach((a) => {
             a.addEventListener('click', () => closeMobilePanel(root));
+        });
+    }
+
+    // Click-outside and Escape dismissal are wired once, not inside
+    // wireInteractions() — render() can now run a second time (see
+    // watchForSessionCompletion() above), and wireInteractions() itself is
+    // meant to be re-run each time to reattach listeners onto the freshly
+    // replaced dropdown/accordion nodes, but these two only ever need to
+    // exist once: `root` is the stable #app-shell container whose innerHTML
+    // gets replaced, never the container itself, so a listener attached to
+    // it once keeps working correctly across every future re-render.
+    function wireGlobalDismissal(root) {
+        document.addEventListener('click', (e) => {
+            if (!root.contains(e.target)) { closeAllDropdowns(root); }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAllDropdowns(root);
+                closeMobilePanel(root);
+            }
         });
     }
 
@@ -704,12 +760,14 @@
         const [auth, session] = await Promise.all([loadAuthStatus(), resolveActiveSession()]);
         const state = { auth, session, platform: detectPlatform() };
         render(state);
+        wireGlobalDismissal(document.getElementById('app-shell'));
         decorateInfoLinks(state);
         // triggerImport is exposed so page-specific body copy (e.g. index.html's
         // "Already started? Import your saved Workspace" hero prompt) can reuse
         // the one universal import mechanism instead of a second implementation.
         window.NavShell = { auth: auth, session: session, ready: true, triggerImport: () => triggerImport(state) };
         document.dispatchEvent(new CustomEvent('navshell:ready', { detail: state }));
+        watchForSessionCompletion(state);
     }
 
     if (document.readyState === 'loading') {
