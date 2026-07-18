@@ -1451,49 +1451,171 @@ function nextActionFor({ hasSession, adaptiveContext, synthesis }) {
 }
 
 // ─────────────────────────────────────────
-//  Dashboard Confidence — a DIFFERENT metric from synthesis.confidencePct,
-//  deliberately not the same value shown on Results/Workspace. That value
-//  (synthesis.confidenceLabel/confidencePct) measures how much
-//  COMPATIBILITY evidence (catalog-matched apps/devices) supports today's
-//  score — it is, and stays, scan-only by construction, since there is no
-//  compatibility evidence without a scan. This function answers a broader
-//  dashboard question instead: "how much relevant evidence, of ANY kind,
-//  currently supports today's ARM Suitability read" — a scan is still the
-//  largest single contributor, but Adaptive Context (what you told us you
-//  plan to do) is real, independent evidence too, and must move this
-//  number even when no scan exists yet, or when the scan's own
-//  compatibility confidence doesn't change.
+//  Dashboard Confidence — Evidence Model
+//
+//  A DIFFERENT metric from synthesis.confidencePct, deliberately not the
+//  same value shown on Results/Workspace. That value is scan-only by
+//  construction (see the Scan Confidence Semantics note on
+//  evidenceSourcesFor() below for exactly what it measures). This layer
+//  answers a broader dashboard question instead: "how much relevant
+//  evidence, of ANY kind, currently supports today's ARM Suitability
+//  read" — a scan is still the largest single contributor, but Adaptive
+//  Context (what you told us you plan to do) is real, independent
+//  evidence too, and must move this number even when no scan exists yet.
 //
 //  ARM Suitability (the recommendation/read itself) and Dashboard
 //  Confidence (how much evidence supports it) are computed independently
-//  here — recommendationFor()/contextualReadFor() never feed into this
-//  function, and this function never feeds into them. Toggling an
-//  Intended Use pill can raise or lower Confidence while leaving
-//  Suitability unchanged, and vice versa (e.g. a scan alone changes
-//  Suitability substantially but only partially moves Confidence if
-//  Intended Use is still unanswered).
+//  — recommendationFor()/contextualReadFor() never feed into this layer,
+//  and this layer never feeds into them. Toggling an Intended Use pill can
+//  raise or lower Confidence while leaving Suitability unchanged, and vice
+//  versa.
 //
-//  A deliberately SIMPLE first model, not a final one — every weight below
-//  is a small, named constant specifically so it can be retuned later
-//  without touching the blending logic itself. Not claimed to be
-//  statistically principled; claimed only to be monotonic (more
-//  independent evidence never lowers this number, all else equal) and
-//  honest (a scan remains the largest contributor, matching how much more
-//  it actually reveals about real compatibility than a stated intent can).
+//  SUFFICIENCY, NOT COMPLETENESS — a load-bearing distinction, not a
+//  footnote: Confidence represents whether the available evidence is
+//  sufficient to support the current recommendation. It does not imply
+//  that no additional evidence could improve the assessment. Reaching
+//  100% means every evidence source this model currently accounts for is
+//  fully present — it is a statement about the sources this version knows
+//  how to weigh, not a claim that the assessment is exhaustive. This is
+//  exactly why Community and Findings are still represented below even
+//  though they contribute zero weight today: a real evidence source can
+//  exist, be visibly absent, and simply not count toward Confidence yet —
+//  100% Confidence must never be read as "nothing more could be learned."
+//  See CLAUDE.md, Evidence Model addendum, for the fuller rationale.
+//
+//  ARCHITECTURE, NOT A RULES ENGINE — this is an explicit seam for later
+//  evolution, not a generalized inference system. evidenceSourcesFor()
+//  below is the one place that knows what sources exist and how each is
+//  scored; dashboardConfidencePct()/dashboardConfidenceLabel() are thin
+//  reducers over its output, so adding, removing, or reweighting a source
+//  later never requires touching the summation logic itself.
 // ─────────────────────────────────────────
 const DASHBOARD_CONFIDENCE_SCAN_WEIGHT = 70; // max points contributed by a completed scan, scaled by the scan's own confidencePct
 const DASHBOARD_CONFIDENCE_INTENDED_USE_WEIGHT = 20; // flat credit once at least one workload pill is selected
 const DASHBOARD_CONFIDENCE_RELATIONSHIP_WEIGHT = 10; // flat credit once a relationship pill is selected
 
-function dashboardConfidencePct({ synthesis, adaptiveContext }) {
-    let pct = 0;
-    if (synthesis && !synthesis.empty) {
-        pct += (synthesis.confidencePct / 100) * DASHBOARD_CONFIDENCE_SCAN_WEIGHT;
+// One EvidenceSource shape, used for every entry this function returns:
+//   id               — stable identifier (e.g. 'current-computer-scan')
+//   label            — short, user-facing name
+//   availability     — 'available' | 'unavailable' — can this source even
+//                       be gathered right now (e.g. scanning requires a
+//                       Windows PC; it's a real source that's simply
+//                       inapplicable on this device, not merely unused)
+//   presence         — 'absent' | 'partial' | 'present' — has this
+//                       specific source actually been gathered yet
+//   contribution     — points actually earned toward Dashboard Confidence
+//                       (0..maxContribution)
+//   maxContribution  — this source's ceiling in the current weighting
+//   quality          — 0..1 strength/reliability signal where one
+//                       meaningfully exists (the scan's own resolution
+//                       rate), else null — Intended Use answers are
+//                       binary present/absent, so quality is null there
+//   explanation      — one short, human-readable sentence, never a raw
+//                       number (see renderEvidenceSummary() in index.html,
+//                       which is the one place these are shown to users)
+//
+// SCAN CONFIDENCE SEMANTICS — investigated and confirmed directly against
+// real code (both real session data and constructed synthetic
+// populations), not assumed: synthesis.confidencePct measures
+// CLASSIFICATION/RESOLUTION COVERAGE — the weighted fraction of the
+// material app population whose effectiveBucket is anything other than
+// 'unknown' — and nothing else. It is completely independent of whether
+// that resolution is favorable. Verified concretely: a synthetic
+// population of 10 apps, all confidently NATIVE, and a second population
+// of 10 apps, all confidently UNSUPPORTED, produced IDENTICAL
+// confidencePct (100) and identical confidenceLabel ("High Confidence"),
+// despite opposite scores (100 vs -20) and opposite readiness labels
+// ("Good Fit" vs "Not Recommended Yet"). A completed scan that produces an
+// unfavorable result is therefore already correctly treated as strong
+// evidence by the existing metric — using it directly to scale this
+// source's contribution does not import a compatibility-outcome bias. No
+// correction was needed; this comment exists so the finding doesn't need
+// to be rediscovered.
+function evidenceSourcesFor({ hasSession, synthesis, adaptiveContext, scanUnavailable, findingsAttentionCount }) {
+    const sources = [];
+
+    let scanPresence = 'absent', scanQuality = null, scanContribution = 0, scanExplanation;
+    if (!hasSession) {
+        scanExplanation = scanUnavailable
+            ? 'Scanning requires a Windows PC and isn’t available from this device.'
+            : 'No scan has been run yet.';
+    } else if (!synthesis || synthesis.empty) {
+        scanPresence = 'partial';
+        scanExplanation = 'A scan ran but found nothing to classify.';
+    } else {
+        scanPresence = 'present';
+        scanQuality = synthesis.confidencePct / 100;
+        scanContribution = scanQuality * DASHBOARD_CONFIDENCE_SCAN_WEIGHT;
+        scanExplanation = synthesis.confidencePct >= 70
+            ? `Scanned — ${synthesis.confidencePct}% of relevant applications have a known compatibility status.`
+            : `Scanned — only ${synthesis.confidencePct}% of relevant applications have a known compatibility status so far.`;
     }
+    sources.push({
+        id: 'current-computer-scan', label: 'Current Computer',
+        availability: scanUnavailable ? 'unavailable' : 'available',
+        presence: scanPresence, contribution: scanContribution,
+        maxContribution: DASHBOARD_CONFIDENCE_SCAN_WEIGHT, quality: scanQuality,
+        explanation: scanExplanation,
+    });
+
     const uses = (adaptiveContext && adaptiveContext.intended_use) || [];
-    if (uses.length > 0) pct += DASHBOARD_CONFIDENCE_INTENDED_USE_WEIGHT;
-    if (adaptiveContext && adaptiveContext.relationship) pct += DASHBOARD_CONFIDENCE_RELATIONSHIP_WEIGHT;
-    return Math.round(Math.max(0, Math.min(100, pct)));
+    const hasWorkload = uses.length > 0;
+    sources.push({
+        id: 'intended-use-workload', label: 'Intended Use — Workload',
+        availability: 'available', presence: hasWorkload ? 'present' : 'absent',
+        contribution: hasWorkload ? DASHBOARD_CONFIDENCE_INTENDED_USE_WEIGHT : 0,
+        maxContribution: DASHBOARD_CONFIDENCE_INTENDED_USE_WEIGHT, quality: null,
+        explanation: hasWorkload ? 'You told us what you plan to use it for.' : 'You haven’t told us what you plan to use it for yet.',
+    });
+
+    const hasRelationship = !!(adaptiveContext && adaptiveContext.relationship);
+    sources.push({
+        id: 'intended-use-relationship', label: 'Intended Use — Relationship',
+        availability: 'available', presence: hasRelationship ? 'present' : 'absent',
+        contribution: hasRelationship ? DASHBOARD_CONFIDENCE_RELATIONSHIP_WEIGHT : 0,
+        maxContribution: DASHBOARD_CONFIDENCE_RELATIONSHIP_WEIGHT, quality: null,
+        explanation: hasRelationship ? 'You told us how this computer fits into your setup.' : 'You haven’t told us how this fits into your setup yet.',
+    });
+
+    // Community — no collection mechanism exists on this surface today
+    // (contribution today happens per-app inside the Workspace). Included
+    // here at zero weight specifically so the evidence summary shows a
+    // real, currently-empty source rather than silently omitting it — see
+    // the sufficiency-vs-completeness note above.
+    sources.push({
+        id: 'community', label: 'Community',
+        availability: 'available', presence: 'absent', contribution: 0, maxContribution: 0,
+        quality: null, explanation: 'No community-sourced evidence applies to this assessment yet.',
+    });
+
+    // Findings — deliberately zero-weight and explicitly NOT independent
+    // evidence: it is an interpretation of Current Computer's own scan
+    // data (see CLAUDE.md, Findings Architecture addendum), so counting it
+    // here would double-count evidence already reflected in the scan
+    // source above. Presence only reflects whether anything currently
+    // needs review, for the summary's benefit — never a confidence input.
+    let findingsPresence = 'absent', findingsExplanation = 'Nothing scanned yet.';
+    if (hasSession && synthesis && !synthesis.empty) {
+        if (findingsAttentionCount > 0) {
+            findingsPresence = 'present';
+            findingsExplanation = `${findingsAttentionCount} item${findingsAttentionCount === 1 ? '' : 's'} currently need${findingsAttentionCount === 1 ? 's' : ''} a closer look.`;
+        } else {
+            findingsPresence = 'present';
+            findingsExplanation = 'Nothing currently needs a closer look.';
+        }
+    }
+    sources.push({
+        id: 'findings', label: 'Findings',
+        availability: 'available', presence: findingsPresence, contribution: 0, maxContribution: 0,
+        quality: null, explanation: findingsExplanation,
+    });
+
+    return sources;
+}
+
+function dashboardConfidencePct(params) {
+    const total = evidenceSourcesFor(params).reduce((sum, s) => sum + s.contribution, 0);
+    return Math.round(Math.max(0, Math.min(100, total)));
 }
 
 // A small, distinct tier vocabulary from Results/Workspace's "Limited

@@ -296,6 +296,47 @@
       letter-spacing: 0.04em;
     }
 
+    /* Evidence Summary — a compact, qualitative "why is Confidence at this
+       level" breakdown inside the More Info panel. Reuses the panel's
+       existing text sizing; deliberately a plain label/status pair per
+       row, never a number. */
+    .evidence-summary-heading {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #64748b;
+      margin-top: 0.75rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .evidence-summary-list {
+      list-style: none;
+      font-size: 0.82rem;
+    }
+
+    .evidence-summary-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .evidence-summary-list li:last-child {
+      border-bottom: none;
+    }
+
+    .evidence-summary-label {
+      color: #94a3b8;
+    }
+
+    .evidence-summary-status {
+      color: #e2e8f0;
+      font-weight: 600;
+      text-align: right;
+    }
+
     /* ═══════════════════════════════════════════════════════════════════
        LAYER 2 — EVIDENCE NAVIGATION
        A persistent, modular tab bar. Adding/removing/renaming a category is
@@ -1383,11 +1424,26 @@
 
       // Confidence gauge — how much evidence of ANY kind (scan or Intended
       // Use) currently supports today's read. See assessment.js,
-      // dashboardConfidencePct() — deliberately NOT the same value as
-      // synthesis.confidencePct (that one is scan-only compatibility
-      // confidence, unchanged, still used on Results/Workspace). Intended
-      // Use answers move this number even with zero scan evidence.
-      const confPct = dashboardConfidencePct({ synthesis, adaptiveContext: ctx });
+      // evidenceSourcesFor() — deliberately NOT the same value as
+      // synthesis.confidencePct (that one is scan-only, unchanged, still
+      // used on Results/Workspace). Computed once here, from the explicit
+      // evidence-source array, and passed down to the helper panels below
+      // so the gauge and the evidence summary can never independently
+      // drift apart — they're reading the same array, not two separate
+      // calculations of "how much evidence exists."
+      let findingsAttentionCount = 0;
+      if (hasSession && synthesis && !synthesis.empty) {
+        const personalContext = loadPersonalContext(sessionId, params);
+        const classified = classifyPopulation(currentResults, personalContext);
+        findingsAttentionCount = classified.filter(({ app, effectiveBucket, decision }) =>
+          classifyAssessmentItem({ decision, bucket: effectiveBucket, app }) === 'deservesAttention').length;
+      }
+      const evidenceSources = evidenceSourcesFor({
+        hasSession, synthesis, adaptiveContext: ctx,
+        scanUnavailable: isLikelyNonWindows(),
+        findingsAttentionCount,
+      });
+      const confPct = Math.round(Math.max(0, Math.min(100, evidenceSources.reduce((sum, s) => sum + s.contribution, 0))));
       const confLabel = dashboardConfidenceLabel(confPct);
       const confColor = confPct <= 0 ? '#334155' : confidenceDisplayColor(
         confPct >= 85 ? 'High Confidence' : confPct >= 60 ? 'Moderate Confidence' : 'Limited Data'
@@ -1413,7 +1469,7 @@
         pillBtn.onclick = null;
       }
 
-      renderHelperPanels(state, ctx, synthesis);
+      renderHelperPanels(state, ctx, synthesis, evidenceSources);
     }
 
     // Calm, non-alarming palette for the Confidence gauge — same mapping
@@ -1430,7 +1486,47 @@
     // content adapts to the current state rather than the toggle itself
     // being hidden or disabled when evidence is thin.
     let openHelperId = null;
-    function renderHelperPanels(state, ctx, synthesis) {
+    // Evidence Summary — a compact, qualitative answer to "why is
+    // Confidence at this level," built directly from the same
+    // evidenceSourcesFor() array the gauge itself sums (see
+    // assessment.js) rather than a second, separately-maintained
+    // description of the same state. Deliberately never shows a raw point
+    // value — presence/quality are mapped to short phrases only.
+    function evidenceSummaryHtml(sources) {
+      const byId = {};
+      sources.forEach((s) => { byId[s.id] = s; });
+      const scan = byId['current-computer-scan'];
+      const workload = byId['intended-use-workload'];
+      const relationship = byId['intended-use-relationship'];
+      const community = byId['community'];
+      const findings = byId['findings'];
+
+      let scanStatus;
+      if (scan.availability === 'unavailable') scanStatus = 'Not available on this device';
+      else if (scan.presence === 'absent') scanStatus = 'Not examined';
+      else if (scan.presence === 'partial') scanStatus = 'Scanned — limited result';
+      else scanStatus = (scan.quality !== null && scan.quality < 0.5) ? 'Scanned — limited result' : 'Scanned';
+
+      const answeredCount = (workload.presence === 'present' ? 1 : 0) + (relationship.presence === 'present' ? 1 : 0);
+      const intendedUseStatus = answeredCount === 0 ? 'Not described' : answeredCount === 1 ? 'Partially described' : 'Described';
+
+      const communityStatus = community.presence === 'absent' ? 'No relevant evidence yet' : 'Evidence available';
+
+      const findingsStatus = findings.presence === 'absent' ? 'Not applicable yet'
+        : findings.explanation.indexOf('Nothing') === 0 ? 'None' : 'Some require attention';
+
+      const rows = [
+        ['Current Computer', scanStatus],
+        ['Intended Use', intendedUseStatus],
+        ['Community', communityStatus],
+        ['Findings', findingsStatus],
+      ];
+      return `<ul class="evidence-summary-list">${rows.map(([label, status]) =>
+        `<li><span class="evidence-summary-label">${escapeHtml(label)}</span><span class="evidence-summary-status">${escapeHtml(status)}</span></li>`
+      ).join('')}</ul>`;
+    }
+
+    function renderHelperPanels(state, ctx, synthesis, evidenceSources) {
       const whyBody = document.getElementById('helper-panel-why');
       const unknownsBody = document.getElementById('helper-panel-unknowns');
       const moreInfoBody = document.getElementById('helper-panel-more-info');
@@ -1461,6 +1557,10 @@
         unknownsBody.innerHTML = `<p>Nothing scanned yet — unknowns will appear here once you scan this computer.</p>`;
       }
 
+      const evidenceSummary = `
+        <p class="evidence-summary-heading">What Confidence is based on</p>
+        ${evidenceSummaryHtml(evidenceSources)}`;
+
       if (currentResults) {
         const appTotal = ['native', 'emulated', 'unsupported', 'unknown'].reduce((n, b) => n + ((currentResults[b] || []).length), 0);
         const deviceTotal = (currentResults.devices || []).length;
@@ -1470,12 +1570,14 @@
             <div class="helper-stat"><div class="helper-stat-count">${deviceTotal}</div><div class="helper-stat-label">Devices</div></div>
           </div>
           <p>This assessment is based on a ${escapeHtml(scanLevelParam)} scan${hasAdaptiveContext(ctx) ? ' plus your Intended Use answers' : ''}.</p>
+          ${evidenceSummary}
           <div class="helper-links">
             <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
             <a href="/how-it-thinks.html">How CheckMyARM Thinks →</a>
           </div>`;
       } else {
         moreInfoBody.innerHTML = `<p>No summary yet — this fills in once you scan or add Intended Use.</p>
+          ${evidenceSummary}
           <div class="helper-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>`;
       }
 
