@@ -55,18 +55,55 @@
     .dashboard {
       max-width: 720px;
       margin: 0 auto 1.5rem auto;
-      padding: 1.1rem 1.5rem;
+      padding: 0.9rem 1.1rem;
       background: #1e293b;
       border: 1px solid #334155;
       border-radius: 14px;
     }
 
-    .dashboard-main {
+    /* ─── THREE-COLUMN INSTRUMENT ROW ────────────────────────────────────
+       Conclusions (gauges) | Evidence/Signals (permanent meters + compact
+       Scanner readout) | What Next — a single horizontal row instead of
+       stacked sections, per the Composition Correction pass (see
+       CLAUDE.md). The evidence meters used to only render inside the
+       collapsed "More Info" panel — a real placement bug, not a missing-
+       markup one — this row is the fix: the same evidenceMeterRow() output
+       now renders here, permanently visible, nothing to open. */
+    .dashboard-panels {
+      display: flex;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    .panel {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 0.55rem 0.7rem;
+    }
+
+    .panel-conclusions {
+      flex: 0 0 auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 1.75rem;
-      flex-wrap: wrap;
+      gap: 0.85rem;
+    }
+
+    .panel-evidence {
+      flex: 1.3 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-whatnext {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     /* Fixed-dimension gauge block — the housing itself never resizes or
@@ -197,49 +234,20 @@
       .gauge-block.pulse { animation: none; }
     }
 
-    /* ─── DISPLAYS ROW — What Next? + Scanner ────────────────────────────
-       Two fixed-size "information displays" sharing one visual language
-       (boxed, bordered, a small dotted eyebrow, a centered readout) so the
-       dashboard reads as one coherent instrument panel rather than a grab
-       bag of widgets — see CLAUDE.md, Coherence & Trust addendum. What
-       Next gets more width (it carries a sentence + buttons); Scanner is
-       compact (a status word + a short caption). Both stack full-width on
-       mobile via the existing @media (max-width:640px) block below. */
-    .dashboard-displays {
-      display: flex;
-      gap: 0.85rem;
-      margin-top: 1rem;
-      align-items: stretch;
-    }
-
-    .info-display {
-      flex: 1 1 0;
-      min-height: 128px;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 0.75rem 0.9rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-
-    #scanner-display {
-      flex: 0.7 1 0;
-      justify-content: center;
-    }
-
+    /* ─── PANEL EYEBROW — shared by the Evidence and What Next columns ───
+       Same small-dot-plus-label treatment the gauges already use for their
+       own titles, so all three columns read as one instrument family. */
     .display-eyebrow {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
-      font-size: 0.62rem;
+      justify-content: center;
+      gap: 0.35rem;
+      font-size: 0.6rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: #64748b;
-      margin-bottom: 0.55rem;
+      margin-bottom: 0.35rem;
     }
 
     .display-dot {
@@ -263,20 +271,54 @@
       #scanner-activity-dot.active { animation: none; }
     }
 
+    /* ─── EVIDENCE / SIGNALS panel — permanently visible, never hidden
+       behind a toggle. This is the actual fix for the composition bug:
+       evidenceMeterRow() output used to only ever render inside the
+       collapsed "More Info" helper panel. It now renders here, in
+       #evidence-meters, on every dashboard render — see renderDashboard()
+       and CLAUDE.md, Composition Correction addendum. Reuses the exact
+       same .evidence-summary-*/.evidence-meter-* classes and row-building
+       functions defined further down this stylesheet — a placement change,
+       not a new visual system. */
+    #evidence-meters {
+      flex: 1 1 auto;
+    }
+
+    /* Scanner — a compact two-line readout (label, then a bold status
+       word) sitting BENEATH the evidence meters inside the same panel,
+       never a standalone card of its own — the large separate Scanner
+       card from the prior pass was a real complaint this pass corrects.
+       Explicitly prototype-level, not a final implementation. */
+    .scanner-inline {
+      margin-top: 0.4rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid #1e293b;
+      text-align: center;
+    }
+
+    .scanner-inline-value {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #e2e8f0;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
     /* What Next's readout — a short, machine-generated-feeling sentence.
-       Monospace + a left accent bar are deliberate: the goal is for this
-       area to visibly read as a live, generated readout rather than
-       ordinary prose sitting on the page (see CLAUDE.md). Fixed min-height
-       so the panel doesn't jump between a one-line and two-line blurb, or
-       between a one-button and two-button action row beneath it. */
+       Monospace is deliberate: the goal is for this area to visibly read
+       as a live, generated readout rather than ordinary prose sitting on
+       the page (see CLAUDE.md). min-height trimmed this pass to fit one
+       typical line — long text still wraps and grows the panel rather
+       than clipping, it just no longer reserves room for two lines by
+       default (most next.text values, after firstSentence() truncation,
+       fit on one line at this column width). */
     .what-next-blurb {
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       color: #cbd5e1;
-      line-height: 1.5;
-      max-width: 480px;
-      margin: 0 auto 0.85rem auto;
-      min-height: 2.3rem;
+      line-height: 1.4;
+      margin: 0 auto 0.5rem auto;
+      min-height: 1.4rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -285,9 +327,8 @@
     .what-next-actions {
       display: flex;
       justify-content: center;
-      gap: 0.6rem;
+      gap: 0.45rem;
       flex-wrap: wrap;
-      margin-top: auto;
     }
 
     .what-next-btn {
@@ -295,13 +336,13 @@
       align-items: center;
       justify-content: center;
       gap: 0.35rem;
-      font-size: 0.82rem;
+      font-size: 0.76rem;
       font-weight: 700;
-      padding: 0.5rem 1.1rem;
-      border-radius: 10px;
+      padding: 0.38rem 0.75rem;
+      border-radius: 8px;
       cursor: pointer;
       text-align: center;
-      line-height: 1.3;
+      line-height: 1.2;
       border: 1px solid transparent;
       text-decoration: none;
     }
@@ -332,24 +373,6 @@
        renderWhatNextPanel()). */
     .what-next-blurb.inert {
       color: #64748b;
-    }
-
-    /* Scanner display — a compact status word + short caption, the same
-       card chrome as What Next (see .info-display above) so the two read
-       as one family of instruments rather than a panel plus a stray strip.
-       Explicitly prototype-level, not a final implementation — see
-       CLAUDE.md. */
-    .scanner-activity-value {
-      font-size: 1.05rem;
-      font-weight: 800;
-      color: #e2e8f0;
-      margin-bottom: 0.2rem;
-    }
-
-    .scanner-activity-caption {
-      font-size: 0.72rem;
-      color: #64748b;
-      line-height: 1.35;
     }
 
     /* Compact helper row — fixed position, controls always visible. */
@@ -463,7 +486,7 @@
 
     .evidence-summary-list {
       list-style: none;
-      font-size: 0.82rem;
+      font-size: 0.74rem;
     }
 
     .evidence-summary-label {
@@ -486,7 +509,7 @@
        filled/empty state rather than implying a percentage that doesn't
        exist. */
     .evidence-summary-row {
-      padding: 0.35rem 0;
+      padding: 0.22rem 0;
       border-bottom: 1px solid #1e293b;
     }
 
@@ -497,8 +520,8 @@
     .evidence-summary-toprow {
       display: flex;
       justify-content: space-between;
-      gap: 1rem;
-      margin-bottom: 0.3rem;
+      gap: 0.6rem;
+      margin-bottom: 0.18rem;
     }
 
     /* Blockier "contributor bar" treatment (vs. the prior thin hairline) —
@@ -507,7 +530,7 @@
        position:relative so the marker lines below can sit inside it. */
     .evidence-meter-track {
       position: relative;
-      height: 9px;
+      height: 6px;
       border-radius: 3px;
       background: #1e293b;
       overflow: visible;
@@ -961,20 +984,15 @@
     }
 
     @media (max-width: 640px) {
-      .dashboard-main {
-        gap: 1.25rem;
-      }
-      .dashboard-displays {
+      /* Three columns stack full-width on mobile. flex:1 1 auto (not a
+         fixed/zero basis) so each panel's height follows its own content
+         — a fixed basis fighting a column layout's content-driven height
+         was the exact bug the prior pass found and fixed for the old
+         two-card row; same lesson applies here. */
+      .dashboard-panels {
         flex-direction: column;
       }
-      /* flex-basis:0 (the desktop row's equal-division trick) fights a
-         column layout whose own height is content-driven: each stacked
-         card was clamping to min-height instead of growing for wrapped
-         text, letting the action buttons spill silently outside the
-         card's visible border — a real bug found in mobile review, not a
-         synthetic stress case. flex-basis:auto lets each card size to its
-         own content while flex-grow:1 still fills any remaining space. */
-      .info-display {
+      .panel {
         flex: 1 1 auto;
       }
       .evidence-tab {
@@ -998,36 +1016,42 @@
 
   <!-- LAYER 1: ASSESSMENT DASHBOARD -->
   <div class="dashboard" id="dashboard">
-    <div class="dashboard-main">
-      <div class="gauge-block" id="gauge-recommendation">
-        <div class="gauge-eyebrow">ARM Suitability</div>
-        <div class="gauge-svg-wrap" id="gauge-rec-svg-wrap"></div>
-        <div class="gauge-label-area">
-          <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
+    <div class="dashboard-panels">
+      <!-- LEFT: Conclusions -->
+      <div class="panel panel-conclusions">
+        <div class="gauge-block" id="gauge-recommendation">
+          <div class="gauge-eyebrow">ARM Suitability</div>
+          <div class="gauge-svg-wrap" id="gauge-rec-svg-wrap"></div>
+          <div class="gauge-label-area">
+            <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
+          </div>
+          <div class="gauge-value-area" id="gauge-rec-value"></div>
+          <div class="gauge-label-sub" id="gauge-rec-sub"></div>
         </div>
-        <div class="gauge-value-area" id="gauge-rec-value"></div>
-        <div class="gauge-label-sub" id="gauge-rec-sub"></div>
-      </div>
-      <div class="gauge-block" id="gauge-confidence">
-        <div class="gauge-eyebrow">Confidence</div>
-        <div class="gauge-svg-wrap" id="gauge-conf-svg-wrap"></div>
-        <div class="gauge-label-area">
-          <div class="gauge-label" id="gauge-conf-label">No Data Yet</div>
+        <div class="gauge-block" id="gauge-confidence">
+          <div class="gauge-eyebrow">Confidence</div>
+          <div class="gauge-svg-wrap" id="gauge-conf-svg-wrap"></div>
+          <div class="gauge-label-area">
+            <div class="gauge-label" id="gauge-conf-label">No Data Yet</div>
+          </div>
+          <div class="gauge-value-area" id="gauge-conf-value">0%</div>
+          <div class="gauge-label-sub"></div>
         </div>
-        <div class="gauge-value-area" id="gauge-conf-value">0%</div>
-        <div class="gauge-label-sub"></div>
       </div>
-    </div>
-    <div class="dashboard-displays">
-      <div class="info-display" id="what-next-display">
+      <!-- MIDDLE: Evidence / Signals — permanently visible, never behind a toggle -->
+      <div class="panel panel-evidence">
+        <div class="display-eyebrow"><span class="display-dot"></span>Evidence</div>
+        <div id="evidence-meters"></div>
+        <div class="scanner-inline" id="scanner-display">
+          <div class="display-eyebrow"><span class="display-dot" id="scanner-activity-dot"></span>Scanner</div>
+          <div class="scanner-inline-value" id="scanner-activity-value">Ready</div>
+        </div>
+      </div>
+      <!-- RIGHT: What Next? -->
+      <div class="panel panel-whatnext" id="what-next-display">
         <div class="display-eyebrow"><span class="display-dot"></span>What Next?</div>
         <div class="what-next-blurb" id="what-next-blurb">Start a new assessment by choosing a starting point below.</div>
         <div class="what-next-actions" id="what-next-actions"></div>
-      </div>
-      <div class="info-display" id="scanner-display">
-        <div class="display-eyebrow"><span class="display-dot" id="scanner-activity-dot"></span>Scanner</div>
-        <div class="scanner-activity-value" id="scanner-activity-value">Ready</div>
-        <div class="scanner-activity-caption" id="scanner-activity-caption">Start a scan anytime</div>
       </div>
     </div>
     <div class="dashboard-helpers">
@@ -1229,29 +1253,26 @@
     // back to "Ready."
     // ───────────────────────────────────────────────────────────────────
     const SCANNER_ACTIVITY_BRIDGE_KEY = 'ngpcx_scanner_activity_bridge_v1';
-    // A short status word (the instrument's big centered readout) plus a
-    // caption (the fuller sentence, smaller and secondary) — split out
-    // this pass so the scanner display can share the same "short value +
-    // caption" visual language as What Next's blurb, rather than one long
-    // inline sentence. See CLAUDE.md, Coherence & Trust addendum.
+    // A short status word only — the Composition Correction pass dropped
+    // the longer caption sentence entirely (not just visually hid it) to
+    // keep Scanner a compact two-line readout ("SCANNER" / "READY") rather
+    // than its own tall card. See CLAUDE.md.
     const SCANNER_STATE_META = {
-      ready: { value: 'Ready', caption: 'Start a scan anytime', dot: '#475569', active: false },
-      downloading: { value: 'Downloading', caption: 'Fetching the scanner tool…', dot: '#3b82f6', active: true },
-      waiting: { value: 'Waiting', caption: 'Run the downloaded scanner to continue', dot: '#f59e0b', active: true },
-      connected: { value: 'Connected', caption: 'Scanner found and linked', dot: '#10b981', active: true },
-      receiving: { value: 'Receiving', caption: 'Pulling in your results…', dot: '#10b981', active: true },
-      updated: { value: 'Updated', caption: 'Assessment refreshed', dot: '#10b981', active: false },
+      ready: { value: 'Ready', dot: '#475569', active: false },
+      downloading: { value: 'Downloading', dot: '#3b82f6', active: true },
+      waiting: { value: 'Waiting', dot: '#f59e0b', active: true },
+      connected: { value: 'Connected', dot: '#10b981', active: true },
+      receiving: { value: 'Receiving', dot: '#10b981', active: true },
+      updated: { value: 'Updated', dot: '#10b981', active: false },
     };
     function setScannerActivity(state) {
       const meta = SCANNER_STATE_META[state] || SCANNER_STATE_META.ready;
       const dot = document.getElementById('scanner-activity-dot');
       const value = document.getElementById('scanner-activity-value');
-      const caption = document.getElementById('scanner-activity-caption');
-      if (!dot || !value || !caption) return;
+      if (!dot || !value) return;
       dot.style.background = meta.dot;
       dot.classList.toggle('active', meta.active);
       value.textContent = meta.value;
-      caption.textContent = meta.caption;
     }
 
     // ───────────────────────────────────────────────────────────────────
@@ -2010,6 +2031,15 @@
       }
       lastConfPct = confPct;
 
+      // Evidence / Signals — permanently visible in the middle panel, on
+      // every render. This is the Composition Correction fix: the exact
+      // same evidenceSummaryHtml()/evidenceMeterRow() output that used to
+      // ONLY ever render inside the collapsed "More Info" helper panel
+      // (a real placement bug — the markup and function always worked,
+      // they just had no persistent home) now renders here first. See
+      // CLAUDE.md, Composition Correction addendum.
+      document.getElementById('evidence-meters').innerHTML = evidenceSummaryHtml(evidenceSources);
+
       // What Next? panel — reuses nextActionFor()'s existing {kind, text}
       // output verbatim (see assessment.js); this file only turns it into
       // buttons, it never re-derives the recommendation itself.
@@ -2148,10 +2178,11 @@
         unknownsBody.innerHTML = `<p>Nothing scanned yet — unknowns will appear here once you scan this computer.</p>`;
       }
 
-      const evidenceSummary = `
-        <p class="evidence-summary-heading">What Confidence is based on</p>
-        ${evidenceSummaryHtml(evidenceSources)}`;
-
+      // Evidence Summary itself no longer duplicates here — it's a
+      // permanent fixture of the dashboard's middle panel now (see
+      // renderDashboard()), so this panel just adds the extra detail that
+      // doesn't fit there (app/device counts, links) without repeating
+      // the meters immediately above it on the same page.
       if (currentResults) {
         const appTotal = ['native', 'emulated', 'unsupported', 'unknown'].reduce((n, b) => n + ((currentResults[b] || []).length), 0);
         const deviceTotal = (currentResults.devices || []).length;
@@ -2161,14 +2192,13 @@
             <div class="helper-stat"><div class="helper-stat-count">${deviceTotal}</div><div class="helper-stat-label">Devices</div></div>
           </div>
           <p>This assessment is based on a ${escapeHtml(scanLevelParam)} scan${hasAdaptiveContext(ctx) ? ' plus your Intended Use answers' : ''}.</p>
-          ${evidenceSummary}
           <div class="helper-links">
             <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
             <a href="/how-it-thinks.html">How CheckMyARM Thinks →</a>
           </div>`;
       } else {
-        moreInfoBody.innerHTML = `<p>No summary yet — this fills in once you scan or add Intended Use.</p>
-          ${evidenceSummary}
+        moreInfoBody.innerHTML = `<p>No summary yet — this fills in once you scan or add Intended Use. The
+          Evidence panel above already reflects what's known so far.</p>
           <div class="helper-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>`;
       }
 
