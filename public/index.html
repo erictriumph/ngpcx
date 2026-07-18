@@ -71,6 +71,19 @@
       text-align: center;
     }
 
+    /* Names which of the three assessment states is currently showing —
+       "Status" / "Early Read · Based on Your Answers, Not a Scan" /
+       "Compatibility Assessment" — so a contextual read can never be
+       mistaken for a scan-backed verdict at a glance. */
+    .rec-eyebrow {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+    }
+
     .rec-badge {
       display: inline-block;
       font-size: 1.3rem;
@@ -80,6 +93,14 @@
       margin-bottom: 0.5rem;
     }
 
+    /* Candidate-suitability badge — teal, distinct from both the neutral
+       gray "Too Early to Tell" and the green/amber/red compatibility
+       palette below, so the two vocabularies never visually collide. */
+    .rec-badge.contextual {
+      background: rgba(45, 212, 191, 0.18);
+      color: #2dd4bf;
+    }
+
     .rec-confidence {
       font-size: 0.8rem;
       color: #64748b;
@@ -87,6 +108,30 @@
       letter-spacing: 0.05em;
       margin-bottom: 1rem;
       min-height: 1.1em;
+    }
+
+    .rec-explanation {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.55;
+      text-align: left;
+      max-width: 100%;
+      margin: 0 0 1rem 0;
+      padding: 0.75rem 1rem;
+      background: rgba(45, 212, 191, 0.06);
+      border: 1px solid rgba(45, 212, 191, 0.2);
+      border-radius: 10px;
+    }
+
+    .contextual-actions {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      margin-top: 0.6rem;
+    }
+
+    .contextual-actions .next-action-cta {
+      margin-top: 0;
     }
 
     .next-action-box {
@@ -611,16 +656,30 @@
     </p>
   </div>
 
-  <!-- PERSISTENT RECOMMENDATION SUMMARY — always present, content evolves. -->
+  <!-- PERSISTENT RECOMMENDATION SUMMARY — always present, content evolves.
+       Three conceptual states (see assessment.js, determineAssessmentState):
+       no read / contextual early read / scan-backed compatibility
+       assessment. The eyebrow label always names which one is showing, so a
+       contextual read can never be mistaken for a scan-backed verdict. -->
   <div class="recommendation-panel" id="recommendation-panel">
+    <div class="rec-eyebrow" id="rec-eyebrow">Status</div>
     <div class="rec-badge" id="rec-badge">Too Early to Tell</div>
     <div class="rec-confidence" id="rec-confidence"></div>
+    <!-- Contextual-read-only: the directional explanation. Never shown at
+         the same time as a scan-backed Confidence value above. -->
+    <p class="rec-explanation" id="rec-explanation" style="display:none;"></p>
     <div class="next-action-box">
       <span class="next-action-label">Recommended next step</span>
       <div class="next-action-text" id="next-action-text">
-        Start with a scan, or answer a few quick questions — either one gets you moving.
+        Start a new assessment by choosing a starting point below.
       </div>
       <button type="button" class="next-action-cta" id="next-action-cta" style="display:none;"></button>
+      <!-- Contextual-read-only: up to two actions instead of one, per the
+           spec's "Run a Scan / Review or Add More Details" pairing. -->
+      <div class="contextual-actions" id="contextual-actions" style="display:none;">
+        <button type="button" class="next-action-cta" id="contextual-scan-btn">Run a Scan →</button>
+        <button type="button" class="next-action-cta" id="contextual-review-btn">Review or Add More Details →</button>
+      </div>
     </div>
     <a href="#" class="view-report-link" id="view-report-link" style="display:none;">View Detailed Report →</a>
   </div>
@@ -1011,43 +1070,107 @@
       return computeSynthesis(currentResults, personalContext);
     }
 
+    // Scroll/reveal helpers shared by every state's action buttons below —
+    // kept in one place so the contextual-read panel and the ordinary
+    // single-CTA button never diverge in what "open questions"/"scroll to
+    // scan" actually does.
+    function revealQuestionsPanel() {
+      questionsPanel.style.display = 'block';
+      questionsPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function scrollToScanPath() {
+      document.getElementById('scan-path').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     function renderRecommendation() {
-      const synthesis = computeCurrentSynthesis();
-      const rec = recommendationFor(synthesis);
-      const badge = document.getElementById('rec-badge');
-      badge.textContent = rec.label;
-      badge.style.background = rec.color + '33';
-      badge.style.color = rec.color;
-
-      const confEl = document.getElementById('rec-confidence');
-      confEl.textContent = (synthesis && !synthesis.empty) ? synthesis.confidenceLabel : '';
-
+      const hasSession = !!(sessionId && currentResults);
       const ctx = currentAdaptiveContext();
-      const next = nextActionFor({ hasSession: !!(sessionId && currentResults), adaptiveContext: ctx, synthesis });
+      const synthesis = hasSession ? computeCurrentSynthesis() : null;
+      const state = determineAssessmentState({ hasSession, adaptiveContext: ctx });
+
+      const eyebrow = document.getElementById('rec-eyebrow');
+      const badge = document.getElementById('rec-badge');
+      const confEl = document.getElementById('rec-confidence');
+      const explanationEl = document.getElementById('rec-explanation');
+      const cta = document.getElementById('next-action-cta');
+      const contextualActions = document.getElementById('contextual-actions');
+
+      badge.classList.remove('contextual');
+
+      if (state === ASSESSMENT_STATE_SCAN_BACKED) {
+        // Compatibility assessment — the existing, evidence-backed verdict.
+        // Unchanged behavior from before this milestone.
+        eyebrow.textContent = 'Compatibility Assessment';
+        const rec = recommendationFor(synthesis);
+        badge.textContent = rec.label;
+        badge.style.background = rec.color + '33';
+        badge.style.color = rec.color;
+        confEl.textContent = (synthesis && !synthesis.empty) ? synthesis.confidenceLabel : '';
+        explanationEl.style.display = 'none';
+      } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
+        // Candidate suitability — a directional read from Adaptive Context
+        // alone. Deliberately a different vocabulary/color/eyebrow from the
+        // compatibility badge above, and never a numeric score — see
+        // assessment.js, contextualReadFor().
+        const read = contextualReadFor(ctx);
+        eyebrow.textContent = 'Early Read · Based on Your Answers, Not a Scan';
+        badge.textContent = read.label;
+        badge.classList.add('contextual');
+        badge.style.background = '';
+        badge.style.color = '';
+        confEl.textContent = '';
+        explanationEl.textContent = read.explanation;
+        explanationEl.style.display = 'block';
+      } else {
+        // No read yet.
+        eyebrow.textContent = 'Status';
+        badge.textContent = 'Too Early to Tell';
+        badge.style.background = RECOMMENDATION_COLORS['Too Early to Tell'] + '33';
+        badge.style.color = RECOMMENDATION_COLORS['Too Early to Tell'];
+        confEl.textContent = '';
+        explanationEl.style.display = 'none';
+      }
+
+      const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
       document.getElementById('next-action-text').textContent = next.text;
 
-      const cta = document.getElementById('next-action-cta');
-      if (next.kind === 'questions' || next.kind === 'start') {
-        cta.style.display = 'inline-block';
-        cta.textContent = 'Answer a few questions →';
-        cta.onclick = () => { questionsPanel.style.display = 'block'; questionsPanel.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
-      } else if (next.kind === 'scan') {
-        cta.style.display = 'inline-block';
-        cta.textContent = 'Scroll to scan →';
-        cta.onclick = () => document.getElementById('scan-path').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else if (next.kind === 'refine' || next.kind === 'report') {
-        cta.style.display = 'inline-block';
-        cta.textContent = next.kind === 'refine' ? 'Open Advanced →' : 'View Detailed Report →';
-        cta.onclick = () => {
-          if (next.kind === 'report') { window.location.href = reportUrlFor(sessionId, scanLevelParam); }
-          else { document.getElementById('advanced-disclosure').open = true; document.getElementById('advanced-disclosure').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-        };
-      } else {
+      // Contextual state gets its own two-action row (Run a Scan / Review
+      // or Add More Details) per the product spec; every other state keeps
+      // the single next-action-cta button, unchanged.
+      if (state === ASSESSMENT_STATE_CONTEXTUAL) {
         cta.style.display = 'none';
+        contextualActions.style.display = 'flex';
+        document.getElementById('contextual-scan-btn').onclick = scrollToScanPath;
+        document.getElementById('contextual-review-btn').onclick = revealQuestionsPanel;
+      } else {
+        contextualActions.style.display = 'none';
+        if (next.kind === 'questions' || next.kind === 'start') {
+          cta.style.display = 'inline-block';
+          cta.textContent = 'Answer a few questions →';
+          cta.onclick = revealQuestionsPanel;
+        } else if (next.kind === 'scan') {
+          cta.style.display = 'inline-block';
+          cta.textContent = 'Scroll to scan →';
+          cta.onclick = scrollToScanPath;
+        } else if (next.kind === 'refine' || next.kind === 'report') {
+          cta.style.display = 'inline-block';
+          cta.textContent = next.kind === 'refine' ? 'Open Advanced →' : 'View Detailed Report →';
+          cta.onclick = () => {
+            if (next.kind === 'report') { window.location.href = reportUrlFor(sessionId, scanLevelParam); }
+            else { document.getElementById('advanced-disclosure').open = true; document.getElementById('advanced-disclosure').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+          };
+        } else {
+          // 'start-empty' (no evidence of any kind) and 'optional-scan' /
+          // 'none-needed' (already surfaced via the contextual-actions row
+          // above when applicable) intentionally show no single CTA here —
+          // see CLAUDE.md, Adaptive Assessment Surface milestone, on why
+          // the truly-empty state must not nudge toward one entry path.
+          cta.style.display = 'none';
+        }
       }
 
       const viewReport = document.getElementById('view-report-link');
-      if (sessionId && currentResults) {
+      if (hasSession) {
         viewReport.style.display = 'inline-block';
         viewReport.href = reportUrlFor(sessionId, scanLevelParam);
       } else {

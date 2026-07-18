@@ -1265,6 +1265,110 @@ function inferRelationshipHint(results) {
 }
 
 // ─────────────────────────────────────────
+//  Assessment state — the smallest clean representation of "what kind of
+//  read can we currently offer," kept deliberately separate from the
+//  Recommendation taxonomy below. Three states, matching the product spec
+//  exactly:
+//    NO_READ       — too little evidence of any kind. Nothing to show but
+//                    an invitation.
+//    CONTEXTUAL    — Adaptive Context alone (workload/relationship answers)
+//                    is enough for a directional CANDIDATE SUITABILITY read.
+//                    No scan-backed compatibility evidence exists.
+//    SCAN_BACKED   — real compatibility evidence exists (a completed scan).
+//                    Governed entirely by computeSynthesis(), unchanged.
+//
+//  This is the code-level expression of a permanent conceptual split this
+//  product must never collapse:
+//    Candidate suitability  — a directional read about whether Windows on
+//                              ARM broadly suits a described WORKLOAD.
+//                              Based on intended use, relationship to the
+//                              current machine, and stated priorities.
+//                              Never a claim about any specific application
+//                              or device.
+//    Compatibility assessment — the existing, evidence-backed verdict
+//                              (readiness score, recommendation label,
+//                              confidence), based on observed applications,
+//                              devices, architecture, and catalog research.
+//                              Only computeSynthesis() ever produces this.
+//  Candidate suitability and compatibility assessment are DIFFERENT
+//  QUESTIONS with different evidence requirements — this file must never
+//  merge them into one number or one vocabulary. contextualReadFor() below
+//  is the ONLY place that answers the suitability question; it is
+//  deliberately built without touching computeSynthesis(), effectiveBucketFor(),
+//  or any compatibility bucket, and its output never feeds into
+//  recommendationFor()/computeSynthesis(). See CLAUDE.md, Adaptive
+//  Assessment Surface milestone, Candidate Suitability addendum.
+// ─────────────────────────────────────────
+const ASSESSMENT_STATE_NO_READ = 'no_read';
+const ASSESSMENT_STATE_CONTEXTUAL = 'contextual';
+const ASSESSMENT_STATE_SCAN_BACKED = 'scan_backed';
+
+function determineAssessmentState({ hasSession, adaptiveContext }) {
+    if (hasSession) return ASSESSMENT_STATE_SCAN_BACKED;
+    if (contextualReadFor(adaptiveContext).available) return ASSESSMENT_STATE_CONTEXTUAL;
+    return ASSESSMENT_STATE_NO_READ;
+}
+
+// ─────────────────────────────────────────
+//  Candidate suitability — the ONE rule evaluation behind both the
+//  contextual-read panel's copy AND its next-action, so the two can never
+//  independently drift (previously nextActionFor() re-derived a parallel
+//  copy of this same branching on its own — collapsed into this single
+//  function per explicit instruction not to run two disconnected
+//  recommendation engines). A modest, explicit ruleset over the 5-option
+//  intended-use vocabulary — not a generalized inference engine.
+//
+//  Deliberately never produces a numeric score. "verdict" is qualitative
+//  only (positive | uncertain) and label is a directional phrase, not a
+//  percentage or a point on the Recommendation taxonomy's 5-value scale —
+//  see the file-level comment above for why these must stay separate
+//  vocabularies.
+// ─────────────────────────────────────────
+function contextualReadFor(adaptiveContext) {
+    const uses = (adaptiveContext && adaptiveContext.intended_use) || [];
+    if (uses.length === 0) return { available: false };
+
+    const specialized = uses.some((u) => u === 'gaming' || u === 'development' || u === 'creative');
+    const travelCompanion = adaptiveContext.relationship === 'secondary_travel';
+    const onlyLightweight = uses.every((u) => u === 'productivity' || u === 'web_email');
+
+    if (specialized) {
+        return {
+            available: true,
+            verdict: 'uncertain',
+            label: 'Depends on Your Setup',
+            explanation: 'Specialized software like this varies widely in ARM readiness today — some titles and tools run great, others don’t yet. We can’t say more without looking at your actual applications.',
+            nextActionKind: 'scan',
+            nextActionText: 'Specialized software like this benefits substantially from a real scan — run one on the computer whose apps matter most to this decision.',
+        };
+    }
+    if (onlyLightweight || travelCompanion) {
+        return {
+            available: true,
+            verdict: 'positive',
+            label: 'Likely a Good Candidate',
+            explanation: onlyLightweight
+                ? 'Your planned use relies mostly on web apps and mainstream productivity tools, which are generally well suited to Windows on ARM. We have not evaluated your current applications or devices yet.'
+                : 'Since this sounds like a secondary or travel computer rather than your main machine, the bar for a good fit is lower — most everyday use cases work well on Windows on ARM. We have not evaluated your current applications or devices yet.',
+            nextActionKind: 'optional-scan',
+            nextActionText: 'You may already have enough for this early read. Run a scan for a full compatibility assessment, or review your answers below.',
+        };
+    }
+    // Defensive fallback for a future workload option that is neither
+    // "specialized" nor "lightweight" — unreachable with the current
+    // 5-option vocabulary (every option is one or the other), kept so this
+    // function fails safely rather than silently if that vocabulary grows.
+    return {
+        available: true,
+        verdict: 'uncertain',
+        label: 'Worth a Closer Look',
+        explanation: 'We don’t yet have enough detail about your planned use to point in a specific direction — a scan or a bit more detail would help.',
+        nextActionKind: 'optional-scan',
+        nextActionText: 'A scan would sharpen this further, but based on what you’ve told us, it’s optional right now.',
+    };
+}
+
+// ─────────────────────────────────────────
 //  Recommendation layer — advice + confidence framing, built ONLY on top of
 //  computeSynthesis()'s existing output. Reuses the current 3-tier readiness
 //  label and 4-tier confidence label rather than inventing new thresholds;
@@ -1272,11 +1376,12 @@ function inferRelationshipHint(results) {
 //
 //  Deliberately conservative: without real compatibility evidence (a
 //  completed scan), the recommendation always stays "Too Early to Tell" —
-//  Adaptive Context alone (workload/relationship answers) shapes the NEXT
-//  ACTION copy, never the recommendation label itself. Fabricating a
-//  compatibility verdict from workload guesses alone would contradict the
-//  entire premise of this product (catalog-verified evidence, not
-//  category-based guessing) — see the accompanying investigation report.
+//  Adaptive Context alone (workload/relationship answers) can produce a
+//  CONTEXTUAL READ (see contextualReadFor(), above) but never changes this
+//  function's output. Fabricating a compatibility verdict from workload
+//  guesses alone would contradict the entire premise of this product
+//  (catalog-verified evidence, not category-based guessing) — see the
+//  accompanying investigation report.
 // ─────────────────────────────────────────
 const RECOMMENDATION_COLORS = {
     'Too Early to Tell': '#64748b',
@@ -1303,14 +1408,22 @@ function recommendationFor(synthesis) {
 
 // ─────────────────────────────────────────
 //  Recommended Next Action — a modest, explicit ruleset (per-case, not a
-//  generalized next-best-action engine). Four states, matching the product
-//  spec exactly: no evidence yet; scan-first; questions-first; both present.
+//  generalized next-best-action engine). Four cases, matching the product
+//  spec exactly: no evidence yet; scan-first; questions-first (delegates to
+//  contextualReadFor() above, the single source of truth for that branch);
+//  both present.
 // ─────────────────────────────────────────
 function nextActionFor({ hasSession, adaptiveContext, synthesis }) {
     const hasQuestions = hasAdaptiveContext(adaptiveContext);
 
     if (!hasSession && !hasQuestions) {
-        return { kind: 'start', text: 'Start with a scan, or answer a few quick questions — either one gets you moving.' };
+        // Neutral — deliberately does not favor either entry path, and
+        // deliberately a DIFFERENT kind from the "some questions answered
+        // but not enough yet" case below, so the UI can hide the single-CTA
+        // button here (no evidence yet = no one recommended action) while
+        // still offering one once partial evidence exists. See CLAUDE.md,
+        // Adaptive Assessment Surface milestone.
+        return { kind: 'start-empty', text: 'Start a new assessment by choosing a starting point below.' };
     }
 
     if (hasSession && !hasQuestions) {
@@ -1323,32 +1436,11 @@ function nextActionFor({ hasSession, adaptiveContext, synthesis }) {
     }
 
     if (hasQuestions && !hasSession) {
-        const uses = adaptiveContext.intended_use;
-        const specialized = uses.some((u) => u === 'gaming' || u === 'development' || u === 'creative');
-        const onlyLightweight = uses.length > 0 && uses.every((u) => u === 'productivity' || u === 'web_email');
-
-        if (specialized) {
-            return {
-                kind: 'scan',
-                text: 'Specialized software like this benefits substantially from a real scan — run one on the computer whose apps matter most to this decision.',
-            };
+        const read = contextualReadFor(adaptiveContext);
+        if (!read.available) {
+            return { kind: 'start', text: 'A bit more detail about what you plan to use it for would help — or start with a scan.' };
         }
-        if (adaptiveContext.relationship === 'secondary_travel' && !specialized) {
-            return {
-                kind: 'optional-scan',
-                text: 'Since this sounds like a travel companion rather than your main machine, you may already have enough for an early read — scanning is optional.',
-            };
-        }
-        if (onlyLightweight) {
-            return {
-                kind: 'none-needed',
-                text: 'Web apps and Microsoft 365 already run well on Windows on ARM — you may have enough for an early read without scanning.',
-            };
-        }
-        return {
-            kind: 'optional-scan',
-            text: 'A scan would sharpen this further, but based on what you’ve told us, it’s optional right now.',
-        };
+        return { kind: read.nextActionKind, text: read.nextActionText };
     }
 
     // Both present — refine the existing assessment.
