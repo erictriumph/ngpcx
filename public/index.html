@@ -71,16 +71,20 @@
 
     /* Fixed-dimension gauge block — the housing itself never resizes or
        repositions as readings change. Height is the sum of fixed parts
-       (eyebrow + svg + label area), never content-driven. Title now sits
-       ABOVE the instrument (like a real gauge's engraved name) and the
-       reading sits below it — see CLAUDE.md, Dashboard Instrument Panel
-       addendum. */
+       (eyebrow + svg + label + value + sub), never content-driven. Title
+       sits ABOVE the instrument (like a real gauge's engraved name); the
+       reading, a centered numeric value line, and an optional qualifier
+       sit below it, in that order — see CLAUDE.md, Coherence & Trust
+       addendum, for why the value line moved to its own row instead of
+       sitting inline with the label. Spacing tightened throughout this
+       pass (smaller inter-line margins) to absorb the added value line
+       without growing the block much beyond its prior height. */
     .gauge-block {
       display: flex;
       flex-direction: column;
       align-items: center;
       width: 108px;
-      height: 136px;
+      height: 148px;
       justify-content: flex-start;
     }
 
@@ -99,28 +103,45 @@
 
     /* Fixed-height text area for the gauge's reading — reserves room for
        up to two lines so labels like "Too Early to Tell" or "Likely a
-       Good Candidate" never grow the dashboard, only wrap within this box.
-       gauge-label-sub reserves its own line even when empty (the
-       compatibility/no-data states) so its later appearance (the
-       contextual-read qualifier) never shifts anything above or below it. */
+       Good Candidate" never grow the dashboard, only wrap within this box. */
     .gauge-label-area {
-      height: 2.75rem;
+      height: 2.2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin-top: 0.3rem;
+      margin-top: 0.15rem;
     }
 
     .gauge-label {
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       font-weight: 700;
       color: #e2e8f0;
       text-align: center;
       max-width: 108px;
-      line-height: 1.2;
+      line-height: 1.15;
     }
 
+    /* Centered numeric readout, its OWN line beneath the label (moved off
+       inline per the Coherence & Trust pass) — a genuine value for
+       Confidence always, and for ARM Suitability once the Recommendation
+       Eligible gate has activated a real reading (see
+       isSuitabilityEligible()). Reserves its line even when empty so an
+       ineligible/no-number state never shifts the block below it. */
+    .gauge-value-area {
+      height: 1.05rem;
+      line-height: 1.05rem;
+      font-size: 0.92rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: #f1f5f9;
+    }
+
+    /* Qualifier / Why? line — mutually exclusive uses of the same fixed
+       slot: a short uppercase tag ("EARLY READ") when a contextual read is
+       active, or a clickable "Why?" affordance when the Suitability gate
+       hasn't activated yet (see gauge-label-sub-why below). Never both at
+       once, so one reserved line covers both cases. */
     .gauge-label-sub {
       font-size: 0.6rem;
       font-weight: 700;
@@ -129,61 +150,133 @@
       color: #2dd4bf;
       height: 0.85rem;
       line-height: 0.85rem;
+      margin-top: 0.1rem;
     }
 
-    /* Numeric readout — Confidence only (a genuine 0-100 value). ARM
-       Suitability stays label-only since it's a categorical taxonomy, not
-       a percentage — see gaugeSvg()'s needle-vs-fill comment below for why
-       a number there would be misleading. */
-    .gauge-pct {
-      color: #64748b;
+    .gauge-label-sub-why {
+      color: #93c5fd;
+      text-transform: none;
+      letter-spacing: normal;
       font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .gauge-label-sub-why:hover {
+      text-decoration: underline;
     }
 
     /* Fixed instrument title — never changes text per state, only ever
        names what the gauge measures (see CLAUDE.md, Dashboard Instruments
-       addendum). Now sits ABOVE the instrument, like an engraved gauge
-       name, per the Dashboard Instrument Panel addendum. */
+       addendum). Sits ABOVE the instrument, like an engraved gauge name. */
     .gauge-eyebrow {
       font-size: 0.6rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: #64748b;
-      margin-bottom: 0.3rem;
+      margin-bottom: 0.2rem;
     }
 
-    /* ─── WHAT NEXT? panel ───────────────────────────────────────────────
-       Replaces the old compact pill with a real contextual recommendation
-       area: a short state-dependent blurb plus 1-2 action buttons. The
-       dashboard RECOMMENDS — it never prescribes a required order, and the
-       tabs above remain fully clickable regardless of what this panel
-       suggests. Fixed min-height so the panel doesn't visibly jump between
-       a one-button and a two-button state; the blurb's own line-height is
-       what absorbs text-length differences (see CLAUDE.md). */
-    .what-next-panel {
+    /* Visible-feedback pulse — a brief highlight ring confirming a value
+       actually changed (see pulseElement() / lastConfPct in the script
+       below). Applied to Confidence specifically, since Suitability
+       deliberately does NOT move for every evidence change (see the
+       Coherence & Trust addendum on why that's correct, not a bug). */
+    .gauge-block.pulse {
+      animation: gauge-pulse 0.7s ease-out;
+      border-radius: 10px;
+    }
+
+    @keyframes gauge-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.45); }
+      100% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .gauge-block.pulse { animation: none; }
+    }
+
+    /* ─── DISPLAYS ROW — What Next? + Scanner ────────────────────────────
+       Two fixed-size "information displays" sharing one visual language
+       (boxed, bordered, a small dotted eyebrow, a centered readout) so the
+       dashboard reads as one coherent instrument panel rather than a grab
+       bag of widgets — see CLAUDE.md, Coherence & Trust addendum. What
+       Next gets more width (it carries a sentence + buttons); Scanner is
+       compact (a status word + a short caption). Both stack full-width on
+       mobile via the existing @media (max-width:640px) block below. */
+    .dashboard-displays {
+      display: flex;
+      gap: 0.85rem;
       margin-top: 1rem;
-      padding-top: 0.9rem;
-      border-top: 1px solid #334155;
+      align-items: stretch;
+    }
+
+    .info-display {
+      flex: 1 1 0;
+      min-height: 128px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 0.75rem 0.9rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
     }
 
-    .what-next-label {
+    #scanner-display {
+      flex: 0.7 1 0;
+      justify-content: center;
+    }
+
+    .display-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       font-size: 0.62rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: #64748b;
-      margin-bottom: 0.45rem;
+      margin-bottom: 0.55rem;
     }
 
+    .display-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3b82f6;
+      flex-shrink: 0;
+    }
+
+    #scanner-activity-dot.active {
+      animation: scanner-pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes scanner-pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+      50% { opacity: 0.55; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #scanner-activity-dot.active { animation: none; }
+    }
+
+    /* What Next's readout — a short, machine-generated-feeling sentence.
+       Monospace + a left accent bar are deliberate: the goal is for this
+       area to visibly read as a live, generated readout rather than
+       ordinary prose sitting on the page (see CLAUDE.md). Fixed min-height
+       so the panel doesn't jump between a one-line and two-line blurb, or
+       between a one-button and two-button action row beneath it. */
     .what-next-blurb {
-      font-size: 0.84rem;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 0.82rem;
       color: #cbd5e1;
       line-height: 1.5;
       max-width: 480px;
       margin: 0 auto 0.85rem auto;
-      min-height: 2.55rem;
+      min-height: 2.3rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -194,6 +287,7 @@
       justify-content: center;
       gap: 0.6rem;
       flex-wrap: wrap;
+      margin-top: auto;
     }
 
     .what-next-btn {
@@ -240,41 +334,22 @@
       color: #64748b;
     }
 
-    /* ─── SCANNER ACTIVITY strip ─────────────────────────────────────────
-       A slim, always-present instrument reporting what the scanner
-       handshake is doing right now. Fixed height so it never shifts
-       surrounding layout; quiet/muted at rest ("Ready"), visibly active
-       during a real scan. Prototype-level — see CLAUDE.md. */
-    .scanner-activity {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-      height: 1.4rem;
-      font-size: 0.76rem;
+    /* Scanner display — a compact status word + short caption, the same
+       card chrome as What Next (see .info-display above) so the two read
+       as one family of instruments rather than a panel plus a stray strip.
+       Explicitly prototype-level, not a final implementation — see
+       CLAUDE.md. */
+    .scanner-activity-value {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #e2e8f0;
+      margin-bottom: 0.2rem;
+    }
+
+    .scanner-activity-caption {
+      font-size: 0.72rem;
       color: #64748b;
-    }
-
-    .scanner-activity-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #475569;
-      flex-shrink: 0;
-    }
-
-    .scanner-activity-dot.active {
-      animation: scanner-pulse 1.4s ease-in-out infinite;
-    }
-
-    @keyframes scanner-pulse {
-      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-      50% { opacity: 0.55; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .scanner-activity-dot.active { animation: none; }
+      line-height: 1.35;
     }
 
     /* Compact helper row — fixed position, controls always visible. */
@@ -426,17 +501,38 @@
       margin-bottom: 0.3rem;
     }
 
+    /* Blockier "contributor bar" treatment (vs. the prior thin hairline) —
+       these are confidence CONTRIBUTORS, not workflow-completion bars, so
+       the visual leans toward a level meter rather than a progress pill.
+       position:relative so the marker lines below can sit inside it. */
     .evidence-meter-track {
-      height: 4px;
-      border-radius: 999px;
+      position: relative;
+      height: 9px;
+      border-radius: 3px;
       background: #1e293b;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .evidence-meter-fill {
       height: 100%;
-      border-radius: 999px;
+      border-radius: 3px;
       background: #3b82f6;
+      transition: width 0.4s ease;
+    }
+
+    /* Subtle reference lines — "roughly enough to matter" and "a strong
+       contribution" — NOT literal thresholds this source must clear (nor
+       the same numbers as the aggregate Confidence tiers elsewhere on this
+       page, which operate on a different, combined scale); illustrative
+       markers in the same spirit, scoped to a single source's own 0-100
+       fill. Absolutely positioned inside the track, drawn over the fill so
+       they stay visible at any fill level. */
+    .evidence-meter-marker {
+      position: absolute;
+      top: -2px;
+      bottom: -2px;
+      width: 1px;
+      background: rgba(148, 163, 184, 0.4);
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -868,6 +964,19 @@
       .dashboard-main {
         gap: 1.25rem;
       }
+      .dashboard-displays {
+        flex-direction: column;
+      }
+      /* flex-basis:0 (the desktop row's equal-division trick) fights a
+         column layout whose own height is content-driven: each stacked
+         card was clamping to min-height instead of growing for wrapped
+         text, letting the action buttons spill silently outside the
+         card's visible border — a real bug found in mobile review, not a
+         synthetic stress case. flex-basis:auto lets each card size to its
+         own content while flex-grow:1 still fills any remaining space. */
+      .info-display {
+        flex: 1 1 auto;
+      }
       .evidence-tab {
         font-size: 0.76rem;
         padding: 0.5rem 0.7rem;
@@ -895,26 +1004,31 @@
         <div class="gauge-svg-wrap" id="gauge-rec-svg-wrap"></div>
         <div class="gauge-label-area">
           <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
-          <div class="gauge-label-sub" id="gauge-rec-sub"></div>
         </div>
+        <div class="gauge-value-area" id="gauge-rec-value"></div>
+        <div class="gauge-label-sub" id="gauge-rec-sub"></div>
       </div>
       <div class="gauge-block" id="gauge-confidence">
         <div class="gauge-eyebrow">Confidence</div>
         <div class="gauge-svg-wrap" id="gauge-conf-svg-wrap"></div>
         <div class="gauge-label-area">
           <div class="gauge-label" id="gauge-conf-label">No Data Yet</div>
-          <div class="gauge-label-sub"></div>
         </div>
+        <div class="gauge-value-area" id="gauge-conf-value">0%</div>
+        <div class="gauge-label-sub"></div>
       </div>
     </div>
-    <div class="what-next-panel">
-      <div class="what-next-label">What Next?</div>
-      <div class="what-next-blurb" id="what-next-blurb">Start a new assessment by choosing a starting point below.</div>
-      <div class="what-next-actions" id="what-next-actions"></div>
-    </div>
-    <div class="scanner-activity" id="scanner-activity">
-      <span class="scanner-activity-dot" id="scanner-activity-dot"></span>
-      <span id="scanner-activity-label">Ready — start a scan anytime</span>
+    <div class="dashboard-displays">
+      <div class="info-display" id="what-next-display">
+        <div class="display-eyebrow"><span class="display-dot"></span>What Next?</div>
+        <div class="what-next-blurb" id="what-next-blurb">Start a new assessment by choosing a starting point below.</div>
+        <div class="what-next-actions" id="what-next-actions"></div>
+      </div>
+      <div class="info-display" id="scanner-display">
+        <div class="display-eyebrow"><span class="display-dot" id="scanner-activity-dot"></span>Scanner</div>
+        <div class="scanner-activity-value" id="scanner-activity-value">Ready</div>
+        <div class="scanner-activity-caption" id="scanner-activity-caption">Start a scan anytime</div>
+      </div>
     </div>
     <div class="dashboard-helpers">
       <button type="button" class="helper-toggle" data-helper="why">Why <span>▾</span></button>
@@ -1115,22 +1229,29 @@
     // back to "Ready."
     // ───────────────────────────────────────────────────────────────────
     const SCANNER_ACTIVITY_BRIDGE_KEY = 'ngpcx_scanner_activity_bridge_v1';
+    // A short status word (the instrument's big centered readout) plus a
+    // caption (the fuller sentence, smaller and secondary) — split out
+    // this pass so the scanner display can share the same "short value +
+    // caption" visual language as What Next's blurb, rather than one long
+    // inline sentence. See CLAUDE.md, Coherence & Trust addendum.
     const SCANNER_STATE_META = {
-      ready: { label: 'Ready — start a scan anytime', dot: '#475569', active: false },
-      downloading: { label: 'Downloading scanner…', dot: '#3b82f6', active: true },
-      waiting: { label: 'Waiting for scanner to run…', dot: '#f59e0b', active: true },
-      connected: { label: 'Scanner connected', dot: '#10b981', active: true },
-      receiving: { label: 'Receiving results…', dot: '#10b981', active: true },
-      updated: { label: 'Assessment updated', dot: '#10b981', active: false },
+      ready: { value: 'Ready', caption: 'Start a scan anytime', dot: '#475569', active: false },
+      downloading: { value: 'Downloading', caption: 'Fetching the scanner tool…', dot: '#3b82f6', active: true },
+      waiting: { value: 'Waiting', caption: 'Run the downloaded scanner to continue', dot: '#f59e0b', active: true },
+      connected: { value: 'Connected', caption: 'Scanner found and linked', dot: '#10b981', active: true },
+      receiving: { value: 'Receiving', caption: 'Pulling in your results…', dot: '#10b981', active: true },
+      updated: { value: 'Updated', caption: 'Assessment refreshed', dot: '#10b981', active: false },
     };
     function setScannerActivity(state) {
       const meta = SCANNER_STATE_META[state] || SCANNER_STATE_META.ready;
       const dot = document.getElementById('scanner-activity-dot');
-      const label = document.getElementById('scanner-activity-label');
-      if (!dot || !label) return;
+      const value = document.getElementById('scanner-activity-value');
+      const caption = document.getElementById('scanner-activity-caption');
+      if (!dot || !value || !caption) return;
       dot.style.background = meta.dot;
       dot.classList.toggle('active', meta.active);
-      label.textContent = meta.label;
+      value.textContent = meta.value;
+      caption.textContent = meta.caption;
     }
 
     // ───────────────────────────────────────────────────────────────────
@@ -1555,8 +1676,13 @@
     // a full status-color ring — see CLAUDE.md); needlePercent (defaults to
     // fillPercent) drives the pointer position independently, since a
     // categorical reading's "fill" and its "position" are different ideas.
-    function gaugeSvg(fillPercent, color, needlePercent) {
-      const clamped = Math.max(0, Math.min(100, fillPercent));
+    // glyph (optional) replaces the needle with a centered character — used
+    // for the "Recommendation Eligible" gate's inactive state (a "?"),
+    // where showing a needle pointed anywhere would imply a reading that
+    // hasn't actually been earned yet. When glyph is set, fill is forced to
+    // 0 regardless of fillPercent — an inactive gauge has an empty track.
+    function gaugeSvg(fillPercent, color, needlePercent, glyph) {
+      const clamped = glyph ? 0 : Math.max(0, Math.min(100, fillPercent));
       const needleAt = needlePercent === undefined ? clamped : needlePercent;
       const trackPts = gaugeArcPoints(GAUGE_START_ANGLE, GAUGE_SWEEP, 48);
       const fillSweep = GAUGE_SWEEP * (clamped / 100);
@@ -1566,7 +1692,9 @@
         <polyline points="${trackPts}" fill="none" stroke="#334155" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>
         ${clamped > 0 ? `<polyline points="${fillPts}" fill="none" stroke="${color}" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
         ${gaugeTicksSvg()}
-        ${gaugeNeedleSvg(needleAt)}
+        ${glyph
+          ? `<text x="${GAUGE_CX}" y="${GAUGE_CY}" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="#475569">${escapeHtml(glyph)}</text>`
+          : gaugeNeedleSvg(needleAt)}
       </svg>`;
     }
 
@@ -1580,6 +1708,63 @@
     function recommendationNeedlePercent(label) {
       const idx = RECOMMENDATION_TIER_ORDER.indexOf(label);
       return idx === -1 ? 0 : (idx / (RECOMMENDATION_TIER_ORDER.length - 1)) * 100;
+    }
+
+    // ─── RECOMMENDATION ELIGIBLE gate ───────────────────────────────────
+    // "The advisor should not feel obligated to make a recommendation
+    // simply because one or two pieces of evidence exist. It should earn
+    // the right to recommend." — this function is that gate.
+    //
+    // Deliberately reuses signals evidenceSourcesFor() ALREADY computes and
+    // ALREADY displays as text in the Evidence Summary, rather than
+    // inventing a new threshold:
+    //   - Scan-backed: the exact same scanQuality >= 0.5 split that
+    //     already decides "Scanned" vs. "Scanned — limited result" in
+    //     evidenceSummaryHtml() (SCAN_QUALITY_SUFFICIENT_THRESHOLD below —
+    //     one named constant, read by both places, instead of the same
+    //     literal 0.5 living twice).
+    //   - Contextual (no scan): both Intended Use questions answered — the
+    //     exact same condition that already produces "Described" rather
+    //     than "Partially described" in the same Evidence Summary.
+    // No new percentage was invented for this gate; it asks "does the
+    // evidence already qualify as good, using standards this dashboard
+    // already holds it to elsewhere" rather than picking an arbitrary bar.
+    const SCAN_QUALITY_SUFFICIENT_THRESHOLD = 0.5;
+    function isSuitabilityEligible(state, evidenceSources) {
+      if (state === ASSESSMENT_STATE_SCAN_BACKED) {
+        const scan = evidenceSources.find((s) => s.id === 'current-computer-scan');
+        return !!scan && scan.presence === 'present' && scan.quality !== null && scan.quality >= SCAN_QUALITY_SUFFICIENT_THRESHOLD;
+      }
+      if (state === ASSESSMENT_STATE_CONTEXTUAL) {
+        const workload = evidenceSources.find((s) => s.id === 'intended-use-workload');
+        const relationship = evidenceSources.find((s) => s.id === 'intended-use-relationship');
+        return !!workload && !!relationship && workload.presence === 'present' && relationship.presence === 'present';
+      }
+      return false;
+    }
+    // Honest, template-filled reasoning for why the gate hasn't opened yet
+    // — reused by both the gauge's "Why?" link (opens this exact content)
+    // and, when truly zero evidence exists, the same panel's fallback
+    // copy. Never a free-form explanation; matches this codebase's
+    // standing convention (see contextualReadFor()) of filling a fixed
+    // template from real computed numbers rather than generating prose.
+    function eligibilityGateExplanation(state, evidenceSources, synthesis) {
+      if (state === ASSESSMENT_STATE_SCAN_BACKED) {
+        const pct = synthesis && !synthesis.empty ? synthesis.confidencePct : 0;
+        return `Your scan has classified ${pct}% of what it found against our compatibility catalog so far — not
+          yet enough to stand behind a recommendation. A Refresh (once more of the catalog has caught up) or a
+          broader scan level can raise this.`;
+      }
+      if (state === ASSESSMENT_STATE_CONTEXTUAL) {
+        const workload = evidenceSources.find((s) => s.id === 'intended-use-workload');
+        const missing = workload && workload.presence === 'present'
+          ? 'how this computer fits into your setup'
+          : 'what you plan to use it for';
+        return `A one-word answer isn't quite enough for even an early read — adding ${missing} would complete the
+          picture.`;
+      }
+      return `There's no evidence yet to read from. Add evidence from Current Computer or Intended Use to get
+        started.`;
     }
 
     // ─── WHAT NEXT? panel ────────────────────────────────────────────────
@@ -1637,10 +1822,21 @@
       // link actions are plain <a href> — no JS handler needed.
     }
 
+    // "Keep the recommendation concise. One sentence is usually enough" —
+    // a presentation-only trim, not a rewrite of nextActionFor()'s text.
+    // Most of its strings are already one sentence; the couple that carry
+    // a second clarifying clause ("...or review your answers below") lose
+    // it here, since the action buttons beneath already make that clause
+    // redundant. The full underlying string is untouched in assessment.js.
+    function firstSentence(text) {
+      const match = text.match(/^[^.!?]*[.!?]/);
+      return match ? match[0].trim() : text;
+    }
+
     function renderWhatNextPanel(next) {
       const blurb = document.getElementById('what-next-blurb');
       const actions = document.getElementById('what-next-actions');
-      blurb.textContent = next.text;
+      blurb.textContent = firstSentence(next.text);
       blurb.classList.toggle('inert', next.kind === 'start-empty');
       actions.innerHTML = '';
 
@@ -1679,60 +1875,34 @@
       }
     }
 
+    // Tracked across renders so a genuine change in Confidence can trigger
+    // a brief visible pulse (see below) — the dashboard should visibly
+    // reward evidence that moved something, even when Suitability itself
+    // didn't change (e.g. Intended Use answers on a scan-backed session,
+    // which correctly never touch the compatibility recommendation — see
+    // CLAUDE.md, Coherence & Trust addendum, "the feedback loop"). null
+    // until the first render so the very first paint never pulses.
+    let lastConfPct = null;
+    function pulseElement(el) {
+      if (!el) return;
+      el.classList.remove('pulse');
+      // Force reflow so re-adding the class restarts the animation even if
+      // it's still mid-run from a rapid prior change.
+      void el.offsetWidth;
+      el.classList.add('pulse');
+      setTimeout(() => el.classList.remove('pulse'), 700);
+    }
+
     function renderDashboard() {
       const hasSession = !!(sessionId && currentResults);
       const ctx = currentAdaptiveContext();
       const synthesis = hasSession ? computeCurrentSynthesis() : null;
       const state = determineAssessmentState({ hasSession, adaptiveContext: ctx });
 
-      // Recommendation gauge — a full colored ring (a status dial, not a
-      // proportional fill) since the taxonomy is categorical, not a
-      // continuous 0-100 scale. The instrument's own title ("ARM
-      // Suitability") is fixed in the HTML and never changes per state —
-      // only the reading (label/color) and the small qualifier beneath it
-      // do. The qualifier is the one remaining place a contextual (context-
-      // only) read stays visibly distinct from a scan-backed compatibility
-      // verdict, now that the eyebrow itself is fixed — see CLAUDE.md,
-      // Dashboard Instruments addendum.
-      // recNeedlePct is set per-branch rather than derived generically from
-      // recLabel, since a contextual read's label ("Likely a Good
-      // Candidate", "Depends on Your Setup") isn't a member of the 5-tier
-      // scan-backed vocabulary RECOMMENDATION_TIER_ORDER indexes — mapping
-      // it through that lookup would silently pin the needle at position 0
-      // regardless of how positive the contextual read actually is.
-      let recColor, recLabel, recSub, recNeedlePct;
-      if (state === ASSESSMENT_STATE_SCAN_BACKED) {
-        const rec = recommendationFor(synthesis);
-        recColor = rec.color; recLabel = rec.label; recSub = '';
-        recNeedlePct = recommendationNeedlePercent(recLabel);
-      } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
-        const read = contextualReadFor(ctx);
-        recColor = '#2dd4bf'; recLabel = read.label; recSub = 'Early Read';
-        // A contextual read only ever carries two verdicts (see
-        // contextualReadFor()) — positioned at the same two tiers a
-        // scan-backed read would land on for the same sentiment, so the
-        // needle still reads as "roughly here," without implying this is
-        // an evidence-backed compatibility verdict (color/eyebrow-sub
-        // still carry that distinction, unchanged).
-        recNeedlePct = read.verdict === 'positive' ? recommendationNeedlePercent('Probably a Good Fit') : recommendationNeedlePercent('Proceed with Caution');
-      } else {
-        recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recSub = '';
-        recNeedlePct = recommendationNeedlePercent('Too Early to Tell');
-      }
-      document.getElementById('gauge-rec-svg-wrap').innerHTML = gaugeSvg(100, recColor, recNeedlePct);
-      document.getElementById('gauge-rec-label').textContent = recLabel;
-      document.getElementById('gauge-rec-label').style.color = recColor;
-      document.getElementById('gauge-rec-sub').textContent = recSub;
-
-      // Confidence gauge — how much evidence of ANY kind (scan or Intended
-      // Use) currently supports today's read. See assessment.js,
-      // evidenceSourcesFor() — deliberately NOT the same value as
-      // synthesis.confidencePct (that one is scan-only, unchanged, still
-      // used on Results/Workspace). Computed once here, from the explicit
-      // evidence-source array, and passed down to the helper panels below
-      // so the gauge and the evidence summary can never independently
-      // drift apart — they're reading the same array, not two separate
-      // calculations of "how much evidence exists."
+      // Evidence sources computed FIRST this pass (previously computed
+      // after the recommendation gauge) — the Recommendation Eligible gate
+      // below needs them to decide whether Suitability may show a reading
+      // at all, so the dependency has to come before, not after.
       let findingsAttentionCount = 0;
       if (hasSession && synthesis && !synthesis.empty) {
         const personalContext = loadPersonalContext(sessionId, params);
@@ -1745,18 +1915,100 @@
         scanUnavailable: isLikelyNonWindows(),
         findingsAttentionCount,
       });
+
+      // Recommendation gauge — a full colored ring (a status dial, not a
+      // proportional fill) once eligible, since the taxonomy is
+      // categorical, not a continuous 0-100 scale — see CLAUDE.md,
+      // Dashboard Instruments addendum. The instrument's own title ("ARM
+      // Suitability") is fixed in the HTML and never changes per state.
+      //
+      // RECOMMENDATION ELIGIBLE GATE: the advisor earns the right to
+      // recommend rather than defaulting to one — see
+      // isSuitabilityEligible() above for exactly what "earns" means (a
+      // reused threshold, not a new one). Ineligible states show a "?"
+      // glyph and "Need More Evidence" (some evidence, not enough yet) or
+      // "Too Early to Tell" (none at all) instead of a real reading.
+      const eligible = isSuitabilityEligible(state, evidenceSources);
+      let recColor, recLabel, recSub, recNeedlePct, recFill, recGlyph, recValue;
+      recValue = '';
+      recGlyph = null;
+      if (eligible && state === ASSESSMENT_STATE_SCAN_BACKED) {
+        const rec = recommendationFor(synthesis);
+        recColor = rec.color; recLabel = rec.label; recSub = ''; recFill = 100;
+        // Continuous position + a real number, once eligible — the exact
+        // same synthesis.score already computed for Results/Workspace
+        // (never a second score), clamped only for THIS display (the
+        // needle/number can't render past the dial's own 0-100 ends; the
+        // underlying score is untouched). "Gradual movement as evidence
+        // improves" (the brief) is this: the label stays categorical
+        // (5 tiers), the needle and number move continuously beneath it.
+        recValue = String(Math.round(Math.max(0, Math.min(100, synthesis.score))));
+        recNeedlePct = Math.max(0, Math.min(100, synthesis.score));
+      } else if (eligible && state === ASSESSMENT_STATE_CONTEXTUAL) {
+        const read = contextualReadFor(ctx);
+        recColor = '#2dd4bf'; recLabel = read.label; recSub = 'Early Read'; recFill = 100;
+        // No continuous number exists for a contextual read (no scan, no
+        // score) — leaving the value line empty here is deliberate, not an
+        // oversight: inventing one would be exactly the "pretend to know
+        // more than it does" this pass's design philosophy rules out.
+        recNeedlePct = read.verdict === 'positive' ? recommendationNeedlePercent('Probably a Good Fit') : recommendationNeedlePercent('Proceed with Caution');
+      } else if (state === ASSESSMENT_STATE_NO_READ) {
+        recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recSub = ''; recFill = 0;
+        recGlyph = '?'; recNeedlePct = 0;
+      } else {
+        // Evidence exists (a scan or some Intended Use answers) but hasn't
+        // cleared the eligibility bar yet.
+        recColor = '#475569'; recLabel = 'Need More Evidence'; recSub = ''; recFill = 0;
+        recGlyph = '?'; recNeedlePct = 0;
+      }
+      document.getElementById('gauge-rec-svg-wrap').innerHTML = gaugeSvg(recFill, recColor, recNeedlePct, recGlyph);
+      document.getElementById('gauge-rec-label').textContent = recLabel;
+      document.getElementById('gauge-rec-label').style.color = eligible ? recColor : '#94a3b8';
+      document.getElementById('gauge-rec-value').textContent = recValue;
+      const recSubEl = document.getElementById('gauge-rec-sub');
+      if (!eligible && state !== ASSESSMENT_STATE_NO_READ) {
+        // "Need More Evidence" — offer the Why? affordance in the same
+        // reserved slot the qualifier tag normally uses (see CLAUDE.md;
+        // these two uses are mutually exclusive, so one line covers both).
+        recSubEl.innerHTML = '<a href="#" class="gauge-label-sub-why" id="gauge-rec-why">Why?</a>';
+        document.getElementById('gauge-rec-why').addEventListener('click', (e) => {
+          e.preventDefault();
+          document.querySelector('.helper-toggle[data-helper="why"]').click();
+        });
+      } else {
+        recSubEl.textContent = recSub;
+      }
+
+      // Confidence gauge — how much evidence of ANY kind (scan or Intended
+      // Use) currently supports today's read. See assessment.js,
+      // evidenceSourcesFor() — deliberately NOT the same value as
+      // synthesis.confidencePct (that one is scan-only, unchanged, still
+      // used on Results/Workspace). Computed once above, from the explicit
+      // evidence-source array, and passed down to the helper panels below
+      // so the gauge and the evidence summary can never independently
+      // drift apart — they're reading the same array, not two separate
+      // calculations of "how much evidence exists."
       const confPct = Math.round(Math.max(0, Math.min(100, evidenceSources.reduce((sum, s) => sum + s.contribution, 0))));
       const confLabel = dashboardConfidenceLabel(confPct);
       const confColor = confPct <= 0 ? '#334155' : confidenceDisplayColor(
         confPct >= 85 ? 'High Confidence' : confPct >= 60 ? 'Moderate Confidence' : 'Limited Data'
       );
       document.getElementById('gauge-conf-svg-wrap').innerHTML = gaugeSvg(confPct, confColor);
-      // Numeric readout alongside the label (e.g. "Good Evidence — 64%") —
-      // Confidence genuinely is a 0-100 value, unlike ARM Suitability's
-      // categorical taxonomy, so a number here is honest rather than
-      // implying false precision.
-      document.getElementById('gauge-conf-label').innerHTML = `${escapeHtml(confLabel)} <span class="gauge-pct">— ${confPct}%</span>`;
+      document.getElementById('gauge-conf-label').textContent = confLabel;
       document.getElementById('gauge-conf-label').style.color = confPct <= 0 ? '#64748b' : confColor;
+      // Numeric readout on its own centered line beneath the label, not
+      // inline with it — see CLAUDE.md, Coherence & Trust addendum.
+      document.getElementById('gauge-conf-value').textContent = confPct + '%';
+
+      // Visible feedback: a brief pulse on Confidence whenever it actually
+      // moves, so an Intended Use answer that doesn't change Suitability
+      // (by design, on a scan-backed session — see the design-philosophy
+      // note above) still visibly registers SOMEWHERE. Skipped on the
+      // very first render (nothing "changed" yet on page load).
+      if (lastConfPct !== null && lastConfPct !== confPct) {
+        pulseElement(document.getElementById('gauge-confidence'));
+      }
+      lastConfPct = confPct;
 
       // What Next? panel — reuses nextActionFor()'s existing {kind, text}
       // output verbatim (see assessment.js); this file only turns it into
@@ -1764,7 +2016,7 @@
       const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
       renderWhatNextPanel(next);
 
-      renderHelperPanels(state, ctx, synthesis, evidenceSources);
+      renderHelperPanels(state, ctx, synthesis, evidenceSources, eligible);
     }
 
     // Calm, non-alarming palette for the Confidence gauge — same mapping
@@ -1802,13 +2054,24 @@
       // implying a percentage that doesn't exist.
       return evidenceEntries.some((e) => e.presence === 'present') ? 100 : 0;
     }
+    // Illustrative marker positions — "roughly enough to matter" and "a
+    // strong contribution" — chosen to rhyme with, but not literally reuse,
+    // the aggregate Confidence tier boundaries (which operate on the
+    // combined dashboard total, a different scale from one source's own
+    // 0-100 fill). Named here so both markers are drawn from one place.
+    const EVIDENCE_MARKER_MIN_USEFUL_PCT = 30;
+    const EVIDENCE_MARKER_STRONG_PCT = 70;
     function evidenceMeterRow(label, status, pct, color) {
       return `<li class="evidence-summary-row">
         <div class="evidence-summary-toprow">
           <span class="evidence-summary-label">${escapeHtml(label)}</span>
           <span class="evidence-summary-status">${escapeHtml(status)}</span>
         </div>
-        <div class="evidence-meter-track"><div class="evidence-meter-fill" style="width:${pct}%; background:${color};"></div></div>
+        <div class="evidence-meter-track">
+          <div class="evidence-meter-fill" style="width:${pct}%; background:${color};"></div>
+          <div class="evidence-meter-marker" style="left:${EVIDENCE_MARKER_MIN_USEFUL_PCT}%;"></div>
+          <div class="evidence-meter-marker" style="left:${EVIDENCE_MARKER_STRONG_PCT}%;"></div>
+        </div>
       </li>`;
     }
     function evidenceSummaryHtml(sources) {
@@ -1824,7 +2087,7 @@
       if (scan.availability === 'unavailable') scanStatus = 'Not available on this device';
       else if (scan.presence === 'absent') scanStatus = 'Not examined';
       else if (scan.presence === 'partial') scanStatus = 'Scanned — limited result';
-      else scanStatus = (scan.quality !== null && scan.quality < 0.5) ? 'Scanned — limited result' : 'Scanned';
+      else scanStatus = (scan.quality !== null && scan.quality < SCAN_QUALITY_SUFFICIENT_THRESHOLD) ? 'Scanned — limited result' : 'Scanned';
 
       const answeredCount = (workload.presence === 'present' ? 1 : 0) + (relationship.presence === 'present' ? 1 : 0);
       const intendedUseStatus = answeredCount === 0 ? 'Not described' : answeredCount === 1 ? 'Partially described' : 'Described';
@@ -1844,12 +2107,22 @@
       return `<ul class="evidence-summary-list">${rows.join('')}</ul>`;
     }
 
-    function renderHelperPanels(state, ctx, synthesis, evidenceSources) {
+    function renderHelperPanels(state, ctx, synthesis, evidenceSources, eligible) {
       const whyBody = document.getElementById('helper-panel-why');
       const unknownsBody = document.getElementById('helper-panel-unknowns');
       const moreInfoBody = document.getElementById('helper-panel-more-info');
 
-      if (state === ASSESSMENT_STATE_SCAN_BACKED && synthesis && !synthesis.empty) {
+      // Gated on the SAME eligibility the gauge itself uses — if
+      // Suitability is showing "Need More Evidence" instead of a real
+      // reading, the Why panel must explain THAT (why the gate hasn't
+      // opened yet), never the underlying synthesis/contextual explanation
+      // a real reading would give. Printing the real explanation here
+      // while the gauge hides it would give away exactly what the gate
+      // exists to hold back.
+      if (!eligible) {
+        const howItThinksLink = '<div class="helper-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>';
+        whyBody.innerHTML = `<p>${escapeHtml(eligibilityGateExplanation(state, evidenceSources, synthesis))}</p>${howItThinksLink}`;
+      } else if (state === ASSESSMENT_STATE_SCAN_BACKED && synthesis && !synthesis.empty) {
         whyBody.innerHTML = `<p>${escapeHtml(synthesis.explanation)}</p>`;
       } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
         whyBody.innerHTML = `<p>${escapeHtml(contextualReadFor(ctx).explanation)}</p>`;
