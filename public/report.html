@@ -1140,6 +1140,17 @@
             // reduction summary) reads bucket/background status from here,
             // never re-derives it. See CLAUDE.md, Canonical Effective Status.
             const classified = classifyPopulation(results, currentPersonalContext);
+            // The ONE canonical score/confidence/recommendation computation
+            // for this render pass — computed once, here, and reused by
+            // every consumer below (the gauge, the readiness label, the
+            // confidence bar, the explanation). Previously the gauge read
+            // the server's raw, unweighted results.score while the label
+            // beside it read this weighted value, which could silently
+            // disagree (see CLAUDE.md, Canonical Assessment Truth
+            // consolidation). computeSynthesis() is the single source of
+            // truth for these values across Results, Workspace, and the
+            // Adaptive Assessment Surface — see assessment.js.
+            const synthesis = computeSynthesis(results, currentPersonalContext);
 
             // System info
             if (results.system) {
@@ -1155,7 +1166,10 @@
                 }
             }
 
-            animateScore(results.score || 0);
+            // Gauge now reads the same weighted synthesis score the
+            // readiness label beside it is computed from — see the
+            // canonical `synthesis` comment above.
+            animateScore(synthesis.empty ? 0 : synthesis.score);
 
             if (results.lastScanned) {
                 const d = new Date(results.lastScanned);
@@ -1307,7 +1321,8 @@
             document.getElementById('unknown-section').innerHTML = buildTable(materialByBucket.unknown, 'unknown');
             document.getElementById('devices-section').innerHTML = buildDeviceTable(results.devices);
 
-            const synthesis = computeSynthesis(results, currentPersonalContext);
+            // synthesis was already computed once, above, near `classified`
+            // — reused here rather than recomputed a second time.
             const readinessEl = document.getElementById('readiness-label');
             const explanationEl = document.getElementById('recommendation-explanation');
             const confLabelEl = document.getElementById('confidence-label');
