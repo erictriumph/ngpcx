@@ -24,210 +24,349 @@
       min-height: 100vh;
     }
 
-    /* HERO — trimmed to a concise invitation; the fuller explanation lives
-       on Why/How CheckMyARM Thinks now, not duplicated here. */
-    .hero {
+    /* HERO — reduced to a single line; the dashboard below is the real
+       first thing a returning user sees, not marketing copy. The fuller
+       explanation lives on Why / How CheckMyARM Thinks. */
+    .hero-compact {
       max-width: 720px;
-      margin: 3.5rem auto 2rem auto;
+      margin: 2rem auto 1.25rem auto;
       text-align: center;
       padding: 0 1rem;
     }
 
-    h1 {
-      font-size: 2.5rem;
+    .hero-compact h1 {
+      font-size: 1.75rem;
       font-weight: 800;
-      margin-bottom: 0.75rem;
-      line-height: 1.15;
+      line-height: 1.2;
     }
 
-    h1 em {
+    .hero-compact h1 em {
       color: #3b82f6;
       font-style: normal;
     }
 
-    .subtitle {
-      font-size: 1rem;
-      color: #94a3b8;
-      margin-bottom: 0;
-      line-height: 1.6;
-      max-width: 560px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    /* ─────────────────────────────────────
-       RECOMMENDATION PANEL — the persistent summary. Present from the very
-       first load ("Too Early to Tell") and never removed from the page —
-       only its content evolves as evidence accumulates. See CLAUDE.md,
-       Adaptive Assessment Surface milestone.
-       ───────────────────────────────────── */
-    .recommendation-panel {
-      max-width: 640px;
-      margin: 2rem auto;
-      padding: 1.5rem 1.75rem;
+    /* ═══════════════════════════════════════════════════════════════════
+       LAYER 1 — ASSESSMENT DASHBOARD
+       Fixed layout, top of page. Gauges + Next Step pill on one row,
+       Why/Unknowns/More Info toggles on a second row. Structure never
+       changes shape as evidence accumulates — only the numbers, colors,
+       and panel contents do. See CLAUDE.md, Assessment Dashboard milestone.
+       ═══════════════════════════════════════════════════════════════════ */
+    .dashboard {
+      max-width: 720px;
+      margin: 0 auto 1.5rem auto;
+      padding: 1.1rem 1.5rem;
       background: #1e293b;
       border: 1px solid #334155;
       border-radius: 14px;
-      text-align: center;
     }
 
-    /* Names which of the three assessment states is currently showing —
-       "Status" / "Early Read · Based on Your Answers, Not a Scan" /
-       "Compatibility Assessment" — so a contextual read can never be
-       mistaken for a scan-backed verdict at a glance. */
-    .rec-eyebrow {
-      font-size: 0.68rem;
+    .dashboard-main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.75rem;
+      flex-wrap: wrap;
+    }
+
+    .gauge-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 92px;
+    }
+
+    .gauge-svg-wrap {
+      position: relative;
+      width: 64px;
+      height: 64px;
+    }
+
+    .gauge-svg-wrap svg {
+      display: block;
+    }
+
+    .gauge-svg-value {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
+
+    .gauge-eyebrow {
+      font-size: 0.62rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: #64748b;
-      margin-bottom: 0.5rem;
+      margin-top: 0.45rem;
     }
 
-    .rec-badge {
-      display: inline-block;
-      font-size: 1.3rem;
-      font-weight: 800;
-      padding: 0.3rem 1rem;
-      border-radius: 999px;
-      margin-bottom: 0.5rem;
+    .gauge-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      text-align: center;
+      max-width: 110px;
+      line-height: 1.25;
+      margin-top: 0.1rem;
     }
 
-    /* Candidate-suitability badge — teal, distinct from both the neutral
-       gray "Too Early to Tell" and the green/amber/red compatibility
-       palette below, so the two vocabularies never visually collide. */
-    .rec-badge.contextual {
-      background: rgba(45, 212, 191, 0.18);
-      color: #2dd4bf;
+    /* Next Step — a compact pill, not a paragraph. The full reasoning
+       lives behind the "Why" toggle below, on demand. */
+    .next-step-pill {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      max-width: 220px;
     }
 
-    .rec-confidence {
-      font-size: 0.8rem;
-      color: #64748b;
+    .next-step-pill-label {
+      font-size: 0.62rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 1rem;
-      min-height: 1.1em;
+      letter-spacing: 0.06em;
+      color: #64748b;
     }
 
-    .rec-explanation {
-      font-size: 0.88rem;
+    .next-step-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(59, 130, 246, 0.14);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #93c5fd;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.4rem 0.85rem;
+      border-radius: 999px;
+      cursor: pointer;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .next-step-pill-btn:hover {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.22);
+    }
+
+    /* Inert variant — shown when there is deliberately no single
+       recommended action (the true empty state) so the pill still occupies
+       its fixed slot without nudging toward one entry path. */
+    .next-step-pill-btn.inert {
+      background: rgba(100, 116, 139, 0.12);
+      border-color: #334155;
+      color: #94a3b8;
+      cursor: default;
+    }
+
+    .next-step-pill-btn.inert:hover {
+      border-color: #334155;
+      background: rgba(100, 116, 139, 0.12);
+    }
+
+    /* Compact helper row — fixed position, controls always visible. */
+    .dashboard-helpers {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid #334155;
+    }
+
+    .helper-toggle {
+      background: none;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 0.3rem 0.7rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .helper-toggle:hover {
+      border-color: #3b82f6;
+      color: #e2e8f0;
+    }
+
+    .helper-toggle.active {
+      border-color: #3b82f6;
+      color: #93c5fd;
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .helper-panel {
+      margin-top: 0.75rem;
+      padding: 0.85rem 1rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      font-size: 0.85rem;
       color: #cbd5e1;
       line-height: 1.55;
       text-align: left;
-      max-width: 100%;
-      margin: 0 0 1rem 0;
-      padding: 0.75rem 1rem;
-      background: rgba(45, 212, 191, 0.06);
-      border: 1px solid rgba(45, 212, 191, 0.2);
-      border-radius: 10px;
     }
 
-    .contextual-actions {
+    .helper-panel[hidden] {
+      display: none;
+    }
+
+    .helper-panel ul {
+      list-style: none;
+      margin-top: 0.4rem;
+    }
+
+    .helper-panel .helper-links {
+      margin-top: 0.6rem;
       display: flex;
-      gap: 1.25rem;
+      gap: 1rem;
       flex-wrap: wrap;
-      margin-top: 0.6rem;
     }
 
-    .contextual-actions .next-action-cta {
-      margin-top: 0;
-    }
-
-    .next-action-box {
-      background: rgba(59, 130, 246, 0.08);
-      border: 1px solid rgba(59, 130, 246, 0.25);
-      border-radius: 10px;
-      padding: 0.85rem 1.1rem;
-      text-align: left;
-      margin-bottom: 0.5rem;
-    }
-
-    .next-action-label {
-      display: block;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #93c5fd;
-      font-weight: 700;
-      margin-bottom: 0.3rem;
-    }
-
-    .next-action-text {
-      font-size: 0.9rem;
-      color: #e2e8f0;
-      line-height: 1.5;
-    }
-
-    .next-action-cta {
-      display: inline-block;
-      margin-top: 0.6rem;
-      font-size: 0.82rem;
+    .helper-panel .helper-links a {
       color: #3b82f6;
       text-decoration: none;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      background: none;
-      padding: 0;
+      font-size: 0.82rem;
     }
 
-    .next-action-cta:hover {
+    .helper-panel .helper-links a:hover {
       text-decoration: underline;
     }
 
-    .view-report-link {
-      display: inline-block;
-      margin-top: 0.75rem;
-      font-size: 0.85rem;
-      color: #94a3b8;
-      text-decoration: none;
-    }
-
-    .view-report-link:hover {
-      color: #f1f5f9;
-    }
-
-    /* ─────────────────────────────────────
-       ENTRY PATHS — two equally prominent starting actions. Collapses to a
-       compact row once any evidence exists, so it stops competing with the
-       recommendation panel for attention.
-       ───────────────────────────────────── */
-    .entry-paths {
-      max-width: 900px;
-      margin: 0 auto 2rem auto;
-      padding: 0 1rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    .helper-stats {
+      display: flex;
       gap: 1.25rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.6rem;
     }
 
-    @media (max-width: 720px) {
-      .entry-paths {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .entry-path {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 1.5rem;
+    .helper-stat {
       text-align: center;
     }
 
-    .entry-path h2 {
-      font-size: 1.1rem;
+    .helper-stat-count {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #f1f5f9;
+    }
+
+    .helper-stat-label {
+      font-size: 0.66rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       LAYER 2 — EVIDENCE NAVIGATION
+       A persistent, modular tab bar. Adding/removing/renaming a category is
+       a one-line change to EVIDENCE_CATEGORIES in the script below — no
+       markup duplication per tab.
+       ═══════════════════════════════════════════════════════════════════ */
+    .evidence-nav {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .evidence-tab {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-bottom: none;
+      color: #94a3b8;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.55rem 1rem;
+      border-radius: 10px 10px 0 0;
+      cursor: pointer;
+      position: relative;
+      top: 1px;
+    }
+
+    .evidence-tab:hover {
+      color: #e2e8f0;
+    }
+
+    .evidence-tab.active {
+      color: #f1f5f9;
+      background: #16233b;
+      border-color: #3b82f6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       LAYER 3 — DETAILS WORKSPACE
+       Only this region substantially changes when a different evidence
+       category is selected. Dashboard and nav above stay put.
+       ═══════════════════════════════════════════════════════════════════ */
+    .details-workspace {
+      max-width: 720px;
+      margin: 0 auto 2.5rem auto;
+      padding: 1.5rem 1.75rem;
+      background: #16233b;
+      border: 1px solid #3b82f6;
+      border-radius: 0 0 14px 14px;
+      min-height: 180px;
+    }
+
+    .workspace-heading {
+      font-size: 1rem;
+      font-weight: 700;
       margin-bottom: 0.4rem;
     }
 
-    .entry-path p {
+    .workspace-subtext {
       font-size: 0.85rem;
       color: #94a3b8;
-      line-height: 1.5;
-      margin-bottom: 1rem;
+      line-height: 1.55;
+      margin-bottom: 1.1rem;
     }
 
+    .workspace-empty {
+      color: #64748b;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .workspace-note {
+      margin-top: 0.85rem;
+      padding: 0.7rem 0.9rem;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 8px;
+      color: #93c5fd;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .workspace-links {
+      margin-top: 1.1rem;
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .workspace-links a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .workspace-links a:hover {
+      text-decoration: underline;
+    }
+
+    /* Current Computer tab — scan entry + system summary. */
     .scan-level {
       text-align: left;
       margin-bottom: 1rem;
@@ -251,13 +390,12 @@
       color: white;
       font-size: 1rem;
       font-weight: 700;
-      padding: 0.85rem 2rem;
+      padding: 0.75rem 1.75rem;
       border-radius: 10px;
       border: none;
       cursor: pointer;
       transition: background 0.2s;
       text-decoration: none;
-      min-width: 180px;
       text-align: center;
     }
 
@@ -273,50 +411,28 @@
       line-height: 1.5;
     }
 
-    /* Compact mode — once evidence exists, the big dual-path cards recede
-       into a small "add more evidence" row. Same actions, quieter frame. */
-    .entry-paths.compact {
-      grid-template-columns: 1fr 1fr;
-      max-width: 520px;
+    .summary-grid {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
     }
 
-    .entry-paths.compact .entry-path {
-      padding: 0.85rem;
+    .summary-item label {
+      display: block;
+      font-size: 0.68rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.15rem;
     }
 
-    .entry-paths.compact .entry-path h2 {
-      font-size: 0.85rem;
+    .summary-item span {
+      font-size: 0.9rem;
+      color: #e2e8f0;
     }
 
-    .entry-paths.compact .entry-path p,
-    .entry-paths.compact .scan-level,
-    .entry-paths.compact .entry-note {
-      display: none;
-    }
-
-    .entry-paths.compact .scan-button,
-    .entry-paths.compact .questions-button {
-      min-width: 0;
-      width: 100%;
-      padding: 0.55rem 1rem;
-      font-size: 0.85rem;
-    }
-
-    /* ─────────────────────────────────────
-       QUESTIONS PANEL — pill-based hypothesis editor. Reuses the existing
-       .decision-btn / .selected visual language from assessment.css
-       (loaded below) so a pill looks and behaves like every other
-       toggle control already in the product, not a new component.
-       ───────────────────────────────────── */
-    .questions-panel {
-      max-width: 640px;
-      margin: 0 auto 2rem auto;
-      padding: 1.5rem 1.75rem;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 14px;
-    }
-
+    /* Intended Use tab — pill-based hypothesis editor. */
     .question-group {
       margin-bottom: 1.25rem;
     }
@@ -361,10 +477,9 @@
       font-weight: 600;
     }
 
-    /* Suggested-but-not-yet-confirmed — same visual family as
-       .findings-btn.suggested elsewhere in the product: a ring, not a fill,
-       so "we guessed this" always reads differently from "you confirmed
-       this." Never used at the same time as .selected. */
+    /* Suggested-but-not-yet-confirmed — a ring, not a fill, so "we
+       guessed this" always reads differently from "you confirmed this."
+       Never used at the same time as .selected. */
     .pill.suggested {
       border-color: #3b82f6;
       box-shadow: 0 0 0 1px #3b82f6;
@@ -376,112 +491,46 @@
       margin-top: 0.6rem;
     }
 
-    /* ─────────────────────────────────────
-       ADVANCED DISCLOSURE — the quiet Workspace/evidence area. Present but
-       minimal with no evidence; grows richer once a scan exists.
-       ───────────────────────────────────── */
-    .advanced-section {
-      max-width: 900px;
-      margin: 0 auto 3rem auto;
-      padding: 0 1rem;
-    }
-
-    .advanced-disclosure {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 1rem 1.5rem;
-    }
-
-    .advanced-disclosure summary {
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: #cbd5e1;
-      list-style: none;
-    }
-
-    .advanced-disclosure summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .advanced-disclosure summary::before {
-      content: '▸ ';
-      color: #64748b;
-    }
-
-    .advanced-disclosure[open] summary::before {
-      content: '▾ ';
-    }
-
-    .advanced-body {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid #334155;
-    }
-
-    .advanced-empty {
-      color: #64748b;
-      font-size: 0.85rem;
-      line-height: 1.6;
-    }
-
-    .advanced-stats {
+    /* Findings tab */
+    .findings-stats {
       display: flex;
       gap: 1.5rem;
       flex-wrap: wrap;
       margin-bottom: 1rem;
     }
 
-    .advanced-stat {
+    .findings-stat {
       text-align: center;
     }
 
-    .advanced-stat-count {
+    .findings-stat-count {
       font-size: 1.4rem;
       font-weight: 800;
     }
 
-    .advanced-stat-label {
+    .findings-stat-label {
       font-size: 0.72rem;
       color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
 
-    .advanced-attention-list {
+    .findings-attention-list {
       list-style: none;
       font-size: 0.85rem;
       color: #cbd5e1;
       line-height: 1.9;
     }
 
-    .advanced-links {
-      margin-top: 1rem;
-      display: flex;
-      gap: 1rem;
-    }
-
-    .advanced-links a {
-      color: #3b82f6;
-      text-decoration: none;
-      font-size: 0.85rem;
-    }
-
-    .advanced-links a:hover {
-      text-decoration: underline;
-    }
-
     /* HOW IT WORKS */
     .section-title {
       text-align: center;
-      font-size: 1.5rem;
+      font-size: 0.85rem;
       font-weight: 700;
       margin-bottom: 1.5rem;
       color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      font-size: 0.85rem;
     }
 
     .how-it-works {
@@ -639,6 +688,19 @@
       color: #475569;
       font-size: 0.85rem;
     }
+
+    @media (max-width: 640px) {
+      .dashboard-main {
+        gap: 1.25rem;
+      }
+      .evidence-tab {
+        font-size: 0.76rem;
+        padding: 0.5rem 0.7rem;
+      }
+      .details-workspace {
+        padding: 1.25rem;
+      }
+    }
   </style>
 </head>
 
@@ -646,113 +708,43 @@
 
   <div id="app-shell"></div>
 
-  <!-- HERO — concise invitation, not the full explanation (that lives on
-       Why / How CheckMyARM Thinks). -->
-  <div class="hero">
+  <div class="hero-compact">
     <h1>Is Windows on <em>ARM</em> Right for You?</h1>
-    <p class="subtitle">
-      CheckMyARM is a Windows on ARM advisor. Scan the PC you use today, answer a few quick
-      questions about what you need next, or both — your assessment builds on whatever you give it.
-    </p>
   </div>
 
-  <!-- PERSISTENT RECOMMENDATION SUMMARY — always present, content evolves.
-       Three conceptual states (see assessment.js, determineAssessmentState):
-       no read / contextual early read / scan-backed compatibility
-       assessment. The eyebrow label always names which one is showing, so a
-       contextual read can never be mistaken for a scan-backed verdict. -->
-  <div class="recommendation-panel" id="recommendation-panel">
-    <div class="rec-eyebrow" id="rec-eyebrow">Status</div>
-    <div class="rec-badge" id="rec-badge">Too Early to Tell</div>
-    <div class="rec-confidence" id="rec-confidence"></div>
-    <!-- Contextual-read-only: the directional explanation. Never shown at
-         the same time as a scan-backed Confidence value above. -->
-    <p class="rec-explanation" id="rec-explanation" style="display:none;"></p>
-    <div class="next-action-box">
-      <span class="next-action-label">Recommended next step</span>
-      <div class="next-action-text" id="next-action-text">
-        Start a new assessment by choosing a starting point below.
+  <!-- LAYER 1: ASSESSMENT DASHBOARD -->
+  <div class="dashboard" id="dashboard">
+    <div class="dashboard-main">
+      <div class="gauge-block" id="gauge-recommendation">
+        <div class="gauge-svg-wrap" id="gauge-rec-svg-wrap"></div>
+        <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
+        <div class="gauge-eyebrow" id="gauge-rec-eyebrow">Status</div>
       </div>
-      <button type="button" class="next-action-cta" id="next-action-cta" style="display:none;"></button>
-      <!-- Contextual-read-only: up to two actions instead of one, per the
-           spec's "Run a Scan / Review or Add More Details" pairing. -->
-      <div class="contextual-actions" id="contextual-actions" style="display:none;">
-        <button type="button" class="next-action-cta" id="contextual-scan-btn">Run a Scan →</button>
-        <button type="button" class="next-action-cta" id="contextual-review-btn">Review or Add More Details →</button>
+      <div class="gauge-block" id="gauge-confidence">
+        <div class="gauge-svg-wrap" id="gauge-conf-svg-wrap"></div>
+        <div class="gauge-label" id="gauge-conf-label">—</div>
+        <div class="gauge-eyebrow">Confidence</div>
+      </div>
+      <div class="next-step-pill">
+        <span class="next-step-pill-label">Next Step</span>
+        <button type="button" class="next-step-pill-btn" id="next-step-pill-btn">Choose a starting point below</button>
       </div>
     </div>
-    <a href="#" class="view-report-link" id="view-report-link" style="display:none;">View Detailed Report →</a>
+    <div class="dashboard-helpers">
+      <button type="button" class="helper-toggle" data-helper="why">Why <span>▾</span></button>
+      <button type="button" class="helper-toggle" data-helper="unknowns">Unknowns <span>▾</span></button>
+      <button type="button" class="helper-toggle" data-helper="more-info">More Info <span>▾</span></button>
+    </div>
+    <div class="helper-panel" id="helper-panel-why" hidden></div>
+    <div class="helper-panel" id="helper-panel-unknowns" hidden></div>
+    <div class="helper-panel" id="helper-panel-more-info" hidden></div>
   </div>
 
-  <!-- TWO EQUAL ENTRY PATHS -->
-  <div class="entry-paths" id="entry-paths">
-    <div class="entry-path" id="scan-path">
-      <h2>Start with a Scan</h2>
-      <p>A small tool reads your installed apps and devices in seconds — low effort, high yield.</p>
+  <!-- LAYER 2: EVIDENCE NAVIGATION -->
+  <nav class="evidence-nav" id="evidence-nav"></nav>
 
-      <div class="scan-level">
-        <label>
-          <input type="radio" name="scan-level" value="quick" checked> Light Assessment
-          <div class="level-detail">a quick recommendation from what you actually use</div>
-        </label>
-        <label>
-          <input type="radio" name="scan-level" value="standard"> Standard Assessment
-          <div class="level-detail">recommended — the best balance of confidence and effort</div>
-        </label>
-        <label>
-          <input type="radio" name="scan-level" value="full"> Advanced Assessment
-          <div class="level-detail">maximum visibility, every app and device exposed</div>
-        </label>
-        <p id="light-device-hint" style="color:#64748b; font-size:0.78rem; margin-top:0.5rem; display:none;">
-          For the best results, connect the devices you normally use before running a Light Assessment.
-        </p>
-      </div>
-
-      <a href="#" class="scan-button" id="run-scan-btn">Run Scan</a>
-
-      <div class="entry-note">
-        Downloads a small tool. Windows may show a publisher warning — that's expected for a small
-        independent project. Click "More info" → "Run anyway" to continue.
-      </div>
-    </div>
-
-    <div class="entry-path" id="questions-path">
-      <h2>Start with a Few Simple Questions</h2>
-      <p>Tell us what you're trying to accomplish with your next computer — lower volume, higher
-        value than a scan alone.</p>
-      <button type="button" class="questions-button" id="open-questions-btn">Answer a Few Questions</button>
-      <div class="entry-note">
-        No apps or devices required — just what you're planning to use it for.
-      </div>
-    </div>
-  </div>
-
-  <!-- QUESTIONS PANEL — revealed on demand; pre-fillable from scan evidence
-       once it exists, always freely editable. -->
-  <div class="questions-panel" id="questions-panel" style="display:none;">
-    <div class="question-group">
-      <span class="question-group-label">What will you use it for? (pick any that apply)</span>
-      <div class="pill-row" id="intended-use-pills"></div>
-    </div>
-    <div class="question-group">
-      <span class="question-group-label">How does this fit into your setup?</span>
-      <div class="pill-row" id="relationship-pills"></div>
-    </div>
-    <div class="hypothesis-note" id="hypothesis-note" style="display:none;">
-      Pre-filled based on what your scan found — tap any pill to correct us.
-    </div>
-  </div>
-
-  <!-- ADVANCED DISCLOSURE — the persistent, progressively-richer workspace
-       area. Present even with no evidence, appropriately quiet until then. -->
-  <div class="advanced-section">
-    <details class="advanced-disclosure" id="advanced-disclosure">
-      <summary>Advanced — evidence, weighting, and full detail</summary>
-      <div class="advanced-body" id="advanced-body">
-        <p class="advanced-empty">Nothing to show yet — start with a scan or answer a few questions above.</p>
-      </div>
-    </details>
-  </div>
+  <!-- LAYER 3: DETAILS WORKSPACE -->
+  <div class="details-workspace" id="details-workspace"></div>
 
   <!-- HOW IT WORKS -->
   <div class="how-it-works">
@@ -760,18 +752,18 @@
     <div class="steps">
       <div class="step">
         <div class="step-number">1</div>
-        <h3>Download the Scanner</h3>
-        <p>A small Windows tool that reads your installed apps and devices. No installation required — just run it.</p>
+        <h3>Scan Your Computer</h3>
+        <p>A small Windows tool reads your installed apps and devices in seconds — low effort, high yield.</p>
       </div>
       <div class="step">
         <div class="step-number">2</div>
-        <h3>Or Answer a Few Questions</h3>
-        <p>No scanner required — tell us what you're trying to accomplish and we'll get you a directional read.</p>
+        <h3>Add Intended Use</h3>
+        <p>Tell us what you're trying to accomplish — a scan alone can't know your intent.</p>
       </div>
       <div class="step">
         <div class="step-number">3</div>
-        <h3>Watch Your Assessment Grow</h3>
-        <p>Your recommendation, confidence, and next step update as you add evidence — on this same page, every time.</p>
+        <h3>Watch Confidence Grow</h3>
+        <p>Every category above adds evidence. The dashboard updates in place — no new page, no lost progress.</p>
       </div>
     </div>
   </div>
@@ -852,21 +844,24 @@
   <script src="/nav.js"></script>
   <script>
     // ═══════════════════════════════════════════════════════════════════
-    // Adaptive Assessment Surface — one persistent page, evolving content.
+    // Adaptive Assessment Surface — Assessment Dashboard architecture.
     //
-    // Evidence model (see CLAUDE.md, Adaptive Assessment Surface milestone):
-    //   Observation  — raw scanner facts (results.apps/devices/system)
-    //   Evidence     — Guidance Signals + Adaptive Context (this page's
-    //                  questions), both interpreted signals
-    //   Assessment   — computeSynthesis() (unchanged, from assessment.js)
-    //   Recommendation — recommendationFor()/nextActionFor() (new, thin
-    //                  layer on top of Assessment; never a second scorer)
+    // Three persistent layers (see CLAUDE.md, Assessment Dashboard
+    // milestone, for the full design rationale):
+    //   1. Dashboard         — #dashboard, fixed shape, gauges + Next Step
+    //                          pill + Why/Unknowns/More Info toggles.
+    //   2. Evidence Navigation — #evidence-nav, a tab bar over
+    //                          EVIDENCE_CATEGORIES (below); modular by
+    //                          construction — add/remove/rename a category
+    //                          by editing that one array.
+    //   3. Details Workspace — #details-workspace, the only region that
+    //                          substantially changes per selected category.
     //
-    // This page never talks to /api/scan directly except through the exact
-    // same scan-trigger flow index.html already used (session creation,
-    // exe download, localhost:7878/poll handshake) — unchanged from before,
-    // just redirecting back to this same page instead of straight to
-    // report.html on completion.
+    // The assessment engine itself is completely unchanged: computeSynthesis(),
+    // classifyPopulation(), contextualReadFor(), recommendationFor(),
+    // nextActionFor(), determineAssessmentState() all come from
+    // assessment.js exactly as before. This file is a UX/interaction layer
+    // on top of that engine, not a second one.
     // ═══════════════════════════════════════════════════════════════════
 
     const params = new URLSearchParams(window.location.search);
@@ -886,115 +881,236 @@
     function workspaceUrlFor(sid, level) {
       return '/workspace.html?session=' + encodeURIComponent(sid) + '&level=' + encodeURIComponent(level);
     }
-
-    // ───────────────────────────────────────────────────────────────────
-    // Scan entry path — same session-creation/exe-download/handshake logic
-    // this page always had, only the completion redirect target changed
-    // (back to this same surface, not straight to report.html).
-    // ───────────────────────────────────────────────────────────────────
-    const btn = document.getElementById('run-scan-btn');
-    const lightDeviceHint = document.getElementById('light-device-hint');
-    function updateLightDeviceHint() {
-      const checked = document.querySelector('input[name="scan-level"]:checked');
-      if (lightDeviceHint) lightDeviceHint.style.display = (checked && checked.value === 'quick') ? 'block' : 'none';
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-    document.querySelectorAll('input[name="scan-level"]').forEach((radio) => {
-      radio.addEventListener('change', updateLightDeviceHint);
-    });
-    updateLightDeviceHint();
 
-    btn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const scanLevel = document.querySelector('input[name="scan-level"]:checked').value;
+    function currentAdaptiveContext() {
+      return loadAdaptiveContext(sessionId);
+    }
+    function computeCurrentSynthesis() {
+      if (!currentResults) return null;
+      const personalContext = sessionId ? loadPersonalContext(sessionId, params) : new Map();
+      return computeSynthesis(currentResults, personalContext);
+    }
 
-      btn.textContent = 'Starting...';
-      btn.style.background = '#475569';
-      btn.style.cursor = 'default';
-      btn.style.pointerEvents = 'none';
+    // A very light, self-contained platform check (deliberately not shared
+    // with nav.js's own detectPlatform() — same "self-contained duplication
+    // over cross-file coupling" precedent nav.js's own header comment
+    // documents) — used only to explain, never to hide, the Current
+    // Computer category when scanning genuinely doesn't apply here. See
+    // CLAUDE.md, "living recommendation" — evidence sources stay visible
+    // and explain themselves rather than disappearing.
+    function isLikelyNonWindows() {
+      const uaPlatform = (navigator.platform || '').toLowerCase();
+      const ua = (navigator.userAgent || '').toLowerCase();
+      if (uaPlatform.includes('win') || ua.includes('windows')) return false;
+      return uaPlatform.includes('mac') || uaPlatform.includes('linux') || ua.includes('android') || ua.includes('iphone') || ua.includes('ipad');
+    }
 
-      let newSessionId;
-      try {
-        const res = await fetch('/api/session', { method: 'POST' });
-        const data = await res.json();
-        newSessionId = data.session_id;
-      } catch (err) {
-        btn.textContent = 'Error — try again';
-        btn.style.background = '#ef4444';
-        return;
+    // ───────────────────────────────────────────────────────────────────
+    // EVIDENCE CATEGORIES — the single source of truth for the Evidence
+    // Navigation bar and the Details Workspace it drives. Adding a new
+    // category (or renaming/removing one) is a one-line change here; no
+    // other markup needs to change. Each category is an evidence SOURCE,
+    // not a workflow step — order is a reasonable default reading order,
+    // not an enforced sequence (the UI recommends via the Next Step pill,
+    // never requires a specific order).
+    // ───────────────────────────────────────────────────────────────────
+    const EVIDENCE_CATEGORIES = [
+      { id: 'current-computer', label: 'Current Computer', render: renderCurrentComputerTab },
+      { id: 'intended-use', label: 'Intended Use', render: renderIntendedUseTab },
+      { id: 'findings', label: 'Findings', render: renderFindingsTab },
+      { id: 'profile', label: 'Profile', render: renderProfileTab },
+      { id: 'community', label: 'Community', render: renderCommunityTab },
+    ];
+    // Chosen once, on initial load only (see chooseInitialTab()) — never
+    // auto-changed again afterward, so a user's own tab clicks are always
+    // the last word and the workspace never jumps out from under them.
+    let activeTabId = 'current-computer';
+
+    function switchTab(tabId) {
+      activeTabId = tabId;
+      renderEvidenceNav();
+      renderDetailsWorkspace();
+    }
+
+    function renderEvidenceNav() {
+      const nav = document.getElementById('evidence-nav');
+      nav.innerHTML = EVIDENCE_CATEGORIES.map((cat) =>
+        `<button type="button" class="evidence-tab${cat.id === activeTabId ? ' active' : ''}" data-tab="${cat.id}">${escapeHtml(cat.label)}</button>`
+      ).join('');
+      nav.querySelectorAll('.evidence-tab').forEach((el) => {
+        el.addEventListener('click', () => switchTab(el.dataset.tab));
+      });
+    }
+
+    function renderDetailsWorkspace() {
+      const container = document.getElementById('details-workspace');
+      const category = EVIDENCE_CATEGORIES.find((c) => c.id === activeTabId) || EVIDENCE_CATEGORIES[0];
+      category.render(container);
+    }
+
+    // ───────────────────────────────────────────────────────────────────
+    // CURRENT COMPUTER — the scan entry point, and the reference
+    // interaction model the other categories follow: a compact action when
+    // there's nothing yet, progressively more detail once evidence exists.
+    // ───────────────────────────────────────────────────────────────────
+    function renderCurrentComputerTab(container) {
+      if (!currentResults) {
+        const nonWindowsNote = isLikelyNonWindows()
+          ? `<div class="workspace-note">Scanning requires a Windows PC. You're viewing this page from a
+               non-Windows device — you can still add Intended Use, or come back to this tab from a Windows
+               machine (or import a scan you already ran elsewhere).</div>`
+          : '';
+        container.innerHTML = `
+          <div class="workspace-heading">Scan This Computer</div>
+          <div class="workspace-subtext">A small tool reads your installed apps and devices in seconds — low effort, high yield.</div>
+          <div class="scan-level">
+            <label>
+              <input type="radio" name="scan-level" value="quick" checked> Light Assessment
+              <div class="level-detail">a quick recommendation from what you actually use</div>
+            </label>
+            <label>
+              <input type="radio" name="scan-level" value="standard"> Standard Assessment
+              <div class="level-detail">recommended — the best balance of confidence and effort</div>
+            </label>
+            <label>
+              <input type="radio" name="scan-level" value="full"> Advanced Assessment
+              <div class="level-detail">maximum visibility, every app and device exposed</div>
+            </label>
+            <p id="light-device-hint" style="color:#64748b; font-size:0.78rem; margin-top:0.5rem; display:none;">
+              For the best results, connect the devices you normally use before running a Light Assessment.
+            </p>
+          </div>
+          <a href="#" class="scan-button" id="run-scan-btn">Run Scan</a>
+          <div class="entry-note">
+            Downloads a small tool. Windows may show a publisher warning — that's expected for a small
+            independent project. Click "More info" → "Run anyway" to continue.
+          </div>
+          ${nonWindowsNote}
+        `;
+        wireScanButton();
+      } else {
+        const s = currentResults.system || {};
+        const appTotal = ['native', 'emulated', 'unsupported', 'unknown'].reduce((n, b) => n + ((currentResults[b] || []).length), 0);
+        const deviceTotal = (currentResults.devices || []).length;
+        container.innerHTML = `
+          <div class="workspace-heading">This Computer</div>
+          <div class="workspace-subtext">Scanned as part of this assessment. Re-scan anytime — your other evidence carries forward.</div>
+          <div class="summary-grid">
+            ${s.os_version ? `<div class="summary-item"><label>OS</label><span>${escapeHtml(s.os_version)}</span></div>` : ''}
+            ${s.cpu ? `<div class="summary-item"><label>CPU</label><span>${escapeHtml(s.cpu)}</span></div>` : ''}
+            <div class="summary-item"><label>Applications</label><span>${appTotal}</span></div>
+            <div class="summary-item"><label>Devices</label><span>${deviceTotal}</span></div>
+          </div>
+          <a href="#" class="scan-button" id="run-scan-btn" style="font-size:0.85rem; padding:0.55rem 1.2rem;">Scan Again</a>
+          <div class="workspace-links">
+            <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
+          </div>
+        `;
+        wireScanButton();
       }
+    }
 
-      const link = document.createElement('a');
-      link.href = '/ngpcx-scanner.exe';
-      link.download = 'ngpcx-scanner.exe';
-      link.click();
+    // Re-attached every time the Current Computer tab renders (its DOM is
+    // rebuilt via innerHTML each time), rather than bound once at page
+    // load — the same session-creation/exe-download/localhost:7878 poll
+    // handshake this surface has always used, just re-wired per render.
+    function wireScanButton() {
+      const btn = document.getElementById('run-scan-btn');
+      if (!btn) return;
+      const lightDeviceHint = document.getElementById('light-device-hint');
+      function updateLightDeviceHint() {
+        const checked = document.querySelector('input[name="scan-level"]:checked');
+        if (lightDeviceHint) lightDeviceHint.style.display = (checked && checked.value === 'quick') ? 'block' : 'none';
+      }
+      document.querySelectorAll('input[name="scan-level"]').forEach((radio) => {
+        radio.addEventListener('change', updateLightDeviceHint);
+      });
+      updateLightDeviceHint();
 
-      btn.textContent = '⏳ Waiting for scanner...';
-      showWaitingMessage();
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const levelInput = document.querySelector('input[name="scan-level"]:checked');
+        const scanLevel = levelInput ? levelInput.value : 'quick';
 
-      pollInterval = setInterval(async () => {
+        btn.textContent = 'Starting...';
+        btn.style.background = '#475569';
+        btn.style.cursor = 'default';
+        btn.style.pointerEvents = 'none';
+
+        let newSessionId;
         try {
-          await fetch('http://localhost:7878?session=' + newSessionId + '&level=' + scanLevel, {
-            signal: AbortSignal.timeout(500)
-          });
-          clearInterval(pollInterval);
-          window.location.href = assessUrlFor(newSessionId, scanLevel);
-          return;
-        } catch (e) { /* localhost handshake not available yet — fall through to server poll */ }
-
-        try {
-          const res = await fetch('/api/session/' + newSessionId);
+          const res = await fetch('/api/session', { method: 'POST' });
           const data = await res.json();
-          if (data.status === 'complete') {
+          newSessionId = data.session_id;
+        } catch (err) {
+          btn.textContent = 'Error — try again';
+          btn.style.background = '#ef4444';
+          return;
+        }
+
+        const link = document.createElement('a');
+        link.href = '/ngpcx-scanner.exe';
+        link.download = 'ngpcx-scanner.exe';
+        link.click();
+
+        btn.textContent = '⏳ Waiting for scanner...';
+        showWaitingMessage();
+
+        pollInterval = setInterval(async () => {
+          try {
+            await fetch('http://localhost:7878?session=' + newSessionId + '&level=' + scanLevel, {
+              signal: AbortSignal.timeout(500)
+            });
             clearInterval(pollInterval);
             window.location.href = assessUrlFor(newSessionId, scanLevel);
-          }
-        } catch (e) { /* transient — next tick retries */ }
-      }, 1000);
-    });
+            return;
+          } catch (e) { /* localhost handshake not available yet — fall through to server poll */ }
+
+          try {
+            const res = await fetch('/api/session/' + newSessionId);
+            const data = await res.json();
+            if (data.status === 'complete') {
+              clearInterval(pollInterval);
+              window.location.href = assessUrlFor(newSessionId, scanLevel);
+            }
+          } catch (e) { /* transient — next tick retries */ }
+        }, 1000);
+      });
+    }
 
     function showWaitingMessage() {
-      const scanPath = document.getElementById('scan-path');
+      const container = document.getElementById('details-workspace');
       const msg = document.createElement('div');
       msg.id = 'waiting-msg';
-      msg.style.cssText = `
-        margin-top: 1rem;
-        padding: 0.85rem 1.1rem;
-        background: rgba(59, 130, 246, 0.1);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 10px;
-        color: #93c5fd;
-        font-size: 0.85rem;
-        line-height: 1.5;
-        text-align: left;
-      `;
+      msg.className = 'workspace-note';
+      msg.style.marginTop = '1rem';
       msg.innerHTML = `
         <strong style="color:#f1f5f9">Scanner downloaded!</strong><br>
         Run <code style="color:#3b82f6">ngpcx-scanner.exe</code> to scan your machine.
         This page updates automatically once it's done.<br>
         <span style="font-size:0.8rem;">Download didn't start? <a href="/ngpcx-scanner.exe" download="ngpcx-scanner.exe" style="color:#3b82f6;">Click here</a>.</span>
       `;
-      scanPath.appendChild(msg);
+      container.appendChild(msg);
     }
 
     if (params.get('rescan') === '1' && sessionStorage.getItem(CARRY_FORWARD_KEY)) {
-      const hero = document.querySelector('.hero');
+      const hero = document.querySelector('.hero-compact');
       const note = document.createElement('div');
-      note.style.cssText = 'max-width:420px; margin:1rem auto 0 auto; padding:0.75rem 1rem; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; color:#93c5fd; font-size:0.85rem; text-align:center;';
+      note.style.cssText = 'max-width:420px; margin:0.75rem auto 0 auto; padding:0.65rem 1rem; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; color:#93c5fd; font-size:0.82rem; text-align:center;';
       note.textContent = 'Continuing your assessment — your personal notes will carry forward once this scan completes.';
       hero.appendChild(note);
     }
 
     // ───────────────────────────────────────────────────────────────────
-    // Questions entry path — reveals the pill panel in place. No navigation,
-    // no separate tool: this is the same page, just showing more of itself.
+    // INTENDED USE — the pill-based hypothesis editor, now a first-class
+    // evidence category rather than a panel revealed by a button click.
+    // Navigating to this tab IS the reveal action.
     // ───────────────────────────────────────────────────────────────────
-    const questionsPanel = document.getElementById('questions-panel');
-    document.getElementById('open-questions-btn').addEventListener('click', () => {
-      questionsPanel.style.display = 'block';
-      questionsPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    function renderPillGroup(containerId, options, labels, selectedValues, multi, onToggle) {
+    function renderPillGroup(containerId, options, labels, selectedValues, onToggle) {
       const container = document.getElementById(containerId);
       container.innerHTML = options.map((opt) => {
         const isSelected = selectedValues.includes(opt);
@@ -1003,10 +1119,6 @@
       container.querySelectorAll('.pill').forEach((el) => {
         el.addEventListener('click', () => onToggle(el.dataset.value));
       });
-    }
-
-    function currentAdaptiveContext() {
-      return loadAdaptiveContext(sessionId);
     }
 
     // "Effective" view merges unconfirmed hints in for DISPLAY only — never
@@ -1024,170 +1136,61 @@
       return inferRelationshipHint(currentResults) || ctx.relationship;
     }
 
-    function renderQuestionsPanel() {
+    function renderIntendedUseTab(container) {
+      container.innerHTML = `
+        <div class="workspace-heading">What Are You Trying to Accomplish?</div>
+        <div class="workspace-subtext">A scan can't know your intent — this is the other half of the evidence a scan alone can't provide.</div>
+        <div class="question-group">
+          <span class="question-group-label">What will you use it for? (pick any that apply)</span>
+          <div class="pill-row" id="intended-use-pills"></div>
+        </div>
+        <div class="question-group">
+          <span class="question-group-label">How does this fit into your setup?</span>
+          <div class="pill-row" id="relationship-pills"></div>
+        </div>
+        <div class="hypothesis-note" id="hypothesis-note" style="display:none;">
+          Pre-filled based on what your scan found — tap any pill to correct us.
+        </div>
+      `;
+
       const ctx = currentAdaptiveContext();
       const effUse = effectiveIntendedUse(ctx);
       const effRel = effectiveRelationship(ctx);
       const isHinted = !ctx.updated_at && (effUse.length > 0 || !!effRel);
 
-      renderPillGroup('intended-use-pills', INTENDED_USE_OPTIONS, INTENDED_USE_LABELS, effUse, true, (value) => {
+      renderPillGroup('intended-use-pills', INTENDED_USE_OPTIONS, INTENDED_USE_LABELS, effUse, (value) => {
         const displayed = effectiveIntendedUse(currentAdaptiveContext());
         const next = displayed.includes(value) ? displayed.filter((v) => v !== value) : displayed.concat([value]);
         saveAdaptiveContext(sessionId, { intended_use: next, relationship: effectiveRelationship(currentAdaptiveContext()) });
         renderAll();
       });
 
-      renderPillGroup('relationship-pills', RELATIONSHIP_OPTIONS, RELATIONSHIP_LABELS, effRel ? [effRel] : [], false, (value) => {
+      renderPillGroup('relationship-pills', RELATIONSHIP_OPTIONS, RELATIONSHIP_LABELS, effRel ? [effRel] : [], (value) => {
         const displayedRel = effectiveRelationship(currentAdaptiveContext());
         const next = displayedRel === value ? null : value; // click again to clear
         saveAdaptiveContext(sessionId, { intended_use: effectiveIntendedUse(currentAdaptiveContext()), relationship: next });
         renderAll();
       });
 
-      // Suggested-but-unconfirmed pills get the ring treatment instead of
-      // the filled/selected one, and the panel opens automatically once
-      // there's something to show — the "here's what we think, correct us"
-      // moment shouldn't require the user to already know to look for it.
       if (isHinted) {
         document.querySelectorAll('#intended-use-pills .pill.selected, #relationship-pills .pill.selected')
           .forEach((el) => { el.classList.remove('selected'); el.classList.add('suggested'); });
         document.getElementById('hypothesis-note').style.display = 'block';
-        if (questionsPanel.style.display === 'none') questionsPanel.style.display = 'block';
-      } else {
-        document.getElementById('hypothesis-note').style.display = 'none';
       }
     }
 
     // ───────────────────────────────────────────────────────────────────
-    // Recommendation panel + entry-path compaction + advanced disclosure —
-    // recomputed on every state change. Recommendation/next-action always
-    // read the RAW stored Adaptive Context (never the hint-merged view),
-    // per "do not silently treat inferred intent as confirmed."
+    // FINDINGS — classified evidence needing a closer look. Formerly the
+    // "Advanced" disclosure's content, now a first-class category since it
+    // answers its own evidence question ("what's still uncertain") rather
+    // than being a catch-all detail dump.
     // ───────────────────────────────────────────────────────────────────
-    function computeCurrentSynthesis() {
-      if (!currentResults) return null;
-      const personalContext = sessionId ? loadPersonalContext(sessionId, params) : new Map();
-      return computeSynthesis(currentResults, personalContext);
-    }
-
-    // Scroll/reveal helpers shared by every state's action buttons below —
-    // kept in one place so the contextual-read panel and the ordinary
-    // single-CTA button never diverge in what "open questions"/"scroll to
-    // scan" actually does.
-    function revealQuestionsPanel() {
-      questionsPanel.style.display = 'block';
-      questionsPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    function scrollToScanPath() {
-      document.getElementById('scan-path').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    function renderRecommendation() {
-      const hasSession = !!(sessionId && currentResults);
-      const ctx = currentAdaptiveContext();
-      const synthesis = hasSession ? computeCurrentSynthesis() : null;
-      const state = determineAssessmentState({ hasSession, adaptiveContext: ctx });
-
-      const eyebrow = document.getElementById('rec-eyebrow');
-      const badge = document.getElementById('rec-badge');
-      const confEl = document.getElementById('rec-confidence');
-      const explanationEl = document.getElementById('rec-explanation');
-      const cta = document.getElementById('next-action-cta');
-      const contextualActions = document.getElementById('contextual-actions');
-
-      badge.classList.remove('contextual');
-
-      if (state === ASSESSMENT_STATE_SCAN_BACKED) {
-        // Compatibility assessment — the existing, evidence-backed verdict.
-        // Unchanged behavior from before this milestone.
-        eyebrow.textContent = 'Compatibility Assessment';
-        const rec = recommendationFor(synthesis);
-        badge.textContent = rec.label;
-        badge.style.background = rec.color + '33';
-        badge.style.color = rec.color;
-        confEl.textContent = (synthesis && !synthesis.empty) ? synthesis.confidenceLabel : '';
-        explanationEl.style.display = 'none';
-      } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
-        // Candidate suitability — a directional read from Adaptive Context
-        // alone. Deliberately a different vocabulary/color/eyebrow from the
-        // compatibility badge above, and never a numeric score — see
-        // assessment.js, contextualReadFor().
-        const read = contextualReadFor(ctx);
-        eyebrow.textContent = 'Early Read · Based on Your Answers, Not a Scan';
-        badge.textContent = read.label;
-        badge.classList.add('contextual');
-        badge.style.background = '';
-        badge.style.color = '';
-        confEl.textContent = '';
-        explanationEl.textContent = read.explanation;
-        explanationEl.style.display = 'block';
-      } else {
-        // No read yet.
-        eyebrow.textContent = 'Status';
-        badge.textContent = 'Too Early to Tell';
-        badge.style.background = RECOMMENDATION_COLORS['Too Early to Tell'] + '33';
-        badge.style.color = RECOMMENDATION_COLORS['Too Early to Tell'];
-        confEl.textContent = '';
-        explanationEl.style.display = 'none';
-      }
-
-      const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
-      document.getElementById('next-action-text').textContent = next.text;
-
-      // Contextual state gets its own two-action row (Run a Scan / Review
-      // or Add More Details) per the product spec; every other state keeps
-      // the single next-action-cta button, unchanged.
-      if (state === ASSESSMENT_STATE_CONTEXTUAL) {
-        cta.style.display = 'none';
-        contextualActions.style.display = 'flex';
-        document.getElementById('contextual-scan-btn').onclick = scrollToScanPath;
-        document.getElementById('contextual-review-btn').onclick = revealQuestionsPanel;
-      } else {
-        contextualActions.style.display = 'none';
-        if (next.kind === 'questions' || next.kind === 'start') {
-          cta.style.display = 'inline-block';
-          cta.textContent = 'Answer a few questions →';
-          cta.onclick = revealQuestionsPanel;
-        } else if (next.kind === 'scan') {
-          cta.style.display = 'inline-block';
-          cta.textContent = 'Scroll to scan →';
-          cta.onclick = scrollToScanPath;
-        } else if (next.kind === 'refine' || next.kind === 'report') {
-          cta.style.display = 'inline-block';
-          cta.textContent = next.kind === 'refine' ? 'Open Advanced →' : 'View Detailed Report →';
-          cta.onclick = () => {
-            if (next.kind === 'report') { window.location.href = reportUrlFor(sessionId, scanLevelParam); }
-            else { document.getElementById('advanced-disclosure').open = true; document.getElementById('advanced-disclosure').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-          };
-        } else {
-          // 'start-empty' (no evidence of any kind) and 'optional-scan' /
-          // 'none-needed' (already surfaced via the contextual-actions row
-          // above when applicable) intentionally show no single CTA here —
-          // see CLAUDE.md, Adaptive Assessment Surface milestone, on why
-          // the truly-empty state must not nudge toward one entry path.
-          cta.style.display = 'none';
-        }
-      }
-
-      const viewReport = document.getElementById('view-report-link');
-      if (hasSession) {
-        viewReport.style.display = 'inline-block';
-        viewReport.href = reportUrlFor(sessionId, scanLevelParam);
-      } else {
-        viewReport.style.display = 'none';
-      }
-    }
-
-    function renderEntryPaths() {
-      const ctx = currentAdaptiveContext();
-      const hasEvidence = !!(sessionId && currentResults) || hasAdaptiveContext(ctx);
-      document.getElementById('entry-paths').classList.toggle('compact', hasEvidence);
-    }
-
-    function renderAdvanced() {
-      const body = document.getElementById('advanced-body');
+    function renderFindingsTab(container) {
       if (!currentResults) {
-        body.innerHTML = '<p class="advanced-empty">Nothing to show yet — start with a scan or answer a few questions above.</p>';
+        container.innerHTML = `
+          <div class="workspace-heading">Findings</div>
+          <p class="workspace-empty">Nothing to show yet — scan this computer or add Intended Use to start building findings.</p>
+        `;
         return;
       }
       const personalContext = loadPersonalContext(sessionId, params);
@@ -1195,40 +1198,279 @@
       const synthesis = computeSynthesis(currentResults, personalContext);
 
       const deservesAttention = classified
-        .filter(({ app, effectiveBucket, isBackground, decision }) =>
-          classifyAssessmentItem({ decision, bucket: effectiveBucket, app }) === 'deservesAttention')
-        .slice(0, 5);
+        .filter(({ app, effectiveBucket, decision }) =>
+          classifyAssessmentItem({ decision, bucket: effectiveBucket, app }) === 'deservesAttention');
 
       const statsHtml = `
-        <div class="advanced-stats">
-          <div class="advanced-stat"><div class="advanced-stat-count">${synthesis.empty ? 0 : synthesis.materialCount}</div><div class="advanced-stat-label">Materially Influencing</div></div>
-          <div class="advanced-stat"><div class="advanced-stat-count">${synthesis.empty ? 0 : synthesis.backgroundCount}</div><div class="advanced-stat-label">Background / Platform</div></div>
-          <div class="advanced-stat"><div class="advanced-stat-count">${(currentResults.devices || []).length}</div><div class="advanced-stat-label">Devices</div></div>
+        <div class="findings-stats">
+          <div class="findings-stat"><div class="findings-stat-count">${synthesis.empty ? 0 : synthesis.materialCount}</div><div class="findings-stat-label">Materially Influencing</div></div>
+          <div class="findings-stat"><div class="findings-stat-count">${synthesis.empty ? 0 : synthesis.backgroundCount}</div><div class="findings-stat-label">Background / Platform</div></div>
+          <div class="findings-stat"><div class="findings-stat-count">${(currentResults.devices || []).length}</div><div class="findings-stat-label">Devices</div></div>
         </div>`;
 
       const attentionHtml = deservesAttention.length > 0
-        ? '<ul class="advanced-attention-list">' + deservesAttention.map(({ app }) => `<li>• ${escapeHtmlLocal(app.name)}</li>`).join('') + '</ul>'
-        : '<p class="advanced-empty">No open items are currently pulling your recommendation down — nice.</p>';
+        ? '<ul class="findings-attention-list">' + deservesAttention.slice(0, 8).map(({ app }) => `<li>• ${escapeHtml(app.name)}</li>`).join('') +
+          (deservesAttention.length > 8 ? `<li style="color:#64748b;">…and ${deservesAttention.length - 8} more</li>` : '') + '</ul>'
+        : '<p class="workspace-empty">No open items are currently pulling your recommendation down — nice.</p>';
 
-      body.innerHTML = statsHtml +
-        '<p class="advanced-empty" style="margin-bottom:0.5rem;">A few items worth a closer look:</p>' +
-        attentionHtml +
-        `<div class="advanced-links">
-           <a href="${workspaceUrlFor(sessionId, scanLevelParam)}">Open full Workspace →</a>
-           <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
-         </div>`;
+      container.innerHTML = `
+        <div class="workspace-heading">Findings</div>
+        <div class="workspace-subtext">Items with evidence that's currently thin — reviewing any of these is the fastest way to raise Confidence.</div>
+        ${statsHtml}
+        ${attentionHtml}
+        <div class="workspace-links">
+          <a href="${workspaceUrlFor(sessionId, scanLevelParam)}">Open Full Workspace →</a>
+          <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
+        </div>
+      `;
     }
 
-    function escapeHtmlLocal(s) {
-      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    // ───────────────────────────────────────────────────────────────────
+    // PROFILE — modest by design. Real, currently-available information
+    // only (session/scan metadata, sign-in state via the shared shell) —
+    // no placeholder data invented just to populate the tab. See CLAUDE.md:
+    // this codebase has an explicit standing rule against fabricating
+    // history/state that doesn't genuinely exist yet.
+    // ───────────────────────────────────────────────────────────────────
+    function renderProfileTab(container) {
+      const auth = (window.NavShell && window.NavShell.auth) || null;
+      const signedIn = auth && auth.user;
+      const scanLine = currentResults
+        ? `<div class="summary-item"><label>Assessment Level</label><span>${escapeHtml(scanLevelParam)}</span></div>`
+        : '';
+      container.innerHTML = `
+        <div class="workspace-heading">Profile</div>
+        <div class="workspace-subtext">Who this assessment belongs to, and what's been captured so far. Nothing here is ever sent to our servers except your scan results.</div>
+        <div class="summary-grid">
+          <div class="summary-item"><label>Session</label><span>${sessionId ? 'Active' : 'None yet'}</span></div>
+          ${scanLine}
+          <div class="summary-item"><label>Sign-in</label><span>${signedIn ? escapeHtml(auth.user.displayName || 'Signed in') : 'Not signed in'}</span></div>
+        </div>
+        ${signedIn
+          ? '<div class="workspace-note">Signed in — your community contributions are tracked under your account.</div>'
+          : '<div class="workspace-note">Signing in is optional. It only matters if you plan to contribute compatibility findings to the community catalog.</div>'}
+      `;
+    }
+
+    // ───────────────────────────────────────────────────────────────────
+    // COMMUNITY — modest by design, same reasoning as Profile. Community
+    // contribution today happens per-app inside the Workspace ("Share your
+    // Findings"), not on this surface — this tab explains that honestly
+    // rather than duplicating a feature that lives elsewhere.
+    // ───────────────────────────────────────────────────────────────────
+    function renderCommunityTab(container) {
+      container.innerHTML = `
+        <div class="workspace-heading">Community</div>
+        <div class="workspace-subtext">CheckMyARM's compatibility data is partly community-sourced. You can contribute what you learn about a specific app from the Workspace.</div>
+        <p class="workspace-empty">Contribute a compatibility finding for a specific app from the Workspace, where each app's own evidence and "Share your Findings" action live.</p>
+        <div class="workspace-links">
+          ${sessionId ? `<a href="${workspaceUrlFor(sessionId, scanLevelParam)}">Open Workspace →</a>` : ''}
+          <a href="/my-submissions.html">My Contributions →</a>
+        </div>
+      `;
+    }
+
+    // ───────────────────────────────────────────────────────────────────
+    // DASHBOARD — gauges, Next Step pill, Why/Unknowns/More Info. Fixed
+    // shape; only values/colors/panel content change.
+    // ───────────────────────────────────────────────────────────────────
+    function gaugeSvg(percent, color) {
+      const size = 64, stroke = 6, r = (size - stroke) / 2;
+      const circumference = 2 * Math.PI * r;
+      const clamped = Math.max(0, Math.min(100, percent));
+      const offset = circumference - (clamped / 100) * circumference;
+      return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <circle cx="${size / 2}" cy="${size / 2}" r="${r}" stroke="#334155" stroke-width="${stroke}" fill="none"/>
+        <circle cx="${size / 2}" cy="${size / 2}" r="${r}" stroke="${color}" stroke-width="${stroke}" fill="none"
+          stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"
+          transform="rotate(-90 ${size / 2} ${size / 2})"/>
+      </svg>`;
+    }
+
+    const NEXT_STEP_PILL_LABELS = {
+      'start-empty': 'Choose a starting point below',
+      'questions': 'Add Intended Use',
+      'scan': 'Run a Scan',
+      'optional-scan': 'Scan Optional — Add Detail',
+      'none-needed': 'Early Read Ready',
+      'start': 'Add More Detail',
+      'refine': 'Review Findings',
+      'report': 'View Detailed Report',
+    };
+    // Which evidence tab the pill's click switches to — 'report' is the one
+    // exception that navigates away entirely (to the Detailed Report), and
+    // 'start-empty' is the one case with no action at all (see the inert
+    // pill styling), matching the "recommend, don't require" principle.
+    const NEXT_STEP_TAB_TARGET = {
+      'questions': 'intended-use',
+      'scan': 'current-computer',
+      'optional-scan': 'current-computer',
+      'none-needed': 'intended-use',
+      'start': 'intended-use',
+      'refine': 'findings',
+    };
+
+    function renderDashboard() {
+      const hasSession = !!(sessionId && currentResults);
+      const ctx = currentAdaptiveContext();
+      const synthesis = hasSession ? computeCurrentSynthesis() : null;
+      const state = determineAssessmentState({ hasSession, adaptiveContext: ctx });
+
+      // Recommendation gauge — a full colored ring (a status dial, not a
+      // proportional fill) since the taxonomy is categorical, not a
+      // continuous 0-100 scale. Confidence, below, IS proportional.
+      let recColor, recLabel, recEyebrow;
+      if (state === ASSESSMENT_STATE_SCAN_BACKED) {
+        const rec = recommendationFor(synthesis);
+        recColor = rec.color; recLabel = rec.label; recEyebrow = 'Compatibility Assessment';
+      } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
+        const read = contextualReadFor(ctx);
+        recColor = '#2dd4bf'; recLabel = read.label; recEyebrow = 'Early Read';
+      } else {
+        recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recEyebrow = 'Status';
+      }
+      document.getElementById('gauge-rec-svg-wrap').innerHTML = gaugeSvg(100, recColor);
+      document.getElementById('gauge-rec-label').textContent = recLabel;
+      document.getElementById('gauge-rec-label').style.color = recColor;
+      document.getElementById('gauge-rec-eyebrow').textContent = recEyebrow;
+
+      // Confidence gauge — proportional, only meaningful once a scan-backed
+      // assessment exists. Muted/empty otherwise, per "avoid displaying a
+      // numeric readiness/confidence figure for a context-only result."
+      const confPct = (synthesis && !synthesis.empty) ? synthesis.confidencePct : 0;
+      const confColor = (synthesis && !synthesis.empty) ? confidenceDisplayColor(synthesis.confidenceLabel) : '#334155';
+      document.getElementById('gauge-conf-svg-wrap').innerHTML = gaugeSvg(confPct, confColor);
+      document.getElementById('gauge-conf-label').textContent = (synthesis && !synthesis.empty) ? synthesis.confidenceLabel : 'No Scan Yet';
+      document.getElementById('gauge-conf-label').style.color = (synthesis && !synthesis.empty) ? confColor : '#64748b';
+
+      // Next Step pill.
+      const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
+      const pillBtn = document.getElementById('next-step-pill-btn');
+      pillBtn.textContent = NEXT_STEP_PILL_LABELS[next.kind] || next.text;
+      const target = NEXT_STEP_TAB_TARGET[next.kind];
+      if (next.kind === 'report') {
+        pillBtn.classList.remove('inert');
+        pillBtn.onclick = () => { window.location.href = reportUrlFor(sessionId, scanLevelParam); };
+      } else if (target) {
+        pillBtn.classList.remove('inert');
+        pillBtn.onclick = () => switchTab(target);
+      } else {
+        // 'start-empty' — deliberately no single recommended action.
+        pillBtn.classList.add('inert');
+        pillBtn.onclick = null;
+      }
+
+      renderHelperPanels(state, ctx, synthesis);
+    }
+
+    // Calm, non-alarming palette for the Confidence gauge — same mapping
+    // report.html's confidenceDisplayColor() already uses, kept in sync
+    // here rather than imported (this file has no module system to import
+    // from report.html's inline script; the mapping is tiny and stable).
+    function confidenceDisplayColor(label) {
+      if (label === 'High Confidence') return '#10b981';
+      if (label === 'Moderate Confidence') return '#f59e0b';
+      return '#93c5fd';
+    }
+
+    // Why / Unknowns / More Info — controls always visible and enabled;
+    // content adapts to the current state rather than the toggle itself
+    // being hidden or disabled when evidence is thin.
+    let openHelperId = null;
+    function renderHelperPanels(state, ctx, synthesis) {
+      const whyBody = document.getElementById('helper-panel-why');
+      const unknownsBody = document.getElementById('helper-panel-unknowns');
+      const moreInfoBody = document.getElementById('helper-panel-more-info');
+
+      if (state === ASSESSMENT_STATE_SCAN_BACKED && synthesis && !synthesis.empty) {
+        whyBody.innerHTML = `<p>${escapeHtml(synthesis.explanation)}</p>`;
+      } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
+        whyBody.innerHTML = `<p>${escapeHtml(contextualReadFor(ctx).explanation)}</p>`;
+      } else {
+        whyBody.innerHTML = `<p>There's not enough evidence yet to explain a recommendation. Add evidence from
+          Current Computer or Intended Use — even one is enough for an early read.</p>`;
+      }
+
+      if (state === ASSESSMENT_STATE_SCAN_BACKED && currentResults) {
+        const personalContext = loadPersonalContext(sessionId, params);
+        const classified = classifyPopulation(currentResults, personalContext);
+        const deservesAttention = classified.filter(({ app, effectiveBucket, decision }) =>
+          classifyAssessmentItem({ decision, bucket: effectiveBucket, app }) === 'deservesAttention');
+        unknownsBody.innerHTML = deservesAttention.length > 0
+          ? `<p>${deservesAttention.length} item${deservesAttention.length === 1 ? '' : 's'} currently have thin evidence:</p>
+             <ul>${deservesAttention.slice(0, 5).map(({ app }) => `<li>• ${escapeHtml(app.name)}</li>`).join('')}</ul>
+             <div class="helper-links"><a href="#" data-switch-tab="findings">See all in Findings →</a></div>`
+          : `<p>Nothing is currently pulling your Confidence down — every material item has enough evidence.</p>`;
+      } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
+        unknownsBody.innerHTML = `<p>Unknowns require a scan — an early read from context alone doesn't evaluate
+          any specific application or device, so there's nothing yet to list here.</p>`;
+      } else {
+        unknownsBody.innerHTML = `<p>Nothing scanned yet — unknowns will appear here once you scan this computer.</p>`;
+      }
+
+      if (currentResults) {
+        const appTotal = ['native', 'emulated', 'unsupported', 'unknown'].reduce((n, b) => n + ((currentResults[b] || []).length), 0);
+        const deviceTotal = (currentResults.devices || []).length;
+        moreInfoBody.innerHTML = `
+          <div class="helper-stats">
+            <div class="helper-stat"><div class="helper-stat-count">${appTotal}</div><div class="helper-stat-label">Apps</div></div>
+            <div class="helper-stat"><div class="helper-stat-count">${deviceTotal}</div><div class="helper-stat-label">Devices</div></div>
+          </div>
+          <p>This assessment is based on a ${escapeHtml(scanLevelParam)} scan${hasAdaptiveContext(ctx) ? ' plus your Intended Use answers' : ''}.</p>
+          <div class="helper-links">
+            <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
+            <a href="/how-it-thinks.html">How CheckMyARM Thinks →</a>
+          </div>`;
+      } else {
+        moreInfoBody.innerHTML = `<p>No summary yet — this fills in once you scan or add Intended Use.</p>
+          <div class="helper-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>`;
+      }
+
+      moreInfoBody.querySelectorAll('[data-switch-tab]').forEach((el) => {
+        el.addEventListener('click', (e) => { e.preventDefault(); switchTab(el.dataset.switchTab); });
+      });
+      unknownsBody.querySelectorAll('[data-switch-tab]').forEach((el) => {
+        el.addEventListener('click', (e) => { e.preventDefault(); switchTab(el.dataset.switchTab); });
+      });
+    }
+
+    document.querySelectorAll('.helper-toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = 'helper-panel-' + btn.dataset.helper;
+        const panel = document.getElementById(id);
+        const isOpen = !panel.hidden;
+        // Mutually exclusive — one open panel at a time keeps the compact
+        // helper row from growing into a second scrolling report.
+        document.querySelectorAll('.helper-panel').forEach((p) => { p.hidden = true; });
+        document.querySelectorAll('.helper-toggle').forEach((b) => b.classList.remove('active'));
+        if (!isOpen) {
+          panel.hidden = false;
+          btn.classList.add('active');
+          openHelperId = id;
+        } else {
+          openHelperId = null;
+        }
+      });
+    });
+
+    // ───────────────────────────────────────────────────────────────────
+    // Initial tab choice — computed exactly once, from whatever evidence
+    // already exists on load (e.g. arriving with ?session= already set).
+    // Never re-evaluated afterward, so a user's own navigation is always
+    // the last word — see EVIDENCE_CATEGORIES comment above.
+    // ───────────────────────────────────────────────────────────────────
+    function chooseInitialTab() {
+      const hasSession = !!(sessionId && currentResults);
+      const ctx = currentAdaptiveContext();
+      const synthesis = hasSession ? computeCurrentSynthesis() : null;
+      const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
+      activeTabId = NEXT_STEP_TAB_TARGET[next.kind] || 'current-computer';
     }
 
     function renderAll() {
-      renderQuestionsPanel();
-      renderRecommendation();
-      renderEntryPaths();
-      renderAdvanced();
+      renderDashboard();
+      renderEvidenceNav();
+      renderDetailsWorkspace();
     }
 
     // ───────────────────────────────────────────────────────────────────
@@ -1237,18 +1479,20 @@
     // fetch and poll it exactly like report.html/workspace.html already do.
     // ───────────────────────────────────────────────────────────────────
     async function loadSessionIfPresent() {
-      if (!sessionId) { renderAll(); return; }
+      if (!sessionId) { chooseInitialTab(); renderAll(); return; }
       try {
         const res = await fetch('/api/session/' + encodeURIComponent(sessionId));
-        if (!res.ok) { sessionId = null; renderAll(); return; }
+        if (!res.ok) { sessionId = null; chooseInitialTab(); renderAll(); return; }
         const data = await res.json();
         if (data.status === 'complete') {
           currentResults = data.results;
           if (currentResults && currentResults.scan_mode) scanLevelParam = currentResults.scan_mode;
+          chooseInitialTab();
           renderAll();
         } else {
           // Still waiting on a physical scan started elsewhere — poll,
           // same 1500ms cadence report.html/workspace.html already use.
+          chooseInitialTab();
           renderAll();
           const waitPoll = setInterval(async () => {
             const r2 = await fetch('/api/session/' + encodeURIComponent(sessionId));
@@ -1262,15 +1506,35 @@
           }, 1500);
         }
       } catch (err) {
+        chooseInitialTab();
         renderAll();
       }
     }
 
     loadSessionIfPresent();
 
+    // nav.js resolves sign-in state asynchronously (a fetch to
+    // /api/auth-status) and may still be in flight when this page's own
+    // initial render runs — if the Profile tab happens to be active when
+    // that resolves, refresh it so "Not signed in" doesn't linger stale
+    // for an already-signed-in visitor. A no-op for every other tab.
+    document.addEventListener('navshell:ready', () => {
+      if (activeTabId === 'profile') renderDetailsWorkspace();
+    });
+
     // The hero's own "Already started?" import affordance now lives in the
     // shared nav shell's header CTA (see nav.js) rather than a
     // page-specific duplicate — importing lands back on this same page.
+    //
+    // ─── Future hooks (architecture leaves room, not implemented here) ───
+    // - "Guide me": a single directed next-action across all categories,
+    //   layered on top of the existing per-category Next Step pill.
+    // - Richer dashboard instrumentation / startup animation.
+    // - Additional evidence categories: EVIDENCE_CATEGORIES is designed to
+    //   make this a one-entry addition (id/label/render), nothing more.
+    // - Assessment export from this surface (today export lives on Results).
+    // - Expanded dashboard explanations beyond the current Why/Unknowns/
+    //   More Info three.
   </script>
 
 </body>
