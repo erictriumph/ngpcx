@@ -1449,3 +1449,62 @@ function nextActionFor({ hasSession, adaptiveContext, synthesis }) {
     }
     return { kind: 'report', text: 'Your assessment is in good shape — view the detailed report for the full picture.' };
 }
+
+// ─────────────────────────────────────────
+//  Dashboard Confidence — a DIFFERENT metric from synthesis.confidencePct,
+//  deliberately not the same value shown on Results/Workspace. That value
+//  (synthesis.confidenceLabel/confidencePct) measures how much
+//  COMPATIBILITY evidence (catalog-matched apps/devices) supports today's
+//  score — it is, and stays, scan-only by construction, since there is no
+//  compatibility evidence without a scan. This function answers a broader
+//  dashboard question instead: "how much relevant evidence, of ANY kind,
+//  currently supports today's ARM Suitability read" — a scan is still the
+//  largest single contributor, but Adaptive Context (what you told us you
+//  plan to do) is real, independent evidence too, and must move this
+//  number even when no scan exists yet, or when the scan's own
+//  compatibility confidence doesn't change.
+//
+//  ARM Suitability (the recommendation/read itself) and Dashboard
+//  Confidence (how much evidence supports it) are computed independently
+//  here — recommendationFor()/contextualReadFor() never feed into this
+//  function, and this function never feeds into them. Toggling an
+//  Intended Use pill can raise or lower Confidence while leaving
+//  Suitability unchanged, and vice versa (e.g. a scan alone changes
+//  Suitability substantially but only partially moves Confidence if
+//  Intended Use is still unanswered).
+//
+//  A deliberately SIMPLE first model, not a final one — every weight below
+//  is a small, named constant specifically so it can be retuned later
+//  without touching the blending logic itself. Not claimed to be
+//  statistically principled; claimed only to be monotonic (more
+//  independent evidence never lowers this number, all else equal) and
+//  honest (a scan remains the largest contributor, matching how much more
+//  it actually reveals about real compatibility than a stated intent can).
+// ─────────────────────────────────────────
+const DASHBOARD_CONFIDENCE_SCAN_WEIGHT = 70; // max points contributed by a completed scan, scaled by the scan's own confidencePct
+const DASHBOARD_CONFIDENCE_INTENDED_USE_WEIGHT = 20; // flat credit once at least one workload pill is selected
+const DASHBOARD_CONFIDENCE_RELATIONSHIP_WEIGHT = 10; // flat credit once a relationship pill is selected
+
+function dashboardConfidencePct({ synthesis, adaptiveContext }) {
+    let pct = 0;
+    if (synthesis && !synthesis.empty) {
+        pct += (synthesis.confidencePct / 100) * DASHBOARD_CONFIDENCE_SCAN_WEIGHT;
+    }
+    const uses = (adaptiveContext && adaptiveContext.intended_use) || [];
+    if (uses.length > 0) pct += DASHBOARD_CONFIDENCE_INTENDED_USE_WEIGHT;
+    if (adaptiveContext && adaptiveContext.relationship) pct += DASHBOARD_CONFIDENCE_RELATIONSHIP_WEIGHT;
+    return Math.round(Math.max(0, Math.min(100, pct)));
+}
+
+// A small, distinct tier vocabulary from Results/Workspace's "Limited
+// Data"/"Moderate Confidence"/"High Confidence" — deliberately different
+// wording (not just a different number) as a second, redundant signal that
+// this is the broader dashboard metric, not the scan-only one, should the
+// two ever be read side by side.
+function dashboardConfidenceLabel(pct) {
+    if (pct <= 0) return 'No Data Yet';
+    if (pct < 30) return 'Limited Evidence';
+    if (pct < 60) return 'Building Evidence';
+    if (pct < 85) return 'Good Evidence';
+    return 'Strong Evidence';
+}

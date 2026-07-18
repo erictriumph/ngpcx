@@ -69,60 +69,89 @@
       flex-wrap: wrap;
     }
 
+    /* Fixed-dimension gauge block — the housing itself never resizes or
+       repositions as readings change. Height is the sum of fixed parts
+       (svg + label area + eyebrow), never content-driven. */
     .gauge-block {
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: 92px;
+      width: 108px;
+      height: 128px;
+      justify-content: flex-start;
     }
 
+    /* A permanently-sized box for the gauge SVG — the SVG itself always
+       renders at the same pixel size (78x61 — see the GAUGE_* constants in
+       the script below) regardless of the value/color passed to it. */
     .gauge-svg-wrap {
       position: relative;
-      width: 64px;
-      height: 64px;
+      width: 78px;
+      height: 61px;
     }
 
     .gauge-svg-wrap svg {
       display: block;
     }
 
-    .gauge-svg-value {
-      position: absolute;
-      inset: 0;
+    /* Fixed-height text area for the gauge's reading — reserves room for
+       up to two lines so labels like "Too Early to Tell" or "Likely a
+       Good Candidate" never grow the dashboard, only wrap within this box.
+       gauge-label-sub reserves its own line even when empty (the
+       compatibility/no-data states) so its later appearance (the
+       contextual-read qualifier) never shifts anything above or below it. */
+    .gauge-label-area {
+      height: 2.5rem;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 0.7rem;
-      font-weight: 800;
+      margin-top: 0.3rem;
     }
 
+    .gauge-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      text-align: center;
+      max-width: 108px;
+      line-height: 1.2;
+    }
+
+    .gauge-label-sub {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #2dd4bf;
+      height: 0.85rem;
+      line-height: 0.85rem;
+    }
+
+    /* Fixed instrument title — never changes text per state, only ever
+       names what the gauge measures (see CLAUDE.md, Dashboard Instruments
+       addendum, on why this replaced a state-dependent eyebrow). */
     .gauge-eyebrow {
-      font-size: 0.62rem;
+      font-size: 0.6rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: #64748b;
-      margin-top: 0.45rem;
-    }
-
-    .gauge-label {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #e2e8f0;
-      text-align: center;
-      max-width: 110px;
-      line-height: 1.25;
-      margin-top: 0.1rem;
+      margin-top: 0.2rem;
     }
 
     /* Next Step — a compact pill, not a paragraph. The full reasoning
-       lives behind the "Why" toggle below, on demand. */
+       lives behind the "Why" toggle below, on demand. Fixed height so
+       "Choose a starting point below" and "Run a Scan" occupy the same
+       slot without moving the helper row beneath them. */
     .next-step-pill {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 0.35rem;
-      max-width: 220px;
+      width: 210px;
+      height: 128px;
+      justify-content: center;
     }
 
     .next-step-pill-label {
@@ -134,8 +163,9 @@
     }
 
     .next-step-pill-btn {
-      display: inline-flex;
+      display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.35rem;
       background: rgba(59, 130, 246, 0.14);
       border: 1px solid rgba(59, 130, 246, 0.35);
@@ -143,10 +173,12 @@
       font-size: 0.8rem;
       font-weight: 700;
       padding: 0.4rem 0.85rem;
-      border-radius: 999px;
+      border-radius: 12px;
       cursor: pointer;
       text-align: center;
       line-height: 1.3;
+      width: 100%;
+      min-height: 2.6rem;
     }
 
     .next-step-pill-btn:hover {
@@ -717,12 +749,18 @@
     <div class="dashboard-main">
       <div class="gauge-block" id="gauge-recommendation">
         <div class="gauge-svg-wrap" id="gauge-rec-svg-wrap"></div>
-        <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
-        <div class="gauge-eyebrow" id="gauge-rec-eyebrow">Status</div>
+        <div class="gauge-label-area">
+          <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
+          <div class="gauge-label-sub" id="gauge-rec-sub"></div>
+        </div>
+        <div class="gauge-eyebrow">ARM Suitability</div>
       </div>
       <div class="gauge-block" id="gauge-confidence">
         <div class="gauge-svg-wrap" id="gauge-conf-svg-wrap"></div>
-        <div class="gauge-label" id="gauge-conf-label">—</div>
+        <div class="gauge-label-area">
+          <div class="gauge-label" id="gauge-conf-label">No Data Yet</div>
+          <div class="gauge-label-sub"></div>
+        </div>
         <div class="gauge-eyebrow">Confidence</div>
       </div>
       <div class="next-step-pill">
@@ -918,11 +956,15 @@
     // not an enforced sequence (the UI recommends via the Next Step pill,
     // never requires a specific order).
     // ───────────────────────────────────────────────────────────────────
+    // "Profile" (usage/context profile) was deliberately removed for now —
+    // it overlapped too much with Intended Use and this pass isn't the
+    // place to invent a distinct role for it. The array shape is exactly
+    // what makes adding a real, separately-earned Profile category back
+    // later a one-entry change, not a rewrite.
     const EVIDENCE_CATEGORIES = [
       { id: 'current-computer', label: 'Current Computer', render: renderCurrentComputerTab },
       { id: 'intended-use', label: 'Intended Use', render: renderIntendedUseTab },
       { id: 'findings', label: 'Findings', render: renderFindingsTab },
-      { id: 'profile', label: 'Profile', render: renderProfileTab },
       { id: 'community', label: 'Community', render: renderCommunityTab },
     ];
     // Chosen once, on initial load only (see chooseInitialTab()) — never
@@ -1226,34 +1268,9 @@
     }
 
     // ───────────────────────────────────────────────────────────────────
-    // PROFILE — modest by design. Real, currently-available information
-    // only (session/scan metadata, sign-in state via the shared shell) —
-    // no placeholder data invented just to populate the tab. See CLAUDE.md:
-    // this codebase has an explicit standing rule against fabricating
-    // history/state that doesn't genuinely exist yet.
-    // ───────────────────────────────────────────────────────────────────
-    function renderProfileTab(container) {
-      const auth = (window.NavShell && window.NavShell.auth) || null;
-      const signedIn = auth && auth.user;
-      const scanLine = currentResults
-        ? `<div class="summary-item"><label>Assessment Level</label><span>${escapeHtml(scanLevelParam)}</span></div>`
-        : '';
-      container.innerHTML = `
-        <div class="workspace-heading">Profile</div>
-        <div class="workspace-subtext">Who this assessment belongs to, and what's been captured so far. Nothing here is ever sent to our servers except your scan results.</div>
-        <div class="summary-grid">
-          <div class="summary-item"><label>Session</label><span>${sessionId ? 'Active' : 'None yet'}</span></div>
-          ${scanLine}
-          <div class="summary-item"><label>Sign-in</label><span>${signedIn ? escapeHtml(auth.user.displayName || 'Signed in') : 'Not signed in'}</span></div>
-        </div>
-        ${signedIn
-          ? '<div class="workspace-note">Signed in — your community contributions are tracked under your account.</div>'
-          : '<div class="workspace-note">Signing in is optional. It only matters if you plan to contribute compatibility findings to the community catalog.</div>'}
-      `;
-    }
-
-    // ───────────────────────────────────────────────────────────────────
-    // COMMUNITY — modest by design, same reasoning as Profile. Community
+    // COMMUNITY — modest by design: real, currently-available information
+    // and real links only, no fabricated data invented just to populate
+    // the tab. Community
     // contribution today happens per-app inside the Workspace ("Share your
     // Findings"), not on this surface — this tab explains that honestly
     // rather than duplicating a feature that lives elsewhere.
@@ -1274,16 +1291,40 @@
     // DASHBOARD — gauges, Next Step pill, Why/Unknowns/More Info. Fixed
     // shape; only values/colors/panel content change.
     // ───────────────────────────────────────────────────────────────────
+    // Fixed automotive-style dashboard gauge — a ~240deg sweep opening at
+    // the bottom, low/resting position at the lower-left, filling clockwise
+    // through the top to the lower-right. Always renders at the same pixel
+    // dimensions regardless of value (r/stroke/pad are constants, never
+    // derived from `percent`) — only the fill's angular extent changes.
+    // Built from explicit point-by-point polylines rather than SVG's
+    // <path> arc command specifically to avoid that command's large-arc/
+    // sweep-flag ambiguity for a >180deg sweep — this is more verbose but
+    // unambiguous and easy to verify by inspection.
+    const GAUGE_R = 34, GAUGE_STROKE = 8, GAUGE_PAD = 5;
+    const GAUGE_START_ANGLE = 150, GAUGE_SWEEP = 240; // degrees; 150->390(=30) sweeps through the top (270)
+    const GAUGE_WIDTH = GAUGE_R * 2 + GAUGE_PAD * 2;
+    const GAUGE_CY = GAUGE_R + GAUGE_PAD;
+    const GAUGE_HEIGHT = GAUGE_CY + GAUGE_R * 0.5 + GAUGE_PAD;
+    const GAUGE_CX = GAUGE_WIDTH / 2;
+
+    function gaugeArcPoints(startAngle, sweepDeg, segments) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const angle = ((startAngle + (sweepDeg * i) / segments) * Math.PI) / 180;
+        pts.push((GAUGE_CX + GAUGE_R * Math.cos(angle)).toFixed(2) + ',' + (GAUGE_CY + GAUGE_R * Math.sin(angle)).toFixed(2));
+      }
+      return pts.join(' ');
+    }
+
     function gaugeSvg(percent, color) {
-      const size = 64, stroke = 6, r = (size - stroke) / 2;
-      const circumference = 2 * Math.PI * r;
       const clamped = Math.max(0, Math.min(100, percent));
-      const offset = circumference - (clamped / 100) * circumference;
-      return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-        <circle cx="${size / 2}" cy="${size / 2}" r="${r}" stroke="#334155" stroke-width="${stroke}" fill="none"/>
-        <circle cx="${size / 2}" cy="${size / 2}" r="${r}" stroke="${color}" stroke-width="${stroke}" fill="none"
-          stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"
-          transform="rotate(-90 ${size / 2} ${size / 2})"/>
+      const trackPts = gaugeArcPoints(GAUGE_START_ANGLE, GAUGE_SWEEP, 48);
+      const fillSweep = GAUGE_SWEEP * (clamped / 100);
+      const fillSegments = Math.max(1, Math.round(48 * (clamped / 100)));
+      const fillPts = gaugeArcPoints(GAUGE_START_ANGLE, fillSweep, fillSegments);
+      return `<svg width="${GAUGE_WIDTH}" height="${GAUGE_HEIGHT}" viewBox="0 0 ${GAUGE_WIDTH} ${GAUGE_HEIGHT}">
+        <polyline points="${trackPts}" fill="none" stroke="#334155" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>
+        ${clamped > 0 ? `<polyline points="${fillPts}" fill="none" stroke="${color}" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
       </svg>`;
     }
 
@@ -1318,30 +1359,42 @@
 
       // Recommendation gauge — a full colored ring (a status dial, not a
       // proportional fill) since the taxonomy is categorical, not a
-      // continuous 0-100 scale. Confidence, below, IS proportional.
-      let recColor, recLabel, recEyebrow;
+      // continuous 0-100 scale. The instrument's own title ("ARM
+      // Suitability") is fixed in the HTML and never changes per state —
+      // only the reading (label/color) and the small qualifier beneath it
+      // do. The qualifier is the one remaining place a contextual (context-
+      // only) read stays visibly distinct from a scan-backed compatibility
+      // verdict, now that the eyebrow itself is fixed — see CLAUDE.md,
+      // Dashboard Instruments addendum.
+      let recColor, recLabel, recSub;
       if (state === ASSESSMENT_STATE_SCAN_BACKED) {
         const rec = recommendationFor(synthesis);
-        recColor = rec.color; recLabel = rec.label; recEyebrow = 'Compatibility Assessment';
+        recColor = rec.color; recLabel = rec.label; recSub = '';
       } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
         const read = contextualReadFor(ctx);
-        recColor = '#2dd4bf'; recLabel = read.label; recEyebrow = 'Early Read';
+        recColor = '#2dd4bf'; recLabel = read.label; recSub = 'Early Read';
       } else {
-        recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recEyebrow = 'Status';
+        recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recSub = '';
       }
       document.getElementById('gauge-rec-svg-wrap').innerHTML = gaugeSvg(100, recColor);
       document.getElementById('gauge-rec-label').textContent = recLabel;
       document.getElementById('gauge-rec-label').style.color = recColor;
-      document.getElementById('gauge-rec-eyebrow').textContent = recEyebrow;
+      document.getElementById('gauge-rec-sub').textContent = recSub;
 
-      // Confidence gauge — proportional, only meaningful once a scan-backed
-      // assessment exists. Muted/empty otherwise, per "avoid displaying a
-      // numeric readiness/confidence figure for a context-only result."
-      const confPct = (synthesis && !synthesis.empty) ? synthesis.confidencePct : 0;
-      const confColor = (synthesis && !synthesis.empty) ? confidenceDisplayColor(synthesis.confidenceLabel) : '#334155';
+      // Confidence gauge — how much evidence of ANY kind (scan or Intended
+      // Use) currently supports today's read. See assessment.js,
+      // dashboardConfidencePct() — deliberately NOT the same value as
+      // synthesis.confidencePct (that one is scan-only compatibility
+      // confidence, unchanged, still used on Results/Workspace). Intended
+      // Use answers move this number even with zero scan evidence.
+      const confPct = dashboardConfidencePct({ synthesis, adaptiveContext: ctx });
+      const confLabel = dashboardConfidenceLabel(confPct);
+      const confColor = confPct <= 0 ? '#334155' : confidenceDisplayColor(
+        confPct >= 85 ? 'High Confidence' : confPct >= 60 ? 'Moderate Confidence' : 'Limited Data'
+      );
       document.getElementById('gauge-conf-svg-wrap').innerHTML = gaugeSvg(confPct, confColor);
-      document.getElementById('gauge-conf-label').textContent = (synthesis && !synthesis.empty) ? synthesis.confidenceLabel : 'No Scan Yet';
-      document.getElementById('gauge-conf-label').style.color = (synthesis && !synthesis.empty) ? confColor : '#64748b';
+      document.getElementById('gauge-conf-label').textContent = confLabel;
+      document.getElementById('gauge-conf-label').style.color = confPct <= 0 ? '#64748b' : confColor;
 
       // Next Step pill.
       const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
@@ -1512,15 +1565,6 @@
     }
 
     loadSessionIfPresent();
-
-    // nav.js resolves sign-in state asynchronously (a fetch to
-    // /api/auth-status) and may still be in flight when this page's own
-    // initial render runs — if the Profile tab happens to be active when
-    // that resolves, refresh it so "Not signed in" doesn't linger stale
-    // for an already-signed-in visitor. A no-op for every other tab.
-    document.addEventListener('navshell:ready', () => {
-      if (activeTabId === 'profile') renderDetailsWorkspace();
-    });
 
     // The hero's own "Already started?" import affordance now lives in the
     // shared nav shell's header CTA (see nav.js) rather than a
