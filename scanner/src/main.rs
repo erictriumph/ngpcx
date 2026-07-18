@@ -17,6 +17,46 @@ struct SystemInfo {
     ram_gb: u64,
     architecture: String,
     is_arm: bool,
+    // --- Observed Environment (new this pass) ---
+    // Durable environmental observations, not derived conclusions — see
+    // CLAUDE.md, Observed Environment milestone. The scanner reports these
+    // raw; nothing here labels the machine "a laptop" or "a gaming PC" —
+    // that interpretation belongs to the assessment layer, same boundary
+    // already established for Guidance Signals.
+    //
+    // Strongest single indicator that the current machine is portable.
+    // Deliberately a plain bool (not Option<bool>) per explicit scope: a
+    // total Win32_Battery query failure is a genuinely rare edge case here,
+    // unlike UserAssist's "never launched via Explorer" scenario, which is
+    // the common case, not the rare one that justified None there.
+    battery_present: bool,
+    // Raw Win32_Processor.Manufacturer string ("GenuineIntel"/"AuthenticAMD"/
+    // etc.) — not parsed or normalized from the cpu name. Deliberately not
+    // reduced to a friendly "Intel"/"AMD"/"Qualcomm" label here: that string
+    // normalization is exactly the kind of interpretation this milestone
+    // draws the line at leaving to the assessment layer.
+    cpu_vendor: Option<String>,
+    // Derived from a count of real (non-placeholder) video controllers, not
+    // from any vendor-name pattern — see get_system_info() for why. A plain
+    // bool for the same reason battery_present is.
+    discrete_gpu_present: bool,
+    // Every distinct real AdapterCompatibility string observed across all
+    // video controllers, not an attempt to label which one is "the discrete
+    // card" specifically — see get_system_info()'s doc comment for why that
+    // attribution was deliberately not attempted.
+    gpu_vendors: Vec<String>,
+    // Win32_ComputerSystem.PartOfDomain, nothing else — no domain name, no
+    // organization, no tenant. A plain bool, same reasoning as battery_present.
+    domain_joined: bool,
+    // Registry EditionID (e.g. "Professional", "Core", "Enterprise") — weak,
+    // corroborating evidence only, not meant to drive anything on its own.
+    windows_edition: Option<String>,
+    // Raw Win32_ComputerSystem.Manufacturer/Model — reported, not interpreted.
+    system_manufacturer: Option<String>,
+    system_model: Option<String>,
+    // Raw Win32_BaseBoard.Manufacturer/Product — reported, not interpreted.
+    motherboard_manufacturer: Option<String>,
+    motherboard_product: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -177,26 +217,6 @@ fn get_system_info() -> SystemInfo {
         .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
         .unwrap_or_else(|_| "Unknown".to_string());
 
-    // CPU
-    let cpu = Command::new("powershell")
-        .args(["-Command", "(Get-WmiObject Win32_Processor).Name"])
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .unwrap_or_else(|_| "Unknown".to_string());
-
-    // RAM
-    let ram_output = Command::new("powershell")
-        .args([
-            "-Command",
-            "(Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory",
-        ])
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .unwrap_or_else(|_| "0".to_string());
-
-    let ram_bytes: u64 = ram_output.trim().parse().unwrap_or(0);
-    let ram_gb = ram_bytes / 1_073_741_824;
-
     // Architecture — check PROCESSOR_ARCHITEW6432 first, since it reflects the
     // true native OS architecture even when this process is running under
     // emulation (e.g. this x64 exe on a real ARM64 machine). Windows only sets
@@ -208,12 +228,123 @@ fn get_system_info() -> SystemInfo {
 
     let is_arm = arch.to_lowercase().contains("arm");
 
+    // CPU name/vendor, RAM, battery presence, GPU count/vendors, domain
+    // membership, Windows edition, and system/motherboard identity are all
+    // collected in one consolidated Get-CimInstance script instead of one
+    // PowerShell process per field — replaces the old separate Get-WmiObject
+    // calls for CPU/RAM, matching the run_powershell_json() pattern every
+    // other collector in this file already uses (PowerShell boilerplate
+    // deduplication, Scanner Stabilization milestone).
+    let ps_script = r#"
+$cs = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue
+$cpu = Get-CimInstance -ClassName Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
+$battery = Get-CimInstance -ClassName Win32_Battery -ErrorAction SilentlyContinue
+$board = Get-CimInstance -ClassName Win32_BaseBoard -ErrorAction SilentlyContinue
+$edition = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -ErrorAction SilentlyContinue).EditionID
+
+# Microsoft's own generic fallback drivers aren't real physical adapters —
+# the same "is this a real device, not a placeholder" filtering the scanner
+# already applies elsewhere (e.g. SW\-prefix virtual-device exclusion).
+# Excluding them keeps GpuCount/GpuVendors meaningful instead of always
+# reporting at least one phantom entry.
+$genericGpuNames = @('Microsoft Basic Display Adapter', 'Microsoft Basic Render Driver')
+$gpuControllers = @(Get-CimInstance -ClassName Win32_VideoController -ErrorAction SilentlyContinue | Where-Object { $_.Name -and ($genericGpuNames -notcontains $_.Name) })
+$gpuVendors = @($gpuControllers | Select-Object -ExpandProperty AdapterCompatibility -Unique | Where-Object { $_ })
+
+[PSCustomObject]@{
+    RamBytes = $cs.TotalPhysicalMemory
+    SystemManufacturer = $cs.Manufacturer
+    SystemModel = $cs.Model
+    DomainJoined = [bool]$cs.PartOfDomain
+    CpuName = $cpu.Name
+    CpuVendor = $cpu.Manufacturer
+    BatteryPresent = [bool]$battery
+    GpuCount = $gpuControllers.Count
+    GpuVendors = $gpuVendors
+    MotherboardManufacturer = $board.Manufacturer
+    MotherboardProduct = $board.Product
+    WindowsEdition = $edition
+} | ConvertTo-Json -Compress
+"#;
+
+    let json = run_powershell_json(ps_script, "system environment info");
+
+    let cpu = json
+        .as_ref()
+        .and_then(|j| j["CpuName"].as_str())
+        .unwrap_or("Unknown")
+        .to_string();
+    let cpu_vendor = json
+        .as_ref()
+        .and_then(|j| j["CpuVendor"].as_str())
+        .map(|s| s.to_string());
+    let ram_bytes = json.as_ref().and_then(|j| j["RamBytes"].as_u64()).unwrap_or(0);
+    let ram_gb = ram_bytes / 1_073_741_824;
+    let battery_present = json
+        .as_ref()
+        .and_then(|j| j["BatteryPresent"].as_bool())
+        .unwrap_or(false);
+    let domain_joined = json
+        .as_ref()
+        .and_then(|j| j["DomainJoined"].as_bool())
+        .unwrap_or(false);
+    let windows_edition = json
+        .as_ref()
+        .and_then(|j| j["WindowsEdition"].as_str())
+        .map(|s| s.to_string());
+    let system_manufacturer = json
+        .as_ref()
+        .and_then(|j| j["SystemManufacturer"].as_str())
+        .map(|s| s.to_string());
+    let system_model = json
+        .as_ref()
+        .and_then(|j| j["SystemModel"].as_str())
+        .map(|s| s.to_string());
+    let motherboard_manufacturer = json
+        .as_ref()
+        .and_then(|j| j["MotherboardManufacturer"].as_str())
+        .map(|s| s.to_string());
+    let motherboard_product = json
+        .as_ref()
+        .and_then(|j| j["MotherboardProduct"].as_str())
+        .map(|s| s.to_string());
+
+    let gpu_count = json.as_ref().and_then(|j| j["GpuCount"].as_i64()).unwrap_or(0);
+    let discrete_gpu_present = gpu_count > 1;
+
+    // GpuVendors is written with @() in the PowerShell script specifically so
+    // it survives ConvertTo-Json as a JSON array even with 0 or 1 elements —
+    // but both shapes are handled defensively here anyway, the same
+    // "single item can still collapse to a bare scalar" tolerance
+    // json_as_items() already applies to top-level PowerShell JSON output.
+    let gpu_vendors: Vec<String> = match json.as_ref().map(|j| &j["GpuVendors"]) {
+        Some(v) if v.is_array() => v
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|x| x.as_str())
+            .map(|s| s.to_string())
+            .collect(),
+        Some(v) if v.is_string() => vec![v.as_str().unwrap().to_string()],
+        _ => vec![],
+    };
+
     SystemInfo {
         os_version,
         cpu,
         ram_gb,
         architecture: arch,
         is_arm,
+        battery_present,
+        cpu_vendor,
+        discrete_gpu_present,
+        gpu_vendors,
+        domain_joined,
+        windows_edition,
+        system_manufacturer,
+        system_model,
+        motherboard_manufacturer,
+        motherboard_product,
     }
 }
 
@@ -1810,6 +1941,15 @@ fn main() {
     println!("  CPU:  {}", system.cpu);
     println!("  RAM:  {} GB", system.ram_gb);
     println!("  Arch: {}", system.architecture);
+    println!(
+        "  System: {} {}",
+        system.system_manufacturer.as_deref().unwrap_or("Unknown"),
+        system.system_model.as_deref().unwrap_or("")
+    );
+    println!(
+        "  Battery: {}  |  Discrete GPU: {}  |  Domain-joined: {}",
+        system.battery_present, system.discrete_gpu_present, system.domain_joined
+    );
     if system.is_arm {
         println!("  ⚡ This machine is already running ARM Windows!");
     }
