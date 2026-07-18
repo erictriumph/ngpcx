@@ -1121,3 +1121,239 @@ function classifyAssessmentItem({ decision, bucket, isLikelyNativeDevice, app })
 
     return 'deservesAttention';
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Adaptive Assessment Surface — user-provided intent/workload context
+//
+//  Conceptual model (see CLAUDE.md-style documentation in the accompanying
+//  commit): the scanner produces OBSERVATIONS (raw facts). Guidance Signals
+//  plus this new user-provided context together form EVIDENCE (interpreted
+//  signals). computeSynthesis() above is the ASSESSMENT layer (it turns
+//  evidence into score/confidence). recommendationFor()/nextActionFor()
+//  below are the RECOMMENDATION layer (advice + confidence framing, on top
+//  of the assessment). Nothing here duplicates or bypasses computeSynthesis
+//  — Adaptive Context never touches compatibility classification
+//  (effectiveBucketFor) or the score formula. It is a second, independent
+//  input the RECOMMENDATION layer reads alongside the assessment, exactly
+//  the same relationship Personal Context already has to computeSynthesis.
+//
+//  Storage follows the exact pattern already established for Personal
+//  Context (readSessionContext/writeSessionContext, above): a session-less
+//  "pending" stash for the case where a user answers questions before any
+//  scan exists, migrated into a session-scoped stash the first time a real
+//  session id becomes available. This is deliberately NOT a new persistence
+//  mechanism — same sessionStorage, same one-per-session key convention,
+//  same "nothing is ever sent to the server" boundary.
+// ─────────────────────────────────────────────────────────────────────────
+
+const ADAPTIVE_CONTEXT_PENDING_KEY = 'ngpcx_adaptive_context_pending_v1';
+function adaptiveContextKey(sessionId) {
+    return 'ngpcx_adaptive_context_' + sessionId;
+}
+
+// Small, fixed vocabularies — modest and explicit, not an open-ended tagging
+// system. Matches this codebase's standing preference (isSystemComponent,
+// isMicrosoftAppxPackage) for a short, named list over a sprawling taxonomy.
+const INTENDED_USE_OPTIONS = ['gaming', 'development', 'creative', 'productivity', 'web_email'];
+const INTENDED_USE_LABELS = {
+    gaming: 'Gaming',
+    development: 'Development',
+    creative: 'Creative work',
+    productivity: 'Office / Productivity',
+    web_email: 'Mostly web & email',
+};
+const RELATIONSHIP_OPTIONS = ['primary_replacement', 'secondary_travel', 'not_sure'];
+const RELATIONSHIP_LABELS = {
+    primary_replacement: 'Replacing my main computer',
+    secondary_travel: 'A second or travel computer',
+    not_sure: "I'm not sure yet",
+};
+
+function defaultAdaptiveContext() {
+    return { intended_use: [], relationship: null, updated_at: null };
+}
+
+// Same discipline as sanitizeImportedEntry(): never trust stored/parsed
+// JSON shape without checking it against the known vocab first.
+function sanitizeAdaptiveContext(raw) {
+    if (!raw || typeof raw !== 'object') return defaultAdaptiveContext();
+    const intended_use = Array.isArray(raw.intended_use)
+        ? raw.intended_use.filter((v) => INTENDED_USE_OPTIONS.includes(v))
+        : [];
+    const relationship = RELATIONSHIP_OPTIONS.includes(raw.relationship) ? raw.relationship : null;
+    const updated_at = typeof raw.updated_at === 'string' ? raw.updated_at : null;
+    return { intended_use, relationship, updated_at };
+}
+
+function hasAdaptiveContext(ctx) {
+    return !!(ctx && (ctx.intended_use.length > 0 || ctx.relationship));
+}
+
+function loadAdaptiveContext(sessionId) {
+    try {
+        if (sessionId) {
+            const sessionRaw = sessionStorage.getItem(adaptiveContextKey(sessionId));
+            if (sessionRaw) return sanitizeAdaptiveContext(JSON.parse(sessionRaw));
+        }
+        const pendingRaw = sessionStorage.getItem(ADAPTIVE_CONTEXT_PENDING_KEY);
+        if (pendingRaw) {
+            const ctx = sanitizeAdaptiveContext(JSON.parse(pendingRaw));
+            // Migrate once a session exists — mirrors loadPersonalContext()'s
+            // consume-and-seed behavior for the generic carry-forward stash.
+            if (sessionId && hasAdaptiveContext(ctx)) saveAdaptiveContext(sessionId, ctx);
+            return ctx;
+        }
+    } catch (err) {
+        // sessionStorage unavailable/corrupt — safe empty default.
+    }
+    return defaultAdaptiveContext();
+}
+
+function saveAdaptiveContext(sessionId, context) {
+    const payload = JSON.stringify({
+        intended_use: context.intended_use,
+        relationship: context.relationship,
+        updated_at: new Date().toISOString(),
+    });
+    try {
+        if (sessionId) sessionStorage.setItem(adaptiveContextKey(sessionId), payload);
+        else sessionStorage.setItem(ADAPTIVE_CONTEXT_PENDING_KEY, payload);
+    } catch (err) {
+        // Best-effort only — same degradation the rest of this file accepts.
+    }
+}
+
+// ─────────────────────────────────────────
+//  Hypothesis inference — "infer aggressively, commit conservatively."
+//
+//  These functions only ever produce SUGGESTIONS for the UI to pre-activate
+//  a pill with; nothing here writes to Adaptive Context directly, and no
+//  caller may treat a hint as if the user had confirmed it. A small, named
+//  keyword list — the same "principled short list, not a sprawling
+//  per-vendor table" precedent as isSystemComponent()/
+//  isMicrosoftAppxPackage() — deliberately not a generalized classifier.
+// ─────────────────────────────────────────
+const WORKLOAD_HINT_PATTERNS = {
+    gaming: /steam|epic games|battle\.net|xbox|riot vanguard|ubisoft connect|ea app|ea desktop|discord/i,
+    development: /visual studio|git\b|docker|node\.js|python|jetbrains|intellij|pycharm|github desktop|windows terminal|wsl|postman/i,
+    creative: /photoshop|premiere|illustrator|after effects|davinci resolve|blender|figma|lightroom|audition/i,
+    productivity: /microsoft 365|outlook|excel|powerpoint|onedrive|microsoft teams|slack|zoom/i,
+};
+
+// Scans classified app names for the patterns above. Deliberately reads
+// only names (already-public catalog/scanner data, same privacy tier as
+// everything else this file touches) — never window titles, file paths, or
+// anything the Observation Enrichment milestone's privacy design excluded.
+function inferWorkloadHints(results) {
+    if (!results) return [];
+    const names = [];
+    ['native', 'emulated', 'unsupported', 'unknown'].forEach((bucket) => {
+        (results[bucket] || []).forEach((app) => { if (app && app.name) names.push(app.name); });
+    });
+    const haystack = names.join(' | ').toLowerCase();
+    return Object.keys(WORKLOAD_HINT_PATTERNS).filter((key) => WORKLOAD_HINT_PATTERNS[key].test(haystack));
+}
+
+// A durable environmental observation (Observed Environment milestone) used
+// as a relevance hint, exactly the "reserved for a future assessment layer"
+// use that milestone anticipated. The scanner reports the fact
+// (battery_present); the inference — and the fact that it's only ever a
+// suggestion, never a conclusion — lives entirely here.
+function inferRelationshipHint(results) {
+    if (!results || !results.system || typeof results.system.battery_present !== 'boolean') return null;
+    return results.system.battery_present === false ? 'secondary_travel' : null;
+}
+
+// ─────────────────────────────────────────
+//  Recommendation layer — advice + confidence framing, built ONLY on top of
+//  computeSynthesis()'s existing output. Reuses the current 3-tier readiness
+//  label and 4-tier confidence label rather than inventing new thresholds;
+//  this is a display-mapping layer, not a second scoring model.
+//
+//  Deliberately conservative: without real compatibility evidence (a
+//  completed scan), the recommendation always stays "Too Early to Tell" —
+//  Adaptive Context alone (workload/relationship answers) shapes the NEXT
+//  ACTION copy, never the recommendation label itself. Fabricating a
+//  compatibility verdict from workload guesses alone would contradict the
+//  entire premise of this product (catalog-verified evidence, not
+//  category-based guessing) — see the accompanying investigation report.
+// ─────────────────────────────────────────
+const RECOMMENDATION_COLORS = {
+    'Too Early to Tell': '#64748b',
+    'Poor Fit': '#ef4444',
+    'Proceed with Caution': '#f59e0b',
+    'Probably a Good Fit': '#10b981',
+    'Good Fit': '#10b981',
+};
+
+function recommendationFor(synthesis) {
+    if (!synthesis || synthesis.empty) {
+        return { label: 'Too Early to Tell', color: RECOMMENDATION_COLORS['Too Early to Tell'] };
+    }
+    const conf = synthesis.confidenceLabel;
+    if (synthesis.readiness.label === 'Good Fit') {
+        const label = (conf === 'High Confidence') ? 'Good Fit' : 'Probably a Good Fit';
+        return { label, color: RECOMMENDATION_COLORS[label] };
+    }
+    if (synthesis.readiness.label === 'Workable with Caveats') {
+        return { label: 'Proceed with Caution', color: RECOMMENDATION_COLORS['Proceed with Caution'] };
+    }
+    return { label: 'Poor Fit', color: RECOMMENDATION_COLORS['Poor Fit'] };
+}
+
+// ─────────────────────────────────────────
+//  Recommended Next Action — a modest, explicit ruleset (per-case, not a
+//  generalized next-best-action engine). Four states, matching the product
+//  spec exactly: no evidence yet; scan-first; questions-first; both present.
+// ─────────────────────────────────────────
+function nextActionFor({ hasSession, adaptiveContext, synthesis }) {
+    const hasQuestions = hasAdaptiveContext(adaptiveContext);
+
+    if (!hasSession && !hasQuestions) {
+        return { kind: 'start', text: 'Start with a scan, or answer a few quick questions — either one gets you moving.' };
+    }
+
+    if (hasSession && !hasQuestions) {
+        // A scan can observe apps, devices, architecture, and system facts,
+        // but it cannot know what you're trying to accomplish next.
+        return {
+            kind: 'questions',
+            text: 'Tell us what you’re trying to accomplish with your next computer — a few quick questions add context a scan alone can’t.',
+        };
+    }
+
+    if (hasQuestions && !hasSession) {
+        const uses = adaptiveContext.intended_use;
+        const specialized = uses.some((u) => u === 'gaming' || u === 'development' || u === 'creative');
+        const onlyLightweight = uses.length > 0 && uses.every((u) => u === 'productivity' || u === 'web_email');
+
+        if (specialized) {
+            return {
+                kind: 'scan',
+                text: 'Specialized software like this benefits substantially from a real scan — run one on the computer whose apps matter most to this decision.',
+            };
+        }
+        if (adaptiveContext.relationship === 'secondary_travel' && !specialized) {
+            return {
+                kind: 'optional-scan',
+                text: 'Since this sounds like a travel companion rather than your main machine, you may already have enough for an early read — scanning is optional.',
+            };
+        }
+        if (onlyLightweight) {
+            return {
+                kind: 'none-needed',
+                text: 'Web apps and Microsoft 365 already run well on Windows on ARM — you may have enough for an early read without scanning.',
+            };
+        }
+        return {
+            kind: 'optional-scan',
+            text: 'A scan would sharpen this further, but based on what you’ve told us, it’s optional right now.',
+        };
+    }
+
+    // Both present — refine the existing assessment.
+    if (synthesis && !synthesis.empty && synthesis.confidenceLabel !== 'High Confidence') {
+        return { kind: 'refine', text: 'Review a few items in Advanced to strengthen your confidence.' };
+    }
+    return { kind: 'report', text: 'Your assessment is in good shape — view the detailed report for the full picture.' };
+}

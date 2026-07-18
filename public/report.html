@@ -343,6 +343,7 @@
 
         <div class="report-header">
             <div style="max-width: 480px;">
+                <a href="/" id="back-to-assessment-link" style="display:none; color:#3b82f6; text-decoration:none; font-size:0.85rem; margin-bottom:0.5rem;">← Back to Assessment</a>
                 <h1>Your ARM Readiness Results</h1>
                 <p id="results-tagline" style="color:#94a3b8; font-size:0.95rem; margin-top:0.5rem; line-height:1.5;">
                 </p>
@@ -547,6 +548,19 @@
         const scanLevelParam = params.get('level');
         let currentResults = null;
         let currentPersonalContext = new Map();
+
+        // Reliable return path to the persistent Adaptive Assessment Surface
+        // — see CLAUDE.md, Adaptive Assessment Surface milestone. The shared
+        // shell's own logo already does this (nav.js's logoHref()), but this
+        // explicit link makes the path discoverable without relying on a
+        // user noticing the logo is clickable.
+        if (sessionId) {
+            const backLink = document.getElementById('back-to-assessment-link');
+            if (backLink) {
+                backLink.href = '/?session=' + encodeURIComponent(sessionId) + '&level=' + encodeURIComponent(scanLevelParam || '');
+                backLink.style.display = 'inline-block';
+            }
+        }
         // Set by renderReductionSummary() — the same small, curated "worth a
         // closer look" list, reused by renderRefreshBanner() so its copy can
         // name the actual count instead of a generic "some apps" (see

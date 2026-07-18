@@ -294,6 +294,14 @@
     function workspaceHref(session) {
         return '/workspace.html?session=' + encodeURIComponent(session.sessionId) + '&level=' + encodeURIComponent(session.level || '');
     }
+    // The persistent Adaptive Assessment Surface (index.html) — the new
+    // effective "home" once an assessment exists. See CLAUDE.md, Adaptive
+    // Assessment Surface milestone. resultsHref() above still points at the
+    // detailed report (report.html), unchanged in meaning — this is a
+    // distinct, new destination, not a rename of it.
+    function assessHref(session) {
+        return '/?session=' + encodeURIComponent(session.sessionId) + '&level=' + encodeURIComponent(session.level || '');
+    }
 
     // Carries the active session forward onto an otherwise plain internal
     // link — the same job assessment.js's old decorateInfoLinks() did for
@@ -376,7 +384,7 @@
                 if (importData.assessmentSnapshot) {
                     sessionStorage.setItem(IMPORTED_ASSESSMENT_SNAPSHOT_KEY, JSON.stringify(importData.assessmentSnapshot));
                 }
-                window.location.href = '/report.html?session=' + newSessionId + '&level=' + encodeURIComponent(importData.scanMode || 'imported') + '&carryForward=1&origin=assessment';
+                window.location.href = '/?session=' + newSessionId + '&level=' + encodeURIComponent(importData.scanMode || 'imported') + '&carryForward=1';
             } catch (err) {
                 alert('Import failed: ' + err.message);
             }
@@ -422,7 +430,8 @@
     function buildAssessmentMenu(state) {
         if (!state.session) return null; // pre-assessment: actions live in the header instead
         return [
-            { label: 'Results', href: resultsHref(state.session) },
+            { label: 'Assessment', href: assessHref(state.session) },
+            { label: 'Detailed Report', href: resultsHref(state.session) },
             { label: 'Refine Assessment', href: workspaceHref(state.session) },
             { label: 'Export', action: 'export' },
             { label: 'Print', action: 'print' },
@@ -467,7 +476,7 @@
     }
 
     function logoHref(state) {
-        return state.session ? resultsHref(state.session) : '/';
+        return state.session ? assessHref(state.session) : '/';
     }
 
     // The ™ mark is deliberately sparse sitewide (see CLAUDE.md, Branding —

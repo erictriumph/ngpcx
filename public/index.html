@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CheckMyARM — ARM Readiness Scanner</title>
+  <title>CheckMyARM — Windows on ARM Advisor</title>
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
@@ -24,19 +24,20 @@
       min-height: 100vh;
     }
 
-    /* HERO */
+    /* HERO — trimmed to a concise invitation; the fuller explanation lives
+       on Why/How CheckMyARM Thinks now, not duplicated here. */
     .hero {
-      max-width: 800px;
-      margin: 5rem auto 3rem auto;
+      max-width: 720px;
+      margin: 3.5rem auto 2rem auto;
       text-align: center;
       padding: 0 1rem;
     }
 
     h1 {
-      font-size: 3rem;
+      font-size: 2.5rem;
       font-weight: 800;
-      margin-bottom: 1rem;
-      line-height: 1.1;
+      margin-bottom: 0.75rem;
+      line-height: 1.15;
     }
 
     h1 em {
@@ -45,37 +46,385 @@
     }
 
     .subtitle {
-      font-size: 1.05rem;
+      font-size: 1rem;
       color: #94a3b8;
-      margin-bottom: 2.5rem;
-      line-height: 1.65;
-      max-width: 620px;
+      margin-bottom: 0;
+      line-height: 1.6;
+      max-width: 560px;
       margin-left: auto;
       margin-right: auto;
     }
 
-    .subtitle p + p {
-      margin-top: 0.9rem;
+    /* ─────────────────────────────────────
+       RECOMMENDATION PANEL — the persistent summary. Present from the very
+       first load ("Too Early to Tell") and never removed from the page —
+       only its content evolves as evidence accumulates. See CLAUDE.md,
+       Adaptive Assessment Surface milestone.
+       ───────────────────────────────────── */
+    .recommendation-panel {
+      max-width: 640px;
+      margin: 2rem auto;
+      padding: 1.5rem 1.75rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      text-align: center;
     }
 
-    .scan-button {
+    .rec-badge {
+      display: inline-block;
+      font-size: 1.3rem;
+      font-weight: 800;
+      padding: 0.3rem 1rem;
+      border-radius: 999px;
+      margin-bottom: 0.5rem;
+    }
+
+    .rec-confidence {
+      font-size: 0.8rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      min-height: 1.1em;
+    }
+
+    .next-action-box {
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 10px;
+      padding: 0.85rem 1.1rem;
+      text-align: left;
+      margin-bottom: 0.5rem;
+    }
+
+    .next-action-label {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #93c5fd;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .next-action-text {
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    .next-action-cta {
+      display: inline-block;
+      margin-top: 0.6rem;
+      font-size: 0.82rem;
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+    }
+
+    .next-action-cta:hover {
+      text-decoration: underline;
+    }
+
+    .view-report-link {
+      display: inline-block;
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      text-decoration: none;
+    }
+
+    .view-report-link:hover {
+      color: #f1f5f9;
+    }
+
+    /* ─────────────────────────────────────
+       ENTRY PATHS — two equally prominent starting actions. Collapses to a
+       compact row once any evidence exists, so it stops competing with the
+       recommendation panel for attention.
+       ───────────────────────────────────── */
+    .entry-paths {
+      max-width: 900px;
+      margin: 0 auto 2rem auto;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 720px) {
+      .entry-paths {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .entry-path {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .entry-path h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .entry-path p {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .scan-level {
+      text-align: left;
+      margin-bottom: 1rem;
+    }
+
+    .scan-level label {
+      display: block;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .scan-level .level-detail {
+      color: #64748b;
+      font-size: 0.78rem;
+    }
+
+    .scan-button, .questions-button {
       display: inline-block;
       background: #3b82f6;
       color: white;
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
-      padding: 1rem 2.5rem;
+      padding: 0.85rem 2rem;
       border-radius: 10px;
       border: none;
       cursor: pointer;
       transition: background 0.2s;
       text-decoration: none;
-      min-width: 200px;
+      min-width: 180px;
       text-align: center;
     }
 
-    .scan-button:hover {
+    .scan-button:hover, .questions-button:hover {
       background: #2563eb;
+    }
+
+    .entry-note {
+      max-width: 100%;
+      margin-top: 0.85rem;
+      color: #64748b;
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+
+    /* Compact mode — once evidence exists, the big dual-path cards recede
+       into a small "add more evidence" row. Same actions, quieter frame. */
+    .entry-paths.compact {
+      grid-template-columns: 1fr 1fr;
+      max-width: 520px;
+    }
+
+    .entry-paths.compact .entry-path {
+      padding: 0.85rem;
+    }
+
+    .entry-paths.compact .entry-path h2 {
+      font-size: 0.85rem;
+    }
+
+    .entry-paths.compact .entry-path p,
+    .entry-paths.compact .scan-level,
+    .entry-paths.compact .entry-note {
+      display: none;
+    }
+
+    .entry-paths.compact .scan-button,
+    .entry-paths.compact .questions-button {
+      min-width: 0;
+      width: 100%;
+      padding: 0.55rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    /* ─────────────────────────────────────
+       QUESTIONS PANEL — pill-based hypothesis editor. Reuses the existing
+       .decision-btn / .selected visual language from assessment.css
+       (loaded below) so a pill looks and behaves like every other
+       toggle control already in the product, not a new component.
+       ───────────────────────────────────── */
+    .questions-panel {
+      max-width: 640px;
+      margin: 0 auto 2rem auto;
+      padding: 1.5rem 1.75rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+    }
+
+    .question-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .question-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .question-group-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 0.6rem;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .pill {
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #f1f5f9;
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .pill:hover {
+      border-color: #3b82f6;
+    }
+
+    .pill.selected {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.18);
+      color: #93c5fd;
+      font-weight: 600;
+    }
+
+    /* Suggested-but-not-yet-confirmed — same visual family as
+       .findings-btn.suggested elsewhere in the product: a ring, not a fill,
+       so "we guessed this" always reads differently from "you confirmed
+       this." Never used at the same time as .selected. */
+    .pill.suggested {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px #3b82f6;
+    }
+
+    .hypothesis-note {
+      font-size: 0.75rem;
+      color: #93c5fd;
+      margin-top: 0.6rem;
+    }
+
+    /* ─────────────────────────────────────
+       ADVANCED DISCLOSURE — the quiet Workspace/evidence area. Present but
+       minimal with no evidence; grows richer once a scan exists.
+       ───────────────────────────────────── */
+    .advanced-section {
+      max-width: 900px;
+      margin: 0 auto 3rem auto;
+      padding: 0 1rem;
+    }
+
+    .advanced-disclosure {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 1rem 1.5rem;
+    }
+
+    .advanced-disclosure summary {
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      list-style: none;
+    }
+
+    .advanced-disclosure summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .advanced-disclosure summary::before {
+      content: '▸ ';
+      color: #64748b;
+    }
+
+    .advanced-disclosure[open] summary::before {
+      content: '▾ ';
+    }
+
+    .advanced-body {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #334155;
+    }
+
+    .advanced-empty {
+      color: #64748b;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .advanced-stats {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .advanced-stat {
+      text-align: center;
+    }
+
+    .advanced-stat-count {
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+
+    .advanced-stat-label {
+      font-size: 0.72rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .advanced-attention-list {
+      list-style: none;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      line-height: 1.9;
+    }
+
+    .advanced-links {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+
+    .advanced-links a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .advanced-links a:hover {
+      text-decoration: underline;
     }
 
     /* HOW IT WORKS */
@@ -252,61 +601,98 @@
 
   <div id="app-shell"></div>
 
-  <!-- HERO -->
+  <!-- HERO — concise invitation, not the full explanation (that lives on
+       Why / How CheckMyARM Thinks). -->
   <div class="hero">
     <h1>Is Windows on <em>ARM</em> Right for You?</h1>
-    <div class="subtitle">
-      <p>Windows on ARM laptops — built around the same energy-efficient processor design used in phones and
-        tablets — can offer excellent battery life, quiet operation, and impressive power efficiency. They're
-        becoming an increasingly compelling option for many Windows users.</p>
-      <p>But because the platform is still evolving, some Windows applications and devices work differently
-        than others.</p>
-      <p>CheckMyARM scans the Windows PC you're using today and evaluates how your applications and devices
-        are expected to work if you decide to make the move.</p>
-      <p>Compatibility information comes from multiple trusted sources and is continually improved by the
-        CheckMyARM community.</p>
-      <p>Your results become a Workspace you can keep building on — mark what you've personally verified,
-        flag what matters most, and save your progress to continue whenever you're ready.</p>
+    <p class="subtitle">
+      CheckMyARM is a Windows on ARM advisor. Scan the PC you use today, answer a few quick
+      questions about what you need next, or both — your assessment builds on whatever you give it.
+    </p>
+  </div>
+
+  <!-- PERSISTENT RECOMMENDATION SUMMARY — always present, content evolves. -->
+  <div class="recommendation-panel" id="recommendation-panel">
+    <div class="rec-badge" id="rec-badge">Too Early to Tell</div>
+    <div class="rec-confidence" id="rec-confidence"></div>
+    <div class="next-action-box">
+      <span class="next-action-label">Recommended next step</span>
+      <div class="next-action-text" id="next-action-text">
+        Start with a scan, or answer a few quick questions — either one gets you moving.
+      </div>
+      <button type="button" class="next-action-cta" id="next-action-cta" style="display:none;"></button>
     </div>
+    <a href="#" class="view-report-link" id="view-report-link" style="display:none;">View Detailed Report →</a>
+  </div>
 
-    <div
-      style="display:flex; align-items:center; justify-content:center; gap:2rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+  <!-- TWO EQUAL ENTRY PATHS -->
+  <div class="entry-paths" id="entry-paths">
+    <div class="entry-path" id="scan-path">
+      <h2>Start with a Scan</h2>
+      <p>A small tool reads your installed apps and devices in seconds — low effort, high yield.</p>
 
-      <div class="scan-level" style="text-align:left;">
-        <label style="display:block; margin-bottom:0.6rem; cursor:pointer;">
+      <div class="scan-level">
+        <label>
           <input type="radio" name="scan-level" value="quick" checked> Light Assessment
-          <span style="color:#64748b; font-size:0.85rem;"> — a quick recommendation from what you actually use</span>
+          <div class="level-detail">a quick recommendation from what you actually use</div>
         </label>
-        <label style="display:block; margin-bottom:0.6rem; cursor:pointer;">
+        <label>
           <input type="radio" name="scan-level" value="standard"> Standard Assessment
-          <span style="color:#64748b; font-size:0.85rem;"> — recommended: the best balance of confidence and effort</span>
+          <div class="level-detail">recommended — the best balance of confidence and effort</div>
         </label>
-        <label style="display:block; cursor:pointer;">
+        <label>
           <input type="radio" name="scan-level" value="full"> Advanced Assessment
-          <span style="color:#64748b; font-size:0.85rem;"> — maximum visibility, every app and device exposed</span>
+          <div class="level-detail">maximum visibility, every app and device exposed</div>
         </label>
-        <p id="light-device-hint" style="color:#64748b; font-size:0.8rem; margin-top:0.6rem; display:none;">
+        <p id="light-device-hint" style="color:#64748b; font-size:0.78rem; margin-top:0.5rem; display:none;">
           For the best results, connect the devices you normally use before running a Light Assessment.
         </p>
       </div>
 
       <a href="#" class="scan-button" id="run-scan-btn">Run Scan</a>
 
-      <div
-        style="max-width:420px; margin:0 auto 1.5rem auto; text-align:center; color:#64748b; font-size:0.8rem; line-height:1.5;">
-        Downloads a small tool. Windows may show a warning since it's not from a large, pre-verified publisher —
-        that's expected for a small independent project, not a sign anything's wrong. Click "More info" → "Run
-        anyway" to continue. It opens a console window, runs the scan, then stays open — close it once you see
-        "Scan complete."
+      <div class="entry-note">
+        Downloads a small tool. Windows may show a publisher warning — that's expected for a small
+        independent project. Click "More info" → "Run anyway" to continue.
       </div>
-
     </div>
 
-    <p style="text-align:center; color:#64748b; font-size:0.85rem;">
-      Already started? <a href="#" id="continue-session-link-hero"
-        style="color:#3b82f6; text-decoration:none;">Import your saved Workspace</a> to continue right where
-      you left off — since nothing is stored on our end, this is the only way to pick up later.
-    </p>
+    <div class="entry-path" id="questions-path">
+      <h2>Start with a Few Simple Questions</h2>
+      <p>Tell us what you're trying to accomplish with your next computer — lower volume, higher
+        value than a scan alone.</p>
+      <button type="button" class="questions-button" id="open-questions-btn">Answer a Few Questions</button>
+      <div class="entry-note">
+        No apps or devices required — just what you're planning to use it for.
+      </div>
+    </div>
+  </div>
+
+  <!-- QUESTIONS PANEL — revealed on demand; pre-fillable from scan evidence
+       once it exists, always freely editable. -->
+  <div class="questions-panel" id="questions-panel" style="display:none;">
+    <div class="question-group">
+      <span class="question-group-label">What will you use it for? (pick any that apply)</span>
+      <div class="pill-row" id="intended-use-pills"></div>
+    </div>
+    <div class="question-group">
+      <span class="question-group-label">How does this fit into your setup?</span>
+      <div class="pill-row" id="relationship-pills"></div>
+    </div>
+    <div class="hypothesis-note" id="hypothesis-note" style="display:none;">
+      Pre-filled based on what your scan found — tap any pill to correct us.
+    </div>
+  </div>
+
+  <!-- ADVANCED DISCLOSURE — the persistent, progressively-richer workspace
+       area. Present even with no evidence, appropriately quiet until then. -->
+  <div class="advanced-section">
+    <details class="advanced-disclosure" id="advanced-disclosure">
+      <summary>Advanced — evidence, weighting, and full detail</summary>
+      <div class="advanced-body" id="advanced-body">
+        <p class="advanced-empty">Nothing to show yet — start with a scan or answer a few questions above.</p>
+      </div>
+    </details>
   </div>
 
   <!-- HOW IT WORKS -->
@@ -320,14 +706,13 @@
       </div>
       <div class="step">
         <div class="step-number">2</div>
-        <h3>Run the Scan</h3>
-        <p>It scans your machine in seconds and sends the results to our server for analysis.</p>
+        <h3>Or Answer a Few Questions</h3>
+        <p>No scanner required — tell us what you're trying to accomplish and we'll get you a directional read.</p>
       </div>
       <div class="step">
         <div class="step-number">3</div>
-        <h3>Get Your Workspace</h3>
-        <p>See your ARM Readiness Score and a full breakdown of which apps are ready, which need emulation, and which
-          won't work — then keep building on it as your assessment continues.</p>
+        <h3>Watch Your Assessment Grow</h3>
+        <p>Your recommendation, confidence, and next step update as you add evidence — on this same page, every time.</p>
       </div>
     </div>
   </div>
@@ -360,11 +745,11 @@
         </div>
       </div>
       <div class="check-card">
-        <div class="check-icon">⚡</div>
+        <div class="check-icon">🎯</div>
         <div>
-          <h3>Emulation Impact</h3>
-          <p>Emulation is a useful compatibility technology — many apps run very well under it. Native ARM64 apps
-            may offer the best efficiency and battery life, and we show you which is which.</p>
+          <h3>What You're Trying to Do</h3>
+          <p>A scan tells us what's installed. A few quick questions tell us what actually matters to
+            your next computer — together they shape a sharper recommendation than either alone.</p>
         </div>
       </div>
     </div>
@@ -395,8 +780,8 @@
   </div>
 
   <footer>
-    CheckMyARM is a community-driven ARM compatibility tool. Data sourced from Winget, vendor sites, and community
-    reports. Free, no ads — <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
+    CheckMyARM is a community-driven ARM compatibility advisor. Data sourced from Winget, vendor sites, and
+    community reports. Free, no ads — <a href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener"
       style="color:#3b82f6;">buy us a coffee</a> if it helped. ·
     <a href="/privacy.html" style="color:#64748b;">Privacy</a> ·
     <a href="/why.html" style="color:#64748b;">Why</a> ·
@@ -407,27 +792,48 @@
   <script src="/assessment.js"></script>
   <script src="/nav.js"></script>
   <script>
-    const btn = document.getElementById('run-scan-btn');
+    // ═══════════════════════════════════════════════════════════════════
+    // Adaptive Assessment Surface — one persistent page, evolving content.
+    //
+    // Evidence model (see CLAUDE.md, Adaptive Assessment Surface milestone):
+    //   Observation  — raw scanner facts (results.apps/devices/system)
+    //   Evidence     — Guidance Signals + Adaptive Context (this page's
+    //                  questions), both interpreted signals
+    //   Assessment   — computeSynthesis() (unchanged, from assessment.js)
+    //   Recommendation — recommendationFor()/nextActionFor() (new, thin
+    //                  layer on top of Assessment; never a second scorer)
+    //
+    // This page never talks to /api/scan directly except through the exact
+    // same scan-trigger flow index.html already used (session creation,
+    // exe download, localhost:7878/poll handshake) — unchanged from before,
+    // just redirecting back to this same page instead of straight to
+    // report.html on completion.
+    // ═══════════════════════════════════════════════════════════════════
+
+    const params = new URLSearchParams(window.location.search);
+    let sessionId = params.get('session');
+    let scanLevelParam = params.get('level') || 'quick';
+    let currentResults = null;
     let pollInterval = null;
 
-    // Assessment Workspace continuity — see report.html for the full design rationale.
-    // Nothing here touches the server except the two calls import already needs
-    // (create a session, classify the imported app list) — both pre-existing,
-    // unchanged endpoints. Carry-forward state lives only in sessionStorage.
-    // CARRY_FORWARD_KEY and the export/import sanitizers now come from the
-    // shared assessment.js (loaded above) rather than a locally duplicated
-    // copy — sanitizeExportPayload() in particular is real validation logic
-    // that needs to stay in sync with report.html/workspace.html, not drift.
-
-    function reportUrlFor(sessionId, scanLevel) {
+    function assessUrlFor(sid, level) {
       const hasCarryForward = !!sessionStorage.getItem(CARRY_FORWARD_KEY);
-      return '/report.html?session=' + sessionId + '&level=' + scanLevel + (hasCarryForward ? '&carryForward=1' : '');
+      return '/?session=' + encodeURIComponent(sid) + '&level=' + encodeURIComponent(level) +
+        (hasCarryForward ? '&carryForward=1' : '');
+    }
+    function reportUrlFor(sid, level) {
+      return '/report.html?session=' + encodeURIComponent(sid) + '&level=' + encodeURIComponent(level) + '&origin=assessment';
+    }
+    function workspaceUrlFor(sid, level) {
+      return '/workspace.html?session=' + encodeURIComponent(sid) + '&level=' + encodeURIComponent(level);
     }
 
-    // Only Light gets this hint — deliberately not a per-level checklist
-    // (Standard/Advanced already collect device history themselves), just
-    // the one honest note explaining why Light's device picture is only as
-    // good as what's plugged in at scan time.
+    // ───────────────────────────────────────────────────────────────────
+    // Scan entry path — same session-creation/exe-download/handshake logic
+    // this page always had, only the completion redirect target changed
+    // (back to this same surface, not straight to report.html).
+    // ───────────────────────────────────────────────────────────────────
+    const btn = document.getElementById('run-scan-btn');
     const lightDeviceHint = document.getElementById('light-device-hint');
     function updateLightDeviceHint() {
       const checked = document.querySelector('input[name="scan-level"]:checked');
@@ -440,120 +846,309 @@
 
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
-
       const scanLevel = document.querySelector('input[name="scan-level"]:checked').value;
 
-      // Step 1: Create a session
       btn.textContent = 'Starting...';
       btn.style.background = '#475569';
       btn.style.cursor = 'default';
       btn.style.pointerEvents = 'none';
 
-      let sessionId;
+      let newSessionId;
       try {
         const res = await fetch('/api/session', { method: 'POST' });
         const data = await res.json();
-        sessionId = data.session_id;
+        newSessionId = data.session_id;
       } catch (err) {
         btn.textContent = 'Error — try again';
         btn.style.background = '#ef4444';
         return;
       }
 
-      // Step 2: Trigger download
       const link = document.createElement('a');
       link.href = '/ngpcx-scanner.exe';
       link.download = 'ngpcx-scanner.exe';
       link.click();
 
-      // Step 3: Show waiting UI
       btn.textContent = '⏳ Waiting for scanner...';
-
       showWaitingMessage();
 
       pollInterval = setInterval(async () => {
-        // Try localhost first
         try {
-          await fetch('http://localhost:7878?session=' + sessionId + '&level=' + scanLevel, {
+          await fetch('http://localhost:7878?session=' + newSessionId + '&level=' + scanLevel, {
             signal: AbortSignal.timeout(500)
           });
-          console.log('localhost connected!');
           clearInterval(pollInterval);
-          window.location.href = reportUrlFor(sessionId, scanLevel);
+          window.location.href = assessUrlFor(newSessionId, scanLevel);
           return;
-        } catch (e) {
-          console.log('localhost failed:', e.message);
-        }
+        } catch (e) { /* localhost handshake not available yet — fall through to server poll */ }
 
-        // Fallback: poll server session directly
         try {
-          const res = await fetch('/api/session/' + sessionId);
+          const res = await fetch('/api/session/' + newSessionId);
           const data = await res.json();
-          console.log('session status:', data.status);
           if (data.status === 'complete') {
             clearInterval(pollInterval);
-            window.location.href = reportUrlFor(sessionId, scanLevel);
+            window.location.href = assessUrlFor(newSessionId, scanLevel);
           }
-        } catch (e) {
-          console.log('session poll failed:', e.message);
-        }
+        } catch (e) { /* transient — next tick retries */ }
       }, 1000);
     });
 
-    // Small heads-up banner when arriving here from a workspace Rescan action — the
-    // user still has to click Run Scan themselves (no auto-triggered download without
-    // a fresh gesture), this just sets expectations.
-    if (new URLSearchParams(window.location.search).get('rescan') === '1' && sessionStorage.getItem(CARRY_FORWARD_KEY)) {
-      const hero = document.querySelector('.hero');
-      const note = document.createElement('div');
-      note.style.cssText = 'max-width:420px; margin:1rem auto 0 auto; padding:0.75rem 1rem; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; color:#93c5fd; font-size:0.85rem; text-align:center;';
-      note.textContent = 'Continuing your workspace — your personal notes will carry forward once this scan completes.';
-      hero.insertBefore(note, hero.firstChild);
-    }
-
-    // The hero's own "Already started?" import prompt reuses nav.js's single
-    // universal import mechanism (window.NavShell.triggerImport) rather than
-    // a second implementation — the nav-embedded Import link this used to sit
-    // alongside is now nav.js's own header CTA. nav.js's init() is typically
-    // done well before a user reads this far down the hero and clicks, but
-    // the ready-event fallback covers the rare case it isn't.
-    const heroContinueLink = document.getElementById('continue-session-link-hero');
-    if (heroContinueLink) {
-      heroContinueLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (window.NavShell && window.NavShell.ready) {
-          window.NavShell.triggerImport();
-        } else {
-          document.addEventListener('navshell:ready', () => window.NavShell.triggerImport(), { once: true });
-        }
-      });
-    }
-
     function showWaitingMessage() {
-      const hero = document.querySelector('.hero');
+      const scanPath = document.getElementById('scan-path');
       const msg = document.createElement('div');
       msg.id = 'waiting-msg';
       msg.style.cssText = `
-        margin-top: 1.5rem;
-        padding: 1rem 1.5rem;
+        margin-top: 1rem;
+        padding: 0.85rem 1.1rem;
         background: rgba(59, 130, 246, 0.1);
         border: 1px solid rgba(59, 130, 246, 0.3);
         border-radius: 10px;
         color: #93c5fd;
-        font-size: 0.95rem;
-        line-height: 1.6;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        text-align: left;
       `;
       msg.innerHTML = `
         <strong style="color:#f1f5f9">Scanner downloaded!</strong><br>
-        Run <code style="color:#3b82f6">ngpcx-scanner.exe</code> to scan your machine.<br>
-        This page will automatically continue once the scanner starts running.<br>
-        <span style="font-size:0.85rem;">Download didn't start? <a href="/ngpcx-scanner.exe" download="ngpcx-scanner.exe" style="color:#3b82f6;">Click here</a>.</span>
+        Run <code style="color:#3b82f6">ngpcx-scanner.exe</code> to scan your machine.
+        This page updates automatically once it's done.<br>
+        <span style="font-size:0.8rem;">Download didn't start? <a href="/ngpcx-scanner.exe" download="ngpcx-scanner.exe" style="color:#3b82f6;">Click here</a>.</span>
       `;
-      hero.appendChild(msg);
+      scanPath.appendChild(msg);
     }
 
+    if (params.get('rescan') === '1' && sessionStorage.getItem(CARRY_FORWARD_KEY)) {
+      const hero = document.querySelector('.hero');
+      const note = document.createElement('div');
+      note.style.cssText = 'max-width:420px; margin:1rem auto 0 auto; padding:0.75rem 1rem; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; color:#93c5fd; font-size:0.85rem; text-align:center;';
+      note.textContent = 'Continuing your assessment — your personal notes will carry forward once this scan completes.';
+      hero.appendChild(note);
+    }
+
+    // ───────────────────────────────────────────────────────────────────
+    // Questions entry path — reveals the pill panel in place. No navigation,
+    // no separate tool: this is the same page, just showing more of itself.
+    // ───────────────────────────────────────────────────────────────────
+    const questionsPanel = document.getElementById('questions-panel');
+    document.getElementById('open-questions-btn').addEventListener('click', () => {
+      questionsPanel.style.display = 'block';
+      questionsPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    function renderPillGroup(containerId, options, labels, selectedValues, multi, onToggle) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = options.map((opt) => {
+        const isSelected = selectedValues.includes(opt);
+        return `<button type="button" class="pill${isSelected ? ' selected' : ''}" data-value="${opt}">${labels[opt]}</button>`;
+      }).join('');
+      container.querySelectorAll('.pill').forEach((el) => {
+        el.addEventListener('click', () => onToggle(el.dataset.value));
+      });
+    }
+
+    function currentAdaptiveContext() {
+      return loadAdaptiveContext(sessionId);
+    }
+
+    // "Effective" view merges unconfirmed hints in for DISPLAY only — never
+    // used to drive recommendation/next-action logic, which always reads
+    // the raw stored context via currentAdaptiveContext(). See
+    // assessment.js's Adaptive Assessment Surface section for the full
+    // "infer aggressively, commit conservatively" rationale.
+    function effectiveIntendedUse(ctx) {
+      if (ctx.updated_at) return ctx.intended_use;
+      const hints = inferWorkloadHints(currentResults);
+      return hints.length > 0 ? hints : ctx.intended_use;
+    }
+    function effectiveRelationship(ctx) {
+      if (ctx.updated_at) return ctx.relationship;
+      return inferRelationshipHint(currentResults) || ctx.relationship;
+    }
+
+    function renderQuestionsPanel() {
+      const ctx = currentAdaptiveContext();
+      const effUse = effectiveIntendedUse(ctx);
+      const effRel = effectiveRelationship(ctx);
+      const isHinted = !ctx.updated_at && (effUse.length > 0 || !!effRel);
+
+      renderPillGroup('intended-use-pills', INTENDED_USE_OPTIONS, INTENDED_USE_LABELS, effUse, true, (value) => {
+        const displayed = effectiveIntendedUse(currentAdaptiveContext());
+        const next = displayed.includes(value) ? displayed.filter((v) => v !== value) : displayed.concat([value]);
+        saveAdaptiveContext(sessionId, { intended_use: next, relationship: effectiveRelationship(currentAdaptiveContext()) });
+        renderAll();
+      });
+
+      renderPillGroup('relationship-pills', RELATIONSHIP_OPTIONS, RELATIONSHIP_LABELS, effRel ? [effRel] : [], false, (value) => {
+        const displayedRel = effectiveRelationship(currentAdaptiveContext());
+        const next = displayedRel === value ? null : value; // click again to clear
+        saveAdaptiveContext(sessionId, { intended_use: effectiveIntendedUse(currentAdaptiveContext()), relationship: next });
+        renderAll();
+      });
+
+      // Suggested-but-unconfirmed pills get the ring treatment instead of
+      // the filled/selected one, and the panel opens automatically once
+      // there's something to show — the "here's what we think, correct us"
+      // moment shouldn't require the user to already know to look for it.
+      if (isHinted) {
+        document.querySelectorAll('#intended-use-pills .pill.selected, #relationship-pills .pill.selected')
+          .forEach((el) => { el.classList.remove('selected'); el.classList.add('suggested'); });
+        document.getElementById('hypothesis-note').style.display = 'block';
+        if (questionsPanel.style.display === 'none') questionsPanel.style.display = 'block';
+      } else {
+        document.getElementById('hypothesis-note').style.display = 'none';
+      }
+    }
+
+    // ───────────────────────────────────────────────────────────────────
+    // Recommendation panel + entry-path compaction + advanced disclosure —
+    // recomputed on every state change. Recommendation/next-action always
+    // read the RAW stored Adaptive Context (never the hint-merged view),
+    // per "do not silently treat inferred intent as confirmed."
+    // ───────────────────────────────────────────────────────────────────
+    function computeCurrentSynthesis() {
+      if (!currentResults) return null;
+      const personalContext = sessionId ? loadPersonalContext(sessionId, params) : new Map();
+      return computeSynthesis(currentResults, personalContext);
+    }
+
+    function renderRecommendation() {
+      const synthesis = computeCurrentSynthesis();
+      const rec = recommendationFor(synthesis);
+      const badge = document.getElementById('rec-badge');
+      badge.textContent = rec.label;
+      badge.style.background = rec.color + '33';
+      badge.style.color = rec.color;
+
+      const confEl = document.getElementById('rec-confidence');
+      confEl.textContent = (synthesis && !synthesis.empty) ? synthesis.confidenceLabel : '';
+
+      const ctx = currentAdaptiveContext();
+      const next = nextActionFor({ hasSession: !!(sessionId && currentResults), adaptiveContext: ctx, synthesis });
+      document.getElementById('next-action-text').textContent = next.text;
+
+      const cta = document.getElementById('next-action-cta');
+      if (next.kind === 'questions' || next.kind === 'start') {
+        cta.style.display = 'inline-block';
+        cta.textContent = 'Answer a few questions →';
+        cta.onclick = () => { questionsPanel.style.display = 'block'; questionsPanel.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+      } else if (next.kind === 'scan') {
+        cta.style.display = 'inline-block';
+        cta.textContent = 'Scroll to scan →';
+        cta.onclick = () => document.getElementById('scan-path').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (next.kind === 'refine' || next.kind === 'report') {
+        cta.style.display = 'inline-block';
+        cta.textContent = next.kind === 'refine' ? 'Open Advanced →' : 'View Detailed Report →';
+        cta.onclick = () => {
+          if (next.kind === 'report') { window.location.href = reportUrlFor(sessionId, scanLevelParam); }
+          else { document.getElementById('advanced-disclosure').open = true; document.getElementById('advanced-disclosure').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        };
+      } else {
+        cta.style.display = 'none';
+      }
+
+      const viewReport = document.getElementById('view-report-link');
+      if (sessionId && currentResults) {
+        viewReport.style.display = 'inline-block';
+        viewReport.href = reportUrlFor(sessionId, scanLevelParam);
+      } else {
+        viewReport.style.display = 'none';
+      }
+    }
+
+    function renderEntryPaths() {
+      const ctx = currentAdaptiveContext();
+      const hasEvidence = !!(sessionId && currentResults) || hasAdaptiveContext(ctx);
+      document.getElementById('entry-paths').classList.toggle('compact', hasEvidence);
+    }
+
+    function renderAdvanced() {
+      const body = document.getElementById('advanced-body');
+      if (!currentResults) {
+        body.innerHTML = '<p class="advanced-empty">Nothing to show yet — start with a scan or answer a few questions above.</p>';
+        return;
+      }
+      const personalContext = loadPersonalContext(sessionId, params);
+      const classified = classifyPopulation(currentResults, personalContext);
+      const synthesis = computeSynthesis(currentResults, personalContext);
+
+      const deservesAttention = classified
+        .filter(({ app, effectiveBucket, isBackground, decision }) =>
+          classifyAssessmentItem({ decision, bucket: effectiveBucket, app }) === 'deservesAttention')
+        .slice(0, 5);
+
+      const statsHtml = `
+        <div class="advanced-stats">
+          <div class="advanced-stat"><div class="advanced-stat-count">${synthesis.empty ? 0 : synthesis.materialCount}</div><div class="advanced-stat-label">Materially Influencing</div></div>
+          <div class="advanced-stat"><div class="advanced-stat-count">${synthesis.empty ? 0 : synthesis.backgroundCount}</div><div class="advanced-stat-label">Background / Platform</div></div>
+          <div class="advanced-stat"><div class="advanced-stat-count">${(currentResults.devices || []).length}</div><div class="advanced-stat-label">Devices</div></div>
+        </div>`;
+
+      const attentionHtml = deservesAttention.length > 0
+        ? '<ul class="advanced-attention-list">' + deservesAttention.map(({ app }) => `<li>• ${escapeHtmlLocal(app.name)}</li>`).join('') + '</ul>'
+        : '<p class="advanced-empty">No open items are currently pulling your recommendation down — nice.</p>';
+
+      body.innerHTML = statsHtml +
+        '<p class="advanced-empty" style="margin-bottom:0.5rem;">A few items worth a closer look:</p>' +
+        attentionHtml +
+        `<div class="advanced-links">
+           <a href="${workspaceUrlFor(sessionId, scanLevelParam)}">Open full Workspace →</a>
+           <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
+         </div>`;
+    }
+
+    function escapeHtmlLocal(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function renderAll() {
+      renderQuestionsPanel();
+      renderRecommendation();
+      renderEntryPaths();
+      renderAdvanced();
+    }
+
+    // ───────────────────────────────────────────────────────────────────
+    // Load — if a session id is on the URL (arriving from a completed scan,
+    // a rescan/import redirect, or the shared shell's logo/back-link),
+    // fetch and poll it exactly like report.html/workspace.html already do.
+    // ───────────────────────────────────────────────────────────────────
+    async function loadSessionIfPresent() {
+      if (!sessionId) { renderAll(); return; }
+      try {
+        const res = await fetch('/api/session/' + encodeURIComponent(sessionId));
+        if (!res.ok) { sessionId = null; renderAll(); return; }
+        const data = await res.json();
+        if (data.status === 'complete') {
+          currentResults = data.results;
+          if (currentResults && currentResults.scan_mode) scanLevelParam = currentResults.scan_mode;
+          renderAll();
+        } else {
+          // Still waiting on a physical scan started elsewhere — poll,
+          // same 1500ms cadence report.html/workspace.html already use.
+          renderAll();
+          const waitPoll = setInterval(async () => {
+            const r2 = await fetch('/api/session/' + encodeURIComponent(sessionId));
+            const d2 = await r2.json();
+            if (d2.status === 'complete') {
+              clearInterval(waitPoll);
+              currentResults = d2.results;
+              if (currentResults && currentResults.scan_mode) scanLevelParam = currentResults.scan_mode;
+              renderAll();
+            }
+          }, 1500);
+        }
+      } catch (err) {
+        renderAll();
+      }
+    }
+
+    loadSessionIfPresent();
+
+    // The hero's own "Already started?" import affordance now lives in the
+    // shared nav shell's header CTA (see nav.js) rather than a
+    // page-specific duplicate — importing lands back on this same page.
   </script>
 
 </body>
-
 </html>
