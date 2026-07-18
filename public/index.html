@@ -71,13 +71,16 @@
 
     /* Fixed-dimension gauge block — the housing itself never resizes or
        repositions as readings change. Height is the sum of fixed parts
-       (svg + label area + eyebrow), never content-driven. */
+       (eyebrow + svg + label area), never content-driven. Title now sits
+       ABOVE the instrument (like a real gauge's engraved name) and the
+       reading sits below it — see CLAUDE.md, Dashboard Instrument Panel
+       addendum. */
     .gauge-block {
       display: flex;
       flex-direction: column;
       align-items: center;
       width: 108px;
-      height: 128px;
+      height: 136px;
       justify-content: flex-start;
     }
 
@@ -101,7 +104,7 @@
        compatibility/no-data states) so its later appearance (the
        contextual-read qualifier) never shifts anything above or below it. */
     .gauge-label-area {
-      height: 2.5rem;
+      height: 2.75rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -128,77 +131,150 @@
       line-height: 0.85rem;
     }
 
+    /* Numeric readout — Confidence only (a genuine 0-100 value). ARM
+       Suitability stays label-only since it's a categorical taxonomy, not
+       a percentage — see gaugeSvg()'s needle-vs-fill comment below for why
+       a number there would be misleading. */
+    .gauge-pct {
+      color: #64748b;
+      font-weight: 600;
+    }
+
     /* Fixed instrument title — never changes text per state, only ever
        names what the gauge measures (see CLAUDE.md, Dashboard Instruments
-       addendum, on why this replaced a state-dependent eyebrow). */
+       addendum). Now sits ABOVE the instrument, like an engraved gauge
+       name, per the Dashboard Instrument Panel addendum. */
     .gauge-eyebrow {
       font-size: 0.6rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: #64748b;
-      margin-top: 0.2rem;
+      margin-bottom: 0.3rem;
     }
 
-    /* Next Step — a compact pill, not a paragraph. The full reasoning
-       lives behind the "Why" toggle below, on demand. Fixed height so
-       "Choose a starting point below" and "Run a Scan" occupy the same
-       slot without moving the helper row beneath them. */
-    .next-step-pill {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.35rem;
-      width: 210px;
-      height: 128px;
-      justify-content: center;
+    /* ─── WHAT NEXT? panel ───────────────────────────────────────────────
+       Replaces the old compact pill with a real contextual recommendation
+       area: a short state-dependent blurb plus 1-2 action buttons. The
+       dashboard RECOMMENDS — it never prescribes a required order, and the
+       tabs above remain fully clickable regardless of what this panel
+       suggests. Fixed min-height so the panel doesn't visibly jump between
+       a one-button and a two-button state; the blurb's own line-height is
+       what absorbs text-length differences (see CLAUDE.md). */
+    .what-next-panel {
+      margin-top: 1rem;
+      padding-top: 0.9rem;
+      border-top: 1px solid #334155;
+      text-align: center;
     }
 
-    .next-step-pill-label {
+    .what-next-label {
       font-size: 0.62rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: #64748b;
+      margin-bottom: 0.45rem;
     }
 
-    .next-step-pill-btn {
+    .what-next-blurb {
+      font-size: 0.84rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+      max-width: 480px;
+      margin: 0 auto 0.85rem auto;
+      min-height: 2.55rem;
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+
+    .what-next-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .what-next-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       gap: 0.35rem;
-      background: rgba(59, 130, 246, 0.14);
-      border: 1px solid rgba(59, 130, 246, 0.35);
-      color: #93c5fd;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 700;
-      padding: 0.4rem 0.85rem;
-      border-radius: 12px;
+      padding: 0.5rem 1.1rem;
+      border-radius: 10px;
       cursor: pointer;
       text-align: center;
       line-height: 1.3;
-      width: 100%;
-      min-height: 2.6rem;
+      border: 1px solid transparent;
+      text-decoration: none;
     }
 
-    .next-step-pill-btn:hover {
-      border-color: #3b82f6;
-      background: rgba(59, 130, 246, 0.22);
+    .what-next-btn.primary {
+      background: #3b82f6;
+      color: white;
     }
 
-    /* Inert variant — shown when there is deliberately no single
-       recommended action (the true empty state) so the pill still occupies
-       its fixed slot without nudging toward one entry path. */
-    .next-step-pill-btn.inert {
-      background: rgba(100, 116, 139, 0.12);
+    .what-next-btn.primary:hover {
+      background: #2563eb;
+    }
+
+    .what-next-btn.secondary {
+      background: rgba(148, 163, 184, 0.1);
       border-color: #334155;
-      color: #94a3b8;
-      cursor: default;
+      color: #cbd5e1;
     }
 
-    .next-step-pill-btn.inert:hover {
-      border-color: #334155;
-      background: rgba(100, 116, 139, 0.12);
+    .what-next-btn.secondary:hover {
+      border-color: #64748b;
+      color: #f1f5f9;
+    }
+
+    /* Deliberately-inert variant — the true empty state, where the panel
+       says so honestly rather than nudging toward one entry path (both
+       real action buttons still render alongside it — see
+       renderWhatNextPanel()). */
+    .what-next-blurb.inert {
+      color: #64748b;
+    }
+
+    /* ─── SCANNER ACTIVITY strip ─────────────────────────────────────────
+       A slim, always-present instrument reporting what the scanner
+       handshake is doing right now. Fixed height so it never shifts
+       surrounding layout; quiet/muted at rest ("Ready"), visibly active
+       during a real scan. Prototype-level — see CLAUDE.md. */
+    .scanner-activity {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      height: 1.4rem;
+      font-size: 0.76rem;
+      color: #64748b;
+    }
+
+    .scanner-activity-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #475569;
+      flex-shrink: 0;
+    }
+
+    .scanner-activity-dot.active {
+      animation: scanner-pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes scanner-pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+      50% { opacity: 0.55; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scanner-activity-dot.active { animation: none; }
     }
 
     /* Compact helper row — fixed position, controls always visible. */
@@ -315,18 +391,6 @@
       font-size: 0.82rem;
     }
 
-    .evidence-summary-list li {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0.3rem 0;
-      border-bottom: 1px solid #1e293b;
-    }
-
-    .evidence-summary-list li:last-child {
-      border-bottom: none;
-    }
-
     .evidence-summary-label {
       color: #94a3b8;
     }
@@ -335,6 +399,44 @@
       color: #e2e8f0;
       font-weight: 600;
       text-align: right;
+    }
+
+    /* Compact per-source meter — a small horizontal fill representing how
+       much evidence THAT SOURCE currently contributes, not a workflow
+       completion bar. Built directly from evidenceSourcesFor()'s existing
+       contribution/maxContribution/presence fields (see
+       evidenceSummaryHtml()) — no new evidence data, just a visual
+       alongside the existing qualitative phrase. Sources with
+       maxContribution 0 (Community, Findings today) render a binary
+       filled/empty state rather than implying a percentage that doesn't
+       exist. */
+    .evidence-summary-row {
+      padding: 0.35rem 0;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .evidence-summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .evidence-summary-toprow {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .evidence-meter-track {
+      height: 4px;
+      border-radius: 999px;
+      background: #1e293b;
+      overflow: hidden;
+    }
+
+    .evidence-meter-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: #3b82f6;
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -789,25 +891,30 @@
   <div class="dashboard" id="dashboard">
     <div class="dashboard-main">
       <div class="gauge-block" id="gauge-recommendation">
+        <div class="gauge-eyebrow">ARM Suitability</div>
         <div class="gauge-svg-wrap" id="gauge-rec-svg-wrap"></div>
         <div class="gauge-label-area">
           <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
           <div class="gauge-label-sub" id="gauge-rec-sub"></div>
         </div>
-        <div class="gauge-eyebrow">ARM Suitability</div>
       </div>
       <div class="gauge-block" id="gauge-confidence">
+        <div class="gauge-eyebrow">Confidence</div>
         <div class="gauge-svg-wrap" id="gauge-conf-svg-wrap"></div>
         <div class="gauge-label-area">
           <div class="gauge-label" id="gauge-conf-label">No Data Yet</div>
           <div class="gauge-label-sub"></div>
         </div>
-        <div class="gauge-eyebrow">Confidence</div>
       </div>
-      <div class="next-step-pill">
-        <span class="next-step-pill-label">Next Step</span>
-        <button type="button" class="next-step-pill-btn" id="next-step-pill-btn">Choose a starting point below</button>
-      </div>
+    </div>
+    <div class="what-next-panel">
+      <div class="what-next-label">What Next?</div>
+      <div class="what-next-blurb" id="what-next-blurb">Start a new assessment by choosing a starting point below.</div>
+      <div class="what-next-actions" id="what-next-actions"></div>
+    </div>
+    <div class="scanner-activity" id="scanner-activity">
+      <span class="scanner-activity-dot" id="scanner-activity-dot"></span>
+      <span id="scanner-activity-label">Ready — start a scan anytime</span>
     </div>
     <div class="dashboard-helpers">
       <button type="button" class="helper-toggle" data-helper="why">Why <span>▾</span></button>
@@ -989,6 +1096,44 @@
     }
 
     // ───────────────────────────────────────────────────────────────────
+    // SCANNER ACTIVITY — a small, prototype-level instrument reporting
+    // what the localhost:7878 handshake is doing right now, directly in
+    // the persistent dashboard rather than a one-off note buried in the
+    // Current Computer tab. Explicitly not a final implementation (see
+    // CLAUDE.md) — the goal here is giving the user visible confidence
+    // evidence is actively being gathered, not a polished component.
+    //
+    // A real scan spans a full page navigation: this page creates a
+    // session, triggers a download, polls localhost:7878, and on success
+    // redirects to THIS SAME URL with ?session=&level= (a fresh page load,
+    // which resets all JS state). "Connected"/"Receiving Results" would
+    // otherwise never be visible — SCANNER_ACTIVITY_BRIDGE_KEY carries a
+    // one-shot flag across that reload (the same sessionStorage-bridge
+    // pattern CARRY_FORWARD_KEY already uses elsewhere in this codebase)
+    // so the freshly-loaded page can play "Connected → Receiving Results →
+    // Assessment Updated" once real results arrive, then quietly settle
+    // back to "Ready."
+    // ───────────────────────────────────────────────────────────────────
+    const SCANNER_ACTIVITY_BRIDGE_KEY = 'ngpcx_scanner_activity_bridge_v1';
+    const SCANNER_STATE_META = {
+      ready: { label: 'Ready — start a scan anytime', dot: '#475569', active: false },
+      downloading: { label: 'Downloading scanner…', dot: '#3b82f6', active: true },
+      waiting: { label: 'Waiting for scanner to run…', dot: '#f59e0b', active: true },
+      connected: { label: 'Scanner connected', dot: '#10b981', active: true },
+      receiving: { label: 'Receiving results…', dot: '#10b981', active: true },
+      updated: { label: 'Assessment updated', dot: '#10b981', active: false },
+    };
+    function setScannerActivity(state) {
+      const meta = SCANNER_STATE_META[state] || SCANNER_STATE_META.ready;
+      const dot = document.getElementById('scanner-activity-dot');
+      const label = document.getElementById('scanner-activity-label');
+      if (!dot || !label) return;
+      dot.style.background = meta.dot;
+      dot.classList.toggle('active', meta.active);
+      label.textContent = meta.label;
+    }
+
+    // ───────────────────────────────────────────────────────────────────
     // EVIDENCE CATEGORIES — the single source of truth for the Evidence
     // Navigation bar and the Details Workspace it drives. Adding a new
     // category (or renaming/removing one) is a one-line change here; no
@@ -1123,6 +1268,7 @@
         btn.style.background = '#475569';
         btn.style.cursor = 'default';
         btn.style.pointerEvents = 'none';
+        setScannerActivity('downloading');
 
         let newSessionId;
         try {
@@ -1132,6 +1278,7 @@
         } catch (err) {
           btn.textContent = 'Error — try again';
           btn.style.background = '#ef4444';
+          setScannerActivity('ready');
           return;
         }
 
@@ -1141,7 +1288,18 @@
         link.click();
 
         btn.textContent = '⏳ Waiting for scanner...';
+        setScannerActivity('waiting');
         showWaitingMessage();
+
+        // Marks "connected" and stashes a one-shot bridge flag so the
+        // fresh page load after the redirect below can pick up the
+        // "Receiving Results → Assessment Updated" leg of this same
+        // sequence — see SCANNER_ACTIVITY_BRIDGE_KEY comment above.
+        function handoffToResults() {
+          setScannerActivity('connected');
+          sessionStorage.setItem(SCANNER_ACTIVITY_BRIDGE_KEY, '1');
+          window.location.href = assessUrlFor(newSessionId, scanLevel);
+        }
 
         pollInterval = setInterval(async () => {
           try {
@@ -1149,7 +1307,7 @@
               signal: AbortSignal.timeout(500)
             });
             clearInterval(pollInterval);
-            window.location.href = assessUrlFor(newSessionId, scanLevel);
+            handoffToResults();
             return;
           } catch (e) { /* localhost handshake not available yet — fall through to server poll */ }
 
@@ -1158,7 +1316,7 @@
             const data = await res.json();
             if (data.status === 'complete') {
               clearInterval(pollInterval);
-              window.location.href = assessUrlFor(newSessionId, scanLevel);
+              handoffToResults();
             }
           } catch (e) { /* transient — next tick retries */ }
         }, 1000);
@@ -1348,17 +1506,58 @@
     const GAUGE_HEIGHT = GAUGE_CY + GAUGE_R * 0.5 + GAUGE_PAD;
     const GAUGE_CX = GAUGE_WIDTH / 2;
 
-    function gaugeArcPoints(startAngle, sweepDeg, segments) {
+    function gaugeArcPoints(startAngle, sweepDeg, segments, radius) {
       const pts = [];
+      const r = radius === undefined ? GAUGE_R : radius;
       for (let i = 0; i <= segments; i++) {
         const angle = ((startAngle + (sweepDeg * i) / segments) * Math.PI) / 180;
-        pts.push((GAUGE_CX + GAUGE_R * Math.cos(angle)).toFixed(2) + ',' + (GAUGE_CY + GAUGE_R * Math.sin(angle)).toFixed(2));
+        pts.push((GAUGE_CX + r * Math.cos(angle)).toFixed(2) + ',' + (GAUGE_CY + r * Math.sin(angle)).toFixed(2));
       }
       return pts.join(' ');
     }
 
-    function gaugeSvg(percent, color) {
-      const clamped = Math.max(0, Math.min(100, percent));
+    function gaugePoint(angleDeg, radius) {
+      const angle = (angleDeg * Math.PI) / 180;
+      return { x: GAUGE_CX + radius * Math.cos(angle), y: GAUGE_CY + radius * Math.sin(angle) };
+    }
+
+    // Tick marks — 5 short radial hairlines at 0/25/50/75/100% of the
+    // sweep, purely decorative (an instrument reads as an instrument
+    // partly because it has hash marks, not because each one denotes a
+    // precise threshold). Same 5 positions double as the ARM Suitability
+    // gauge's discrete tier stops — see gaugeSvg()'s needlePercent.
+    const GAUGE_TICK_FRACTIONS = [0, 0.25, 0.5, 0.75, 1];
+    function gaugeTicksSvg() {
+      const inner = GAUGE_R - GAUGE_STROKE * 0.65;
+      const outer = GAUGE_R + GAUGE_STROKE * 0.55;
+      return GAUGE_TICK_FRACTIONS.map((f) => {
+        const angle = GAUGE_START_ANGLE + GAUGE_SWEEP * f;
+        const p1 = gaugePoint(angle, inner);
+        const p2 = gaugePoint(angle, outer);
+        return `<line x1="${p1.x.toFixed(2)}" y1="${p1.y.toFixed(2)}" x2="${p2.x.toFixed(2)}" y2="${p2.y.toFixed(2)}" stroke="#475569" stroke-width="1.25" stroke-linecap="round"/>`;
+      }).join('');
+    }
+
+    // Needle — a simple radial pointer plus a small hub, at whatever
+    // percent position is meaningful for THIS gauge (see the two call
+    // sites in renderDashboard(): a genuine 0-100% position for Confidence,
+    // a discrete 5-tier stop position for ARM Suitability). Deliberately
+    // lightweight — two SVG primitives, no library.
+    function gaugeNeedleSvg(needlePercent) {
+      const clamped = Math.max(0, Math.min(100, needlePercent));
+      const angle = GAUGE_START_ANGLE + GAUGE_SWEEP * (clamped / 100);
+      const tip = gaugePoint(angle, GAUGE_R - GAUGE_STROKE * 0.55);
+      return `<line x1="${GAUGE_CX}" y1="${GAUGE_CY}" x2="${tip.x.toFixed(2)}" y2="${tip.y.toFixed(2)}" stroke="#f1f5f9" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="${GAUGE_CX}" cy="${GAUGE_CY}" r="2.5" fill="#f1f5f9"/>`;
+    }
+
+    // fillPercent drives the colored arc (categorical gauges pass 100 for
+    // a full status-color ring — see CLAUDE.md); needlePercent (defaults to
+    // fillPercent) drives the pointer position independently, since a
+    // categorical reading's "fill" and its "position" are different ideas.
+    function gaugeSvg(fillPercent, color, needlePercent) {
+      const clamped = Math.max(0, Math.min(100, fillPercent));
+      const needleAt = needlePercent === undefined ? clamped : needlePercent;
       const trackPts = gaugeArcPoints(GAUGE_START_ANGLE, GAUGE_SWEEP, 48);
       const fillSweep = GAUGE_SWEEP * (clamped / 100);
       const fillSegments = Math.max(1, Math.round(48 * (clamped / 100)));
@@ -1366,31 +1565,119 @@
       return `<svg width="${GAUGE_WIDTH}" height="${GAUGE_HEIGHT}" viewBox="0 0 ${GAUGE_WIDTH} ${GAUGE_HEIGHT}">
         <polyline points="${trackPts}" fill="none" stroke="#334155" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>
         ${clamped > 0 ? `<polyline points="${fillPts}" fill="none" stroke="${color}" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+        ${gaugeTicksSvg()}
+        ${gaugeNeedleSvg(needleAt)}
       </svg>`;
     }
 
-    const NEXT_STEP_PILL_LABELS = {
-      'start-empty': 'Choose a starting point below',
+    // Discrete 5-tier stop positions for the ARM Suitability needle — the
+    // recommendation taxonomy is categorical (see recommendationFor()), so
+    // the needle points at one of 5 fixed tick positions rather than a
+    // continuous percent. This is presentation-only: it never feeds back
+    // into recommendationFor() or any scoring, and the color-fill logic
+    // (full ring per category color) is completely unchanged.
+    const RECOMMENDATION_TIER_ORDER = ['Too Early to Tell', 'Poor Fit', 'Proceed with Caution', 'Probably a Good Fit', 'Good Fit'];
+    function recommendationNeedlePercent(label) {
+      const idx = RECOMMENDATION_TIER_ORDER.indexOf(label);
+      return idx === -1 ? 0 : (idx / (RECOMMENDATION_TIER_ORDER.length - 1)) * 100;
+    }
+
+    // ─── WHAT NEXT? panel ────────────────────────────────────────────────
+    // Which evidence tab (or off-page link) each button targets. This is
+    // the ONE place that turns nextActionFor()'s existing {kind, text}
+    // output into real UI actions — it never re-derives the recommendation
+    // itself, only presents it. 'start-empty' is handled separately below
+    // (two equally-weighted entry actions, not a primary/secondary pair —
+    // see the original "two equally prominent entry paths" precedent).
+    // Every action here reuses an existing tab or an existing off-page
+    // link (Report/Workspace/Community) — nothing new was invented to
+    // populate a second button; where no second real action exists, the
+    // panel just shows one.
+    const WHAT_NEXT_PRIMARY_LABEL = {
       'questions': 'Add Intended Use',
-      'scan': 'Run a Scan',
-      'optional-scan': 'Scan Optional — Add Detail',
-      'none-needed': 'Early Read Ready',
       'start': 'Add More Detail',
+      'scan': 'Run a Scan',
+      'optional-scan': 'Run a Scan (Optional)',
+      'none-needed': 'Review Your Answers',
       'refine': 'Review Findings',
       'report': 'View Detailed Report',
     };
-    // Which evidence tab the pill's click switches to — 'report' is the one
-    // exception that navigates away entirely (to the Detailed Report), and
-    // 'start-empty' is the one case with no action at all (see the inert
-    // pill styling), matching the "recommend, don't require" principle.
-    const NEXT_STEP_TAB_TARGET = {
-      'questions': 'intended-use',
-      'scan': 'current-computer',
-      'optional-scan': 'current-computer',
-      'none-needed': 'intended-use',
-      'start': 'intended-use',
-      'refine': 'findings',
+    const WHAT_NEXT_PRIMARY_TARGET = {
+      'questions': { tab: 'intended-use' },
+      'start': { tab: 'intended-use' },
+      'scan': { tab: 'current-computer' },
+      'optional-scan': { tab: 'current-computer' },
+      'none-needed': { tab: 'intended-use' },
+      'refine': { tab: 'findings' },
+      'report': { link: 'report' },
     };
+    // Secondary action — one reasonable complementary action per kind, or
+    // none where a second real action doesn't exist yet. Intentionally NOT
+    // exhaustive of every navigation option; the dashboard recommends, it
+    // doesn't try to list everything the tabs already make reachable.
+    const WHAT_NEXT_SECONDARY = {
+      'questions': { label: 'View Detailed Report', link: 'report' },
+      'start': { label: 'Run a Scan', tab: 'current-computer' },
+      'scan': { label: 'Browse Community Data', tab: 'community' },
+      'optional-scan': { label: 'Browse Community Data', tab: 'community' },
+      'none-needed': { label: 'Run a Scan (Optional)', tab: 'current-computer' },
+      'refine': { label: 'View Detailed Report', link: 'report' },
+      'report': { label: 'Open Full Workspace', link: 'workspace' },
+    };
+
+    function whatNextActionHref(action) {
+      if (action.link === 'report') return reportUrlFor(sessionId, scanLevelParam);
+      if (action.link === 'workspace') return workspaceUrlFor(sessionId, scanLevelParam);
+      return '#';
+    }
+    function wireWhatNextButton(btn, action) {
+      if (action.tab) {
+        btn.addEventListener('click', (e) => { e.preventDefault(); switchTab(action.tab); });
+      }
+      // link actions are plain <a href> — no JS handler needed.
+    }
+
+    function renderWhatNextPanel(next) {
+      const blurb = document.getElementById('what-next-blurb');
+      const actions = document.getElementById('what-next-actions');
+      blurb.textContent = next.text;
+      blurb.classList.toggle('inert', next.kind === 'start-empty');
+      actions.innerHTML = '';
+
+      if (next.kind === 'start-empty') {
+        // No single recommended action yet — both entry paths shown with
+        // equal visual weight, matching this surface's original "two
+        // equally prominent entry paths" design.
+        actions.innerHTML = `
+          <a href="#" class="what-next-btn primary" data-tab="current-computer">Start Scan</a>
+          <a href="#" class="what-next-btn primary" data-tab="intended-use">Answer Questions</a>`;
+        actions.querySelectorAll('[data-tab]').forEach((el) => {
+          el.addEventListener('click', (e) => { e.preventDefault(); switchTab(el.dataset.tab); });
+        });
+        return;
+      }
+
+      const primaryLabel = WHAT_NEXT_PRIMARY_LABEL[next.kind];
+      const primaryTarget = WHAT_NEXT_PRIMARY_TARGET[next.kind];
+      const secondary = WHAT_NEXT_SECONDARY[next.kind];
+      if (!primaryLabel || !primaryTarget) return; // defensive — every real kind is mapped above
+
+      const primaryBtn = document.createElement('a');
+      primaryBtn.href = primaryTarget.link ? whatNextActionHref(primaryTarget) : '#';
+      primaryBtn.className = 'what-next-btn primary';
+      primaryBtn.textContent = primaryLabel;
+      wireWhatNextButton(primaryBtn, primaryTarget);
+      actions.appendChild(primaryBtn);
+
+      if (secondary) {
+        const secondaryBtn = document.createElement('a');
+        secondaryBtn.href = secondary.link ? whatNextActionHref(secondary) : '#';
+        secondaryBtn.className = 'what-next-btn secondary';
+        secondaryBtn.textContent = secondary.label;
+        wireWhatNextButton(secondaryBtn, secondary);
+        actions.appendChild(secondaryBtn);
+      }
+    }
 
     function renderDashboard() {
       const hasSession = !!(sessionId && currentResults);
@@ -1407,17 +1694,32 @@
       // only) read stays visibly distinct from a scan-backed compatibility
       // verdict, now that the eyebrow itself is fixed — see CLAUDE.md,
       // Dashboard Instruments addendum.
-      let recColor, recLabel, recSub;
+      // recNeedlePct is set per-branch rather than derived generically from
+      // recLabel, since a contextual read's label ("Likely a Good
+      // Candidate", "Depends on Your Setup") isn't a member of the 5-tier
+      // scan-backed vocabulary RECOMMENDATION_TIER_ORDER indexes — mapping
+      // it through that lookup would silently pin the needle at position 0
+      // regardless of how positive the contextual read actually is.
+      let recColor, recLabel, recSub, recNeedlePct;
       if (state === ASSESSMENT_STATE_SCAN_BACKED) {
         const rec = recommendationFor(synthesis);
         recColor = rec.color; recLabel = rec.label; recSub = '';
+        recNeedlePct = recommendationNeedlePercent(recLabel);
       } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
         const read = contextualReadFor(ctx);
         recColor = '#2dd4bf'; recLabel = read.label; recSub = 'Early Read';
+        // A contextual read only ever carries two verdicts (see
+        // contextualReadFor()) — positioned at the same two tiers a
+        // scan-backed read would land on for the same sentiment, so the
+        // needle still reads as "roughly here," without implying this is
+        // an evidence-backed compatibility verdict (color/eyebrow-sub
+        // still carry that distinction, unchanged).
+        recNeedlePct = read.verdict === 'positive' ? recommendationNeedlePercent('Probably a Good Fit') : recommendationNeedlePercent('Proceed with Caution');
       } else {
         recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recSub = '';
+        recNeedlePct = recommendationNeedlePercent('Too Early to Tell');
       }
-      document.getElementById('gauge-rec-svg-wrap').innerHTML = gaugeSvg(100, recColor);
+      document.getElementById('gauge-rec-svg-wrap').innerHTML = gaugeSvg(100, recColor, recNeedlePct);
       document.getElementById('gauge-rec-label').textContent = recLabel;
       document.getElementById('gauge-rec-label').style.color = recColor;
       document.getElementById('gauge-rec-sub').textContent = recSub;
@@ -1449,25 +1751,18 @@
         confPct >= 85 ? 'High Confidence' : confPct >= 60 ? 'Moderate Confidence' : 'Limited Data'
       );
       document.getElementById('gauge-conf-svg-wrap').innerHTML = gaugeSvg(confPct, confColor);
-      document.getElementById('gauge-conf-label').textContent = confLabel;
+      // Numeric readout alongside the label (e.g. "Good Evidence — 64%") —
+      // Confidence genuinely is a 0-100 value, unlike ARM Suitability's
+      // categorical taxonomy, so a number here is honest rather than
+      // implying false precision.
+      document.getElementById('gauge-conf-label').innerHTML = `${escapeHtml(confLabel)} <span class="gauge-pct">— ${confPct}%</span>`;
       document.getElementById('gauge-conf-label').style.color = confPct <= 0 ? '#64748b' : confColor;
 
-      // Next Step pill.
+      // What Next? panel — reuses nextActionFor()'s existing {kind, text}
+      // output verbatim (see assessment.js); this file only turns it into
+      // buttons, it never re-derives the recommendation itself.
       const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
-      const pillBtn = document.getElementById('next-step-pill-btn');
-      pillBtn.textContent = NEXT_STEP_PILL_LABELS[next.kind] || next.text;
-      const target = NEXT_STEP_TAB_TARGET[next.kind];
-      if (next.kind === 'report') {
-        pillBtn.classList.remove('inert');
-        pillBtn.onclick = () => { window.location.href = reportUrlFor(sessionId, scanLevelParam); };
-      } else if (target) {
-        pillBtn.classList.remove('inert');
-        pillBtn.onclick = () => switchTab(target);
-      } else {
-        // 'start-empty' — deliberately no single recommended action.
-        pillBtn.classList.add('inert');
-        pillBtn.onclick = null;
-      }
+      renderWhatNextPanel(next);
 
       renderHelperPanels(state, ctx, synthesis, evidenceSources);
     }
@@ -1491,7 +1786,31 @@
     // evidenceSourcesFor() array the gauge itself sums (see
     // assessment.js) rather than a second, separately-maintained
     // description of the same state. Deliberately never shows a raw point
-    // value — presence/quality are mapped to short phrases only.
+    // value — presence/quality are mapped to short phrases, plus a small
+    // horizontal meter representing THAT SOURCE's own state (how much it
+    // currently contributes for scored sources, or a plain has/doesn't-have
+    // reading for sources with no scoring weight yet — see
+    // evidenceMeterPct()) — never a workflow-completion bar.
+    function evidenceMeterPct(...evidenceEntries) {
+      const totalMax = evidenceEntries.reduce((sum, e) => sum + e.maxContribution, 0);
+      if (totalMax > 0) {
+        const totalContribution = evidenceEntries.reduce((sum, e) => sum + e.contribution, 0);
+        return Math.round((totalContribution / totalMax) * 100);
+      }
+      // No scoring weight defined for this source (e.g. Community, Findings
+      // today) — fall back to a plain presence reading rather than
+      // implying a percentage that doesn't exist.
+      return evidenceEntries.some((e) => e.presence === 'present') ? 100 : 0;
+    }
+    function evidenceMeterRow(label, status, pct, color) {
+      return `<li class="evidence-summary-row">
+        <div class="evidence-summary-toprow">
+          <span class="evidence-summary-label">${escapeHtml(label)}</span>
+          <span class="evidence-summary-status">${escapeHtml(status)}</span>
+        </div>
+        <div class="evidence-meter-track"><div class="evidence-meter-fill" style="width:${pct}%; background:${color};"></div></div>
+      </li>`;
+    }
     function evidenceSummaryHtml(sources) {
       const byId = {};
       sources.forEach((s) => { byId[s.id] = s; });
@@ -1512,18 +1831,17 @@
 
       const communityStatus = community.presence === 'absent' ? 'No relevant evidence yet' : 'Evidence available';
 
+      const findingsNeedsAttention = findings.presence === 'present' && findings.explanation.indexOf('Nothing') !== 0;
       const findingsStatus = findings.presence === 'absent' ? 'Not applicable yet'
-        : findings.explanation.indexOf('Nothing') === 0 ? 'None' : 'Some require attention';
+        : findingsNeedsAttention ? 'Some require attention' : 'None';
 
       const rows = [
-        ['Current Computer', scanStatus],
-        ['Intended Use', intendedUseStatus],
-        ['Community', communityStatus],
-        ['Findings', findingsStatus],
+        evidenceMeterRow('Current Computer', scanStatus, evidenceMeterPct(scan), '#3b82f6'),
+        evidenceMeterRow('Intended Use', intendedUseStatus, evidenceMeterPct(workload, relationship), '#3b82f6'),
+        evidenceMeterRow('Community', communityStatus, evidenceMeterPct(community), '#64748b'),
+        evidenceMeterRow('Findings', findingsStatus, evidenceMeterPct(findings), findingsNeedsAttention ? '#f59e0b' : '#10b981'),
       ];
-      return `<ul class="evidence-summary-list">${rows.map(([label, status]) =>
-        `<li><span class="evidence-summary-label">${escapeHtml(label)}</span><span class="evidence-summary-status">${escapeHtml(status)}</span></li>`
-      ).join('')}</ul>`;
+      return `<ul class="evidence-summary-list">${rows.join('')}</ul>`;
     }
 
     function renderHelperPanels(state, ctx, synthesis, evidenceSources) {
@@ -1619,7 +1937,12 @@
       const ctx = currentAdaptiveContext();
       const synthesis = hasSession ? computeCurrentSynthesis() : null;
       const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
-      activeTabId = NEXT_STEP_TAB_TARGET[next.kind] || 'current-computer';
+      // Reuses the same kind→tab mapping the What Next? primary button
+      // targets (WHAT_NEXT_PRIMARY_TARGET) — 'report' has no tab entry
+      // there (it's an off-page link), so it correctly falls back to
+      // 'current-computer' here too, unchanged from the prior behavior.
+      const target = WHAT_NEXT_PRIMARY_TARGET[next.kind];
+      activeTabId = (target && target.tab) || 'current-computer';
     }
 
     function renderAll() {
@@ -1634,6 +1957,20 @@
     // fetch and poll it exactly like report.html/workspace.html already do.
     // ───────────────────────────────────────────────────────────────────
     async function loadSessionIfPresent() {
+      // Consume the one-shot Scanner Activity bridge flag (see
+      // SCANNER_ACTIVITY_BRIDGE_KEY comment above) — only present when THIS
+      // page load is the direct redirect target of a just-completed scan,
+      // never on an ordinary revisit/import, so "Receiving Results" only
+      // ever plays when results are genuinely new.
+      const scanJustHappened = !!sessionStorage.getItem(SCANNER_ACTIVITY_BRIDGE_KEY);
+      sessionStorage.removeItem(SCANNER_ACTIVITY_BRIDGE_KEY);
+      if (scanJustHappened) setScannerActivity('receiving');
+      function announceResultsIfScanJustHappened() {
+        if (!scanJustHappened) return;
+        setScannerActivity('updated');
+        setTimeout(() => setScannerActivity('ready'), 3000);
+      }
+
       if (!sessionId) { chooseInitialTab(); renderAll(); return; }
       try {
         const res = await fetch('/api/session/' + encodeURIComponent(sessionId));
@@ -1644,6 +1981,7 @@
           if (currentResults && currentResults.scan_mode) scanLevelParam = currentResults.scan_mode;
           chooseInitialTab();
           renderAll();
+          announceResultsIfScanJustHappened();
         } else {
           // Still waiting on a physical scan started elsewhere — poll,
           // same 1500ms cadence report.html/workspace.html already use.
@@ -1657,6 +1995,7 @@
               currentResults = d2.results;
               if (currentResults && currentResults.scan_mode) scanLevelParam = currentResults.scan_mode;
               renderAll();
+              announceResultsIfScanJustHappened();
             }
           }, 1500);
         }
