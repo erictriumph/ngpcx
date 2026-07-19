@@ -638,23 +638,36 @@
 
     /* ═══════════════════════════════════════════════════════════════════
        LAYER 2 — EVIDENCE NAVIGATION (mode selectors)
-       A persistent, modular selector row, styled as the same button
-       family as the What Next queue (rounded rect, blue-active/muted-
-       inactive) rather than protruding page tabs — related to, not
-       identical to, .whatnext-slot: these select a MODE, they don't rank
-       recommendations, so no "›" marker and no monospace. Adding/removing/
-       renaming a category is a one-line change to EVIDENCE_CATEGORIES in
-       the script below — no markup duplication per tab.
+       A 3-zone grid, not a flat tab row — the layout itself is the
+       information architecture: Observed (left, 2 rows: Detected Apps /
+       Detected Devices) | Intent (center, 1 row spanning both: Use Case)
+       | Assessment (right, 2 rows: Applications / Devices). Thin vertical
+       dividers between the zones (not text labels) are what communicate
+       "these are three different kinds of workspace," per the brief's own
+       "the layout itself should communicate this progression without
+       requiring explanatory text." Column/row placement is data-driven —
+       see EVIDENCE_CATEGORIES' zoneCol/zoneRow fields and
+       renderEvidenceNav() — adding a category is still a one-entry change,
+       it just also says where in the grid it belongs.
        ═══════════════════════════════════════════════════════════════════ */
     .evidence-nav {
-      margin: 0 0 0.75rem 0;
-      display: flex;
-      justify-content: center;
-      gap: 0.4rem;
-      flex-wrap: wrap;
+      margin: 0 0 0.85rem 0;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      grid-template-rows: auto auto;
+      column-gap: 1.5rem;
+      row-gap: 0.5rem;
+      align-items: stretch;
+    }
+
+    .zone-divider {
+      grid-row: 1 / 3;
+      width: 1px;
+      background: #1e293b;
     }
 
     .evidence-tab {
+      width: 100%;
       background: rgba(148, 163, 184, 0.08);
       border: 1px solid #334155;
       color: #94a3b8;
@@ -663,6 +676,7 @@
       padding: 0.5rem 1rem;
       border-radius: 8px;
       cursor: pointer;
+      text-align: center;
     }
 
     .evidence-tab:hover {
@@ -674,6 +688,35 @@
       color: white;
       background: #3b82f6;
       border-color: transparent;
+    }
+
+    /* The Intent zone's one tab spans both rows and centers within that
+       taller cell — visually the anchor the two side zones flank, matching
+       "a scan is an accelerator, not a prerequisite" (this workspace works
+       identically with or without one). */
+    .evidence-tab.zone-anchor {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+      /* Collapse to a single stacked column — the explicit zoneCol/zoneRow
+         placement each tab carries as an inline style only makes sense
+         against the desktop 5-track grid, so it's force-overridden back to
+         natural document order here rather than fighting a narrower grid. */
+      .evidence-nav {
+        grid-template-columns: 1fr;
+        row-gap: 0.4rem;
+      }
+      .evidence-tab {
+        grid-column: auto !important;
+        grid-row: auto !important;
+      }
+      .zone-divider {
+        display: none;
+      }
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -867,7 +910,8 @@
       margin-top: 0.6rem;
     }
 
-    /* Findings tab */
+    /* Small stat trio — reused by the Applications tab's "what's actually
+       influencing this recommendation" summary (formerly Findings-only). */
     .findings-stats {
       display: flex;
       gap: 1.5rem;
@@ -898,6 +942,187 @@
       line-height: 1.9;
     }
 
+    /* ═══════════════════════════════════════════════════════════════════
+       DETECTED / ASSESSMENT-MODEL WORKSPACES — shared item-list components
+       used by Detected Apps, Detected Devices, Applications, and Devices.
+       ═══════════════════════════════════════════════════════════════════ */
+
+    /* A tri-level importance READ, not a filter — every item still shows,
+       classified rather than hidden. Colors deliberately reuse this
+       codebase's existing semantic palette (green=confident/good,
+       amber=uncertain, slate=background/inert) rather than inventing a
+       fourth meaning for color. */
+    .tier-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .tier-badge.important { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tier-badge.possible { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.28); }
+    .tier-badge.background { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.28); }
+
+    /* Where an item came from — Detected (real, from a scan), Suggested
+       (placeholder, inferred from Use Case), Manual (user-typed), Planned
+       (a future purchase, not owned yet). Muted by design: this is
+       provenance, not a verdict. */
+    .source-tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.1rem 0.5rem;
+      border-radius: 5px;
+      background: rgba(148, 163, 184, 0.1);
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .source-tag.detected { color: #93c5fd; background: rgba(59, 130, 246, 0.12); }
+    .source-tag.suggested { color: #c4b5fd; background: rgba(167, 139, 250, 0.12); }
+    .source-tag.manual { color: #6ee7b7; background: rgba(16, 185, 129, 0.1); }
+    .source-tag.planned { color: #fda4af; background: rgba(244, 114, 182, 0.1); }
+
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.65rem;
+      background: rgba(148, 163, 184, 0.04);
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+    }
+
+    .item-row-name {
+      flex: 1 1 auto;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .item-row-tags {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-shrink: 0;
+    }
+
+    /* Three-way override — the user is correcting our READ, not editing
+       the underlying scan. Compact segmented buttons; the active choice
+       (if any override exists) is filled, everything else stays outlined. */
+    .override-group {
+      display: flex;
+      gap: 0.15rem;
+      flex-shrink: 0;
+      margin-left: 0.4rem;
+    }
+
+    .override-btn {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.2rem 0.45rem;
+      border-radius: 5px;
+      border: 1px solid #334155;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .override-btn:hover {
+      border-color: #64748b;
+      color: #cbd5e1;
+    }
+
+    .override-btn.active.important { background: rgba(16, 185, 129, 0.18); border-color: #10b981; color: #34d399; }
+    .override-btn.active.background { background: rgba(100, 116, 139, 0.22); border-color: #64748b; color: #cbd5e1; }
+
+    .category-section {
+      margin-bottom: 1.4rem;
+    }
+
+    .category-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .category-heading {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .category-heading-count {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #475569;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    /* Add / search row — real, functional filtering + local add; no
+       backend call, entries live in this page's own in-memory model. */
+    .manual-add-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .manual-add-row input[type="text"] {
+      flex: 1 1 auto;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #f1f5f9;
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .manual-add-row input[type="text"]:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .manual-add-row button {
+      flex-shrink: 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #3b82f6;
+      background: rgba(59, 130, 246, 0.12);
+      color: #93c5fd;
+      cursor: pointer;
+    }
+
+    .manual-add-row button:hover {
+      background: rgba(59, 130, 246, 0.22);
+    }
+
+    /* Scan CTA — reused verbatim by both Detected Apps and Detected
+       Devices' empty states (see scanCtaHtml()), not a copy each. */
+    .scan-cta-box {
+      border: 1px dashed #334155;
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-top: 0.5rem;
+    }
+
     /* HOW IT WORKS */
     .section-title {
       text-align: center;
@@ -910,7 +1135,7 @@
     }
 
     .how-it-works {
-      max-width: 800px;
+      max-width: 1040px;
       margin: 0 auto 5rem auto;
       padding: 0 1rem;
     }
@@ -949,7 +1174,7 @@
 
     /* WHAT WE CHECK */
     .what-we-check {
-      max-width: 800px;
+      max-width: 1040px;
       margin: 0 auto 5rem auto;
       padding: 0 1rem;
     }
@@ -989,7 +1214,7 @@
 
     /* SCORE LEGEND */
     .score-legend {
-      max-width: 800px;
+      max-width: 1040px;
       margin: 0 auto 5rem auto;
       padding: 0 1rem;
     }
@@ -1086,6 +1311,23 @@
       }
       .details-workspace {
         padding: 1.25rem;
+      }
+      /* Item rows (Detected Apps/Devices, Applications, Devices) were
+         overflowing horizontally on narrow screens — name + tags + a
+         3-button override group is too much for one line below ~640px.
+         Wrapping to two lines (name on its own row, tags/overrides
+         flowing below) fixes the real overflow found during mobile
+         verification, rather than shrinking text until it's unreadable. */
+      .item-row {
+        flex-wrap: wrap;
+        row-gap: 0.4rem;
+      }
+      .item-row-name {
+        flex: 1 1 100%;
+        white-space: normal;
+      }
+      .override-group {
+        margin-left: 0;
       }
     }
   </style>
@@ -1283,6 +1525,11 @@
     let scanLevelParam = params.get('level') || 'quick';
     let currentResults = null;
     let pollInterval = null;
+    // Refreshed from loadPersonalContext() at the top of every Detected/
+    // Assessment-zone render — kept as shared state (not a local) so
+    // applyImportanceOverride() can read+write it without re-loading on
+    // every click. Initialized empty so any pre-first-render read is safe.
+    let currentPersonalContext = new Map();
 
     function assessUrlFor(sid, level) {
       const hasCarryForward = !!sessionStorage.getItem(CARRY_FORWARD_KEY);
@@ -1382,29 +1629,44 @@
     }
 
     // ───────────────────────────────────────────────────────────────────
-    // EVIDENCE CATEGORIES — the single source of truth for the Evidence
-    // Navigation bar and the Details Workspace it drives. Adding a new
-    // category (or renaming/removing one) is a one-line change here; no
-    // other markup needs to change. Each category is an evidence SOURCE,
-    // not a workflow step — order is a reasonable default reading order,
-    // not an enforced sequence (the UI recommends via the Next Step pill,
-    // never requires a specific order).
+    // EVIDENCE CATEGORIES — the single source of truth for the Investigation
+    // Console's 3-zone grid and the Details Workspace it drives. Each entry
+    // carries WHERE it sits in that grid (zoneCol/zoneRow/zoneRowSpan —
+    // columns 1/3/5, dividers live in the even columns) as well as what it
+    // renders — adding a category is still a one-entry change, it just also
+    // says which zone it belongs to.
+    //
+    // The three zones are a deliberate reframing, not a relabeling of the
+    // old four-tab list:
+    //   Observed (col 1)    — what a scan found (Detected Apps/Devices)
+    //   Intent   (col 3)    — what the user is trying to accomplish (Use Case)
+    //   Assessment (col 5)  — the app's evolving model of what should
+    //                         influence the recommendation (Applications/
+    //                         Devices) — detected + suggested + manual +
+    //                         planned, combined
+    // "Current Computer" (the old scan-trigger tab) is gone as a standalone
+    // destination — scanning is now reached contextually, from wherever a
+    // scan would actually fill a gap (Detected Apps/Devices' empty state),
+    // matching "a scan is an accelerator, not a prerequisite." "Findings"
+    // is gone too — its stat trio and attention list now live inside
+    // Applications, the workspace that already answers the same underlying
+    // question ("what's actually shaping this recommendation"). "Community"
+    // is reachable via the top nav's own Community menu — this console
+    // stays scoped to building the assessment model itself.
     // ───────────────────────────────────────────────────────────────────
-    // "Profile" (usage/context profile) was deliberately removed for now —
-    // it overlapped too much with Intended Use and this pass isn't the
-    // place to invent a distinct role for it. The array shape is exactly
-    // what makes adding a real, separately-earned Profile category back
-    // later a one-entry change, not a rewrite.
     const EVIDENCE_CATEGORIES = [
-      { id: 'current-computer', label: 'Current Computer', render: renderCurrentComputerTab },
-      { id: 'intended-use', label: 'Intended Use', render: renderIntendedUseTab },
-      { id: 'findings', label: 'Findings', render: renderFindingsTab },
-      { id: 'community', label: 'Community', render: renderCommunityTab },
+      { id: 'detected-apps', label: 'Detected Apps', zoneCol: 1, zoneRow: 1, render: renderDetectedAppsTab },
+      { id: 'detected-devices', label: 'Detected Devices', zoneCol: 1, zoneRow: 2, render: renderDetectedDevicesTab },
+      { id: 'use-case', label: 'Use Case', zoneCol: 3, zoneRow: 1, zoneRowSpan: 2, render: renderUseCaseTab },
+      { id: 'applications', label: 'Applications', zoneCol: 5, zoneRow: 1, render: renderApplicationsTab },
+      { id: 'devices', label: 'Devices', zoneCol: 5, zoneRow: 2, render: renderDevicesTab },
     ];
-    // Chosen once, on initial load only (see chooseInitialTab()) — never
-    // auto-changed again afterward, so a user's own tab clicks are always
-    // the last word and the workspace never jumps out from under them.
-    let activeTabId = 'current-computer';
+    // Use Case is the deliberate default/home tab — this workspace works
+    // identically whether or not a scan has ever run, per the brief's own
+    // "a scan is an accelerator, not a prerequisite." chooseInitialTab()
+    // (below) can still override this once real evidence points somewhere
+    // more useful, but this is the fallback and the true empty-state home.
+    let activeTabId = 'use-case';
 
     function switchTab(tabId) {
       activeTabId = tabId;
@@ -1414,9 +1676,12 @@
 
     function renderEvidenceNav() {
       const nav = document.getElementById('evidence-nav');
-      nav.innerHTML = EVIDENCE_CATEGORIES.map((cat) =>
-        `<button type="button" class="evidence-tab${cat.id === activeTabId ? ' active' : ''}" data-tab="${cat.id}">${escapeHtml(cat.label)}</button>`
-      ).join('');
+      nav.innerHTML = EVIDENCE_CATEGORIES.map((cat) => {
+        const rowStyle = cat.zoneRowSpan ? `${cat.zoneRow} / span ${cat.zoneRowSpan}` : String(cat.zoneRow);
+        const anchorClass = cat.zoneRowSpan ? ' zone-anchor' : '';
+        return `<button type="button" class="evidence-tab${anchorClass}${cat.id === activeTabId ? ' active' : ''}"
+          data-tab="${cat.id}" style="grid-column:${cat.zoneCol};grid-row:${rowStyle};">${escapeHtml(cat.label)}</button>`;
+      }).join('') + '<div class="zone-divider" style="grid-column:2;"></div><div class="zone-divider" style="grid-column:4;"></div>';
       nav.querySelectorAll('.evidence-tab').forEach((el) => {
         el.addEventListener('click', () => switchTab(el.dataset.tab));
       });
@@ -1429,21 +1694,24 @@
     }
 
     // ───────────────────────────────────────────────────────────────────
-    // CURRENT COMPUTER — the scan entry point, and the reference
-    // interaction model the other categories follow: a compact action when
-    // there's nothing yet, progressively more detail once evidence exists.
+    // SCAN CTA — shared by Detected Apps and Detected Devices' empty
+    // states. Scanning is no longer its own destination tab; it's reached
+    // contextually, from wherever a scan would actually fill a gap — "a
+    // scan is an accelerator, not a prerequisite," not the front door.
+    // Once a scan exists, this same markup (with a shorter heading) also
+    // powers the "Scan Again" affordance at the top of both tabs.
     // ───────────────────────────────────────────────────────────────────
-    function renderCurrentComputerTab(container) {
-      if (!currentResults) {
-        const nonWindowsNote = isLikelyNonWindows()
-          ? `<div class="workspace-note">Scanning requires a Windows PC. You're viewing this page from a
-               non-Windows device — you can still add Intended Use, or come back to this tab from a Windows
-               machine (or import a scan you already ran elsewhere).</div>`
-          : '';
-        container.innerHTML = `
-          <div class="workspace-heading">Scan This Computer</div>
-          <div class="workspace-subtext">A small tool reads your installed apps and devices in seconds — low effort, high yield.</div>
-          <div class="scan-level">
+    function scanCtaHtml(heading, subtext, isRescan) {
+      const nonWindowsNote = isLikelyNonWindows()
+        ? `<div class="workspace-note">Scanning requires a Windows PC. You're viewing this page from a
+             non-Windows device — you can still describe your Use Case, or add applications/devices manually,
+             or come back here from a Windows machine (or import a scan you already ran elsewhere).</div>`
+        : '';
+      return `
+        <div class="scan-cta-box">
+          <div class="workspace-heading">${escapeHtml(heading)}</div>
+          <div class="workspace-subtext">${subtext}</div>
+          ${!isRescan ? `<div class="scan-level">
             <label>
               <input type="radio" name="scan-level" value="quick" checked> Light Assessment
               <div class="level-detail">a quick recommendation from what you actually use</div>
@@ -1459,38 +1727,18 @@
             <p id="light-device-hint" style="color:#64748b; font-size:0.78rem; margin-top:0.5rem; display:none;">
               For the best results, connect the devices you normally use before running a Light Assessment.
             </p>
-          </div>
-          <a href="#" class="scan-button" id="run-scan-btn">Run Scan</a>
-          <div class="entry-note">
+          </div>` : ''}
+          <a href="#" class="scan-button" id="run-scan-btn"${isRescan ? ' style="font-size:0.85rem; padding:0.55rem 1.2rem;"' : ''}>${isRescan ? 'Scan Again' : 'Run Readiness Scan'}</a>
+          ${!isRescan ? `<div class="entry-note">
             Downloads a small tool. Windows may show a publisher warning — that's expected for a small
             independent project. Click "More info" → "Run anyway" to continue.
-          </div>
+          </div>` : ''}
           ${nonWindowsNote}
-        `;
-        wireScanButton();
-      } else {
-        const s = currentResults.system || {};
-        const appTotal = ['native', 'emulated', 'unsupported', 'unknown'].reduce((n, b) => n + ((currentResults[b] || []).length), 0);
-        const deviceTotal = (currentResults.devices || []).length;
-        container.innerHTML = `
-          <div class="workspace-heading">This Computer</div>
-          <div class="workspace-subtext">Scanned as part of this assessment. Re-scan anytime — your other evidence carries forward.</div>
-          <div class="summary-grid">
-            ${s.os_version ? `<div class="summary-item"><label>OS</label><span>${escapeHtml(s.os_version)}</span></div>` : ''}
-            ${s.cpu ? `<div class="summary-item"><label>CPU</label><span>${escapeHtml(s.cpu)}</span></div>` : ''}
-            <div class="summary-item"><label>Applications</label><span>${appTotal}</span></div>
-            <div class="summary-item"><label>Devices</label><span>${deviceTotal}</span></div>
-          </div>
-          <a href="#" class="scan-button" id="run-scan-btn" style="font-size:0.85rem; padding:0.55rem 1.2rem;">Scan Again</a>
-          <div class="workspace-links">
-            <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
-          </div>
-        `;
-        wireScanButton();
-      }
+        </div>
+      `;
     }
 
-    // Re-attached every time the Current Computer tab renders (its DOM is
+    // Re-attached every time a tab containing #run-scan-btn renders (its
     // rebuilt via innerHTML each time), rather than bound once at page
     // load — the same session-creation/exe-download/localhost:7878 poll
     // handshake this surface has always used, just re-wired per render.
@@ -1595,9 +1843,11 @@
     }
 
     // ───────────────────────────────────────────────────────────────────
-    // INTENDED USE — the pill-based hypothesis editor, now a first-class
-    // evidence category rather than a panel revealed by a button click.
-    // Navigating to this tab IS the reveal action.
+    // USE CASE (Intent zone) — the pill-based hypothesis editor, and the
+    // deliberate default/home tab. "Understand what success looks like for
+    // this user" — lightweight by design, and works identically whether or
+    // not a scan has ever run, per this milestone's "a scan is an
+    // accelerator, not a prerequisite."
     // ───────────────────────────────────────────────────────────────────
     function renderPillGroup(containerId, options, labels, selectedValues, onToggle) {
       const container = document.getElementById(containerId);
@@ -1625,7 +1875,7 @@
       return inferRelationshipHint(currentResults) || ctx.relationship;
     }
 
-    function renderIntendedUseTab(container) {
+    function renderUseCaseTab(container) {
       container.innerHTML = `
         <div class="workspace-heading">What Are You Trying to Accomplish?</div>
         <div class="workspace-subtext">A scan can't know your intent — this is the other half of the evidence a scan alone can't provide.</div>
@@ -1668,70 +1918,418 @@
       }
     }
 
-    // ───────────────────────────────────────────────────────────────────
-    // FINDINGS — classified evidence needing a closer look. Formerly the
-    // "Advanced" disclosure's content, now a first-class category since it
-    // answers its own evidence question ("what's still uncertain") rather
-    // than being a catch-all detail dump.
-    // ───────────────────────────────────────────────────────────────────
-    function renderFindingsTab(container) {
-      if (!currentResults) {
-        container.innerHTML = `
-          <div class="workspace-heading">Findings</div>
-          <p class="workspace-empty">Nothing to show yet — scan this computer or add Intended Use to start building findings.</p>
-        `;
-        return;
-      }
-      const personalContext = loadPersonalContext(sessionId, params);
-      const classified = classifyPopulation(currentResults, personalContext);
-      const synthesis = computeSynthesis(currentResults, personalContext);
+    // ═══════════════════════════════════════════════════════════════════
+    // OBSERVED ZONE — Detected Apps / Detected Devices. "What did we find,
+    // and what do we currently think matters?" A tri-level importance READ
+    // (never a filter — nothing here is ever hidden), reusing this
+    // codebase's own real Guidance-Signal evidence functions from
+    // assessment.js (read-only calls — nothing in assessment.js was
+    // modified for this milestone) rather than inventing a parallel
+    // classification system. The user is refining OUR INTERPRETATION, not
+    // editing the scan — so overrides write to the exact same real
+    // Personal Context (critical_to_me / doesnt_matter) every other page in
+    // this app already reads and writes, via applyImportanceOverride()
+    // below. That makes the override genuinely functional, not cosmetic:
+    // carry on to Results/Workspace and it's already accounted for.
+    // ═══════════════════════════════════════════════════════════════════
+    const TIER_LABELS = { important: 'Likely Important', possible: 'Possible Importance', background: 'Likely System / Background' };
 
-      const deservesAttention = classified
-        .filter(({ app, effectiveBucket, decision }) =>
-          classifyAssessmentItem({ decision, bucket: effectiveBucket, app }) === 'deservesAttention');
-
-      const statsHtml = `
-        <div class="findings-stats">
-          <div class="findings-stat"><div class="findings-stat-count">${synthesis.empty ? 0 : synthesis.materialCount}</div><div class="findings-stat-label">Materially Influencing</div></div>
-          <div class="findings-stat"><div class="findings-stat-count">${synthesis.empty ? 0 : synthesis.backgroundCount}</div><div class="findings-stat-label">Background / Platform</div></div>
-          <div class="findings-stat"><div class="findings-stat-count">${(currentResults.devices || []).length}</div><div class="findings-stat-label">Devices</div></div>
-        </div>`;
-
-      const attentionHtml = deservesAttention.length > 0
-        ? '<ul class="findings-attention-list">' + deservesAttention.slice(0, 8).map(({ app }) => `<li>• ${escapeHtml(app.name)}</li>`).join('') +
-          (deservesAttention.length > 8 ? `<li style="color:#64748b;">…and ${deservesAttention.length - 8} more</li>` : '') + '</ul>'
-        : '<p class="workspace-empty">No open items are currently pulling your recommendation down — nice.</p>';
-
-      container.innerHTML = `
-        <div class="workspace-heading">Findings</div>
-        <div class="workspace-subtext">Items with evidence that's currently thin — reviewing any of these is the fastest way to raise Confidence.</div>
-        ${statsHtml}
-        ${attentionHtml}
-        <div class="workspace-links">
-          <a href="${workspaceUrlFor(sessionId, scanLevelParam)}">Open Full Workspace →</a>
-          <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
-        </div>
-      `;
+    function tierBadge(tier) {
+      return `<span class="tier-badge ${tier}">${TIER_LABELS[tier]}</span>`;
     }
 
-    // ───────────────────────────────────────────────────────────────────
-    // COMMUNITY — modest by design: real, currently-available information
-    // and real links only, no fabricated data invented just to populate
-    // the tab. Community
-    // contribution today happens per-app inside the Workspace ("Share your
-    // Findings"), not on this surface — this tab explains that honestly
-    // rather than duplicating a feature that lives elsewhere.
-    // ───────────────────────────────────────────────────────────────────
-    function renderCommunityTab(container) {
+    // isBackgroundApp()/defaultImportanceForApp() are real, unmodified
+    // assessment.js functions (see CLAUDE.md, Background/Reference and
+    // Observation Enrichment milestones) — this just reads their verdicts
+    // into a 3-tier label for this workspace's presentation. A real user
+    // override (critical_to_me / doesnt_matter, written by
+    // applyImportanceOverride() below) takes precedence over the computed
+    // read — the whole point of "the user is refining our interpretation"
+    // is that the item visibly MOVES once corrected, not just that a
+    // button lights up while the item stays where it was.
+    function appImportanceTier(app, decision) {
+      if (decision && decision.critical_to_me) return 'important';
+      if (decision && decision.decision === 'doesnt_matter') return 'background';
+      if (isBackgroundApp(app, decision)) return 'background';
+      return defaultImportanceForApp(app).level === 'high' ? 'important' : 'possible';
+    }
+
+    // No real "is this a system device" signal exists anywhere in this
+    // codebase yet (see CLAUDE.md: "devices are never deprioritized... a
+    // Light-scanned device list is already just 'currently connected'") —
+    // this placeholder maps defaultImportanceForDevice()'s existing
+    // recency-based 'low' tier onto "background" for THIS prototype's
+    // purposes only, clearly a presentation choice, not a claim that a
+    // real background-device signal exists. Same override precedence as
+    // appImportanceTier() above.
+    function deviceImportanceTier(device, decision) {
+      if (decision && decision.critical_to_me) return 'important';
+      if (decision && decision.decision === 'doesnt_matter') return 'background';
+      const level = defaultImportanceForDevice(device).level;
+      if (level === 'high') return 'important';
+      if (level === 'normal') return 'possible';
+      return 'background';
+    }
+
+    // The one place a Detected-tab override actually writes — reuses
+    // assessment.js's real Personal Context storage (decisionKey/
+    // deviceDecisionKey/personalContextToEntries/writeSessionContext),
+    // exactly the mechanism workspace.html's own decision buttons use.
+    // 'important' sets critical_to_me; 'background' sets decision to the
+    // real doesnt_matter value; 'auto' clears both, reverting to whatever
+    // our computed read already says.
+    function applyImportanceOverride(raw, isDevice, tier) {
+      const key = isDevice ? deviceDecisionKey(raw) : decisionKey(raw);
+      const existing = currentPersonalContext.get(key) || {
+        app_name: raw.name, app_id: (isDevice ? raw.hardware_id : raw.id) || null,
+        decision: 'research_note', verified_status: undefined,
+        critical_to_me: false, note: '', researched_at: new Date().toISOString(), is_device: isDevice,
+      };
+      const entry = Object.assign({}, existing);
+      if (tier === 'important') {
+        entry.critical_to_me = true;
+        if (entry.decision === 'doesnt_matter') entry.decision = 'research_note';
+      } else if (tier === 'background') {
+        entry.decision = 'doesnt_matter';
+        entry.critical_to_me = false;
+      } else {
+        entry.critical_to_me = false;
+        if (entry.decision === 'doesnt_matter') entry.decision = 'research_note';
+      }
+      entry.researched_at = new Date().toISOString();
+      currentPersonalContext.set(key, entry);
+      writeSessionContext(sessionId, personalContextToEntries(currentPersonalContext));
+      renderDetailsWorkspace();
+      renderDashboard(); // a real Personal Context change — Confidence/Suitability can genuinely move
+    }
+
+    function overrideGroupHtml(itemKey, overridden, currentTier) {
+      return `<div class="override-group">
+        <button type="button" class="override-btn${overridden && currentTier === 'important' ? ' active important' : ''}" data-key="${escapeHtml(itemKey)}" data-tier="important" title="Mark as important to you">Important</button>
+        <button type="button" class="override-btn" data-key="${escapeHtml(itemKey)}" data-tier="auto" title="Reset to our automatic read">Auto</button>
+        <button type="button" class="override-btn${overridden && currentTier === 'background' ? ' active background' : ''}" data-key="${escapeHtml(itemKey)}" data-tier="background" title="Mark as background / not important">Background</button>
+      </div>`;
+    }
+
+    function detectedTierSectionsHtml(tiers, byKey) {
+      return ['important', 'possible', 'background'].map((tier) => {
+        const items = tiers[tier];
+        if (!items.length) return '';
+        const rows = items.map(({ key, name, overridden, tier: t }) => `
+          <div class="item-row">
+            <span class="item-row-name">${escapeHtml(name)}</span>
+            <span class="item-row-tags"><span class="source-tag detected">Detected</span>${tierBadge(t)}</span>
+            ${overrideGroupHtml(key, overridden, t)}
+          </div>`).join('');
+        return `<div class="category-section"><div class="category-heading">${TIER_LABELS[tier]}<span class="category-heading-count">${items.length}</span></div><div class="item-list">${rows}</div></div>`;
+      }).join('');
+    }
+
+    function wireOverrideButtons(container, byKey, isDevice) {
+      container.querySelectorAll('.override-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const raw = byKey.get(btn.dataset.key);
+          if (raw) applyImportanceOverride(raw, isDevice, btn.dataset.tier);
+        });
+      });
+    }
+
+    function renderDetectedAppsTab(container) {
+      if (!currentResults) {
+        container.innerHTML = `
+          <div class="workspace-heading">Detected Apps</div>
+          <div class="workspace-subtext">This workspace fills in automatically once you run a readiness scan — scanning is one way to build your assessment, not the only one.</div>
+          ${scanCtaHtml('Run a Readiness Scan', 'A small tool reads your installed apps in seconds — low effort, high yield.')}
+        `;
+        wireScanButton();
+        return;
+      }
+      currentPersonalContext = loadPersonalContext(sessionId, params);
+      const classified = classifyPopulation(currentResults, currentPersonalContext);
+      const byKey = new Map();
+      const tiers = { important: [], possible: [], background: [] };
+      classified.forEach(({ app, decision }) => {
+        const key = decisionKey(app);
+        byKey.set(key, app);
+        const overridden = !!decision && (decision.critical_to_me || decision.decision === 'doesnt_matter');
+        const tier = appImportanceTier(app, decision);
+        tiers[tier].push({ key, name: app.name, overridden, tier });
+      });
       container.innerHTML = `
-        <div class="workspace-heading">Community</div>
-        <div class="workspace-subtext">CheckMyARM's compatibility data is partly community-sourced. You can contribute what you learn about a specific app from the Workspace.</div>
-        <p class="workspace-empty">Contribute a compatibility finding for a specific app from the Workspace, where each app's own evidence and "Share your Findings" action live.</p>
-        <div class="workspace-links">
-          ${sessionId ? `<a href="${workspaceUrlFor(sessionId, scanLevelParam)}">Open Workspace →</a>` : ''}
-          <a href="/my-submissions.html">My Contributions →</a>
-        </div>
+        <div class="workspace-heading">Detected Apps</div>
+        <div class="workspace-subtext">Every application your scan found, classified by how likely it is to matter to your recommendation. Nothing is hidden — correct any read below.</div>
+        ${detectedTierSectionsHtml(tiers, byKey)}
       `;
+      wireOverrideButtons(container, byKey, false);
+    }
+
+    function renderDetectedDevicesTab(container) {
+      if (!currentResults) {
+        container.innerHTML = `
+          <div class="workspace-heading">Detected Devices</div>
+          <div class="workspace-subtext">This workspace fills in automatically once you run a readiness scan — scanning is one way to build your assessment, not the only one.</div>
+          ${scanCtaHtml('Run a Readiness Scan', 'A small tool reads your connected devices in seconds — low effort, high yield.')}
+        `;
+        wireScanButton();
+        return;
+      }
+      currentPersonalContext = loadPersonalContext(sessionId, params);
+      const byKey = new Map();
+      const tiers = { important: [], possible: [], background: [] };
+      (currentResults.devices || []).forEach((device) => {
+        const key = deviceDecisionKey(device);
+        byKey.set(key, device);
+        const decision = currentPersonalContext.get(key);
+        const overridden = !!decision && (decision.critical_to_me || decision.decision === 'doesnt_matter');
+        const tier = deviceImportanceTier(device, decision);
+        tiers[tier].push({ key, name: device.name, overridden, tier });
+      });
+      container.innerHTML = `
+        <div class="workspace-heading">Detected Devices</div>
+        <div class="workspace-subtext">Every device your scan found, classified the same way. Devices don't currently factor into your Score — but overrides are saved here for when they do.</div>
+        ${detectedTierSectionsHtml(tiers, byKey)}
+      `;
+      wireOverrideButtons(container, byKey, true);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ASSESSMENT ZONE — Applications / Devices. "What should influence this
+    // recommendation?" Each page visibly combines FOUR sources — detected
+    // (real), suggested (placeholder, inferred from Use Case), manually-
+    // added (real, in-memory for this prototype), and future/planned (real,
+    // in-memory) — organized by category rather than alphabetically. The
+    // suggested/manual/planned lists are intentionally NOT persisted beyond
+    // this page load (no localStorage, no server write) — this is UX
+    // placeholder functionality per the brief, not a new feature.
+    // ═══════════════════════════════════════════════════════════════════
+    const APP_CATEGORIES = ['Office', 'Development', 'Creative', 'Gaming', 'Media', 'Utilities'];
+    const APP_CATEGORY_KEYWORDS = [
+      ['Development', /visual studio|vscode|\bcode\b|\bgit\b|docker|node\.js|python|jetbrains|intellij|pycharm|terminal|powershell|\bsql\b|github/i],
+      ['Creative', /photoshop|illustrator|premiere|davinci|figma|sketch|blender|gimp|affinity|lightroom|audition/i],
+      ['Gaming', /steam|epic games|discord|xbox|battle\.net|riot|geforce|nvidia app|playnite/i],
+      ['Media', /spotify|\bvlc\b|netflix|itunes|media player|\bplex\b|audible/i],
+      ['Office', /\boffice\b|\bword\b|\bexcel\b|powerpoint|outlook|365|\bteams\b|notion|\bslack\b|acrobat|\bpdf\b/i],
+    ];
+    function categorizeAppName(name) {
+      for (const [cat, re] of APP_CATEGORY_KEYWORDS) if (re.test(name)) return cat;
+      return 'Utilities';
+    }
+
+    const DEVICE_CATEGORIES = ['Office', 'Audio', 'Creative', 'Gaming', 'Travel', 'Networking'];
+    const DEVICE_CATEGORY_KEYWORDS = [
+      ['Audio', /headset|headphone|speaker|microphone|\baudio\b/i],
+      ['Creative', /tablet|drawing|stylus|scanner|graphics/i],
+      ['Gaming', /controller|joystick|gaming/i],
+      ['Networking', /\bdock\b|\bhub\b|ethernet|wi-?fi|adapter|router/i],
+      ['Travel', /travel|portable/i],
+    ];
+    function categorizeDeviceName(name) {
+      for (const [cat, re] of DEVICE_CATEGORY_KEYWORDS) if (re.test(name)) return cat;
+      return 'Office';
+    }
+
+    // Illustrative placeholder suggestions keyed off the SAME real
+    // INTENDED_USE_OPTIONS/RELATIONSHIP_OPTIONS values assessment.js
+    // already defines — this is what makes "the assessment model gets
+    // richer as Use Case fills in" a real, observable behavior rather than
+    // a claim, even though the suggestion content itself is placeholder.
+    const SUGGESTED_APPS_BY_USE_CASE = {
+      gaming: ['Steam', 'Discord', 'NVIDIA App'],
+      development: ['Visual Studio Code', 'Git', 'Docker Desktop'],
+      creative: ['Adobe Photoshop', 'DaVinci Resolve', 'Figma'],
+      productivity: ['Microsoft 365', 'Notion'],
+      web_email: ['Google Chrome', 'Mozilla Thunderbird'],
+    };
+    const SUGGESTED_DEVICES_BY_USE_CASE = {
+      gaming: ['Gaming Headset', 'Mechanical Keyboard'],
+      development: ['External Monitor', 'Docking Station'],
+      creative: ['Drawing Tablet', 'Color-Accurate Monitor'],
+      productivity: ['Wireless Mouse', 'Webcam'],
+      web_email: ['Bluetooth Headphones'],
+    };
+    const SUGGESTED_DEVICES_BY_RELATIONSHIP = {
+      secondary_travel: ['USB-C Travel Dock', 'Portable SSD'],
+    };
+
+    // In-memory only, per this page load — deliberately not persisted
+    // (see the zone comment above). Real functionality, throwaway storage.
+    let manualApps = [];
+    let plannedApps = [];
+    let manualDevices = [];
+    let plannedDevices = [];
+
+    function combinedApplicationItems() {
+      const items = [];
+      const seen = new Set();
+      function addItem(name, source, tier) {
+        const norm = normalizeAppName(name);
+        if (!norm || seen.has(norm)) return;
+        seen.add(norm);
+        items.push({ name, source, tier: tier || null, category: categorizeAppName(name) });
+      }
+      if (currentResults) {
+        currentPersonalContext = loadPersonalContext(sessionId, params);
+        classifyPopulation(currentResults, currentPersonalContext).forEach(({ app, decision }) => {
+          addItem(app.name, 'detected', appImportanceTier(app, decision));
+        });
+      }
+      const ctx = currentAdaptiveContext();
+      (ctx.intended_use || []).forEach((use) => {
+        (SUGGESTED_APPS_BY_USE_CASE[use] || []).forEach((name) => addItem(name, 'suggested'));
+      });
+      manualApps.forEach((name) => addItem(name, 'manual'));
+      plannedApps.forEach((name) => addItem(name, 'planned'));
+      return items;
+    }
+
+    function combinedDeviceItems() {
+      const items = [];
+      const seen = new Set();
+      function addItem(name, source, tier) {
+        const norm = normalizeAppName(name);
+        if (!norm || seen.has(norm)) return;
+        seen.add(norm);
+        items.push({ name, source, tier: tier || null, category: categorizeDeviceName(name) });
+      }
+      if (currentResults) {
+        currentPersonalContext = loadPersonalContext(sessionId, params);
+        (currentResults.devices || []).forEach((device) => {
+          const decision = currentPersonalContext.get(deviceDecisionKey(device));
+          addItem(device.name, 'detected', deviceImportanceTier(device, decision));
+        });
+      }
+      const ctx = currentAdaptiveContext();
+      (ctx.intended_use || []).forEach((use) => {
+        (SUGGESTED_DEVICES_BY_USE_CASE[use] || []).forEach((name) => addItem(name, 'suggested'));
+      });
+      if (ctx.relationship && SUGGESTED_DEVICES_BY_RELATIONSHIP[ctx.relationship]) {
+        SUGGESTED_DEVICES_BY_RELATIONSHIP[ctx.relationship].forEach((name) => addItem(name, 'suggested'));
+      }
+      manualDevices.forEach((name) => addItem(name, 'manual'));
+      plannedDevices.forEach((name) => addItem(name, 'planned'));
+      return items;
+    }
+
+    const SOURCE_LABELS = { detected: 'Detected', suggested: 'Suggested', manual: 'Manual', planned: 'Planned' };
+    function assessmentItemRowHtml(item) {
+      return `<div class="item-row">
+        <span class="item-row-name">${escapeHtml(item.name)}</span>
+        <span class="item-row-tags"><span class="source-tag ${item.source}">${SOURCE_LABELS[item.source]}</span>${item.tier ? tierBadge(item.tier) : ''}</span>
+      </div>`;
+    }
+
+    function categorizedSectionsHtml(items, categories) {
+      const groups = {};
+      categories.forEach((c) => { groups[c] = []; });
+      const other = [];
+      items.forEach((item) => (groups[item.category] || other).push(item));
+      const known = categories.map((cat) => {
+        if (!groups[cat].length) return '';
+        return `<div class="category-section"><div class="category-heading">${escapeHtml(cat)}<span class="category-heading-count">${groups[cat].length}</span></div><div class="item-list">${groups[cat].map(assessmentItemRowHtml).join('')}</div></div>`;
+      }).join('');
+      const otherHtml = other.length
+        ? `<div class="category-section"><div class="category-heading">Other<span class="category-heading-count">${other.length}</span></div><div class="item-list">${other.map(assessmentItemRowHtml).join('')}</div></div>`
+        : '';
+      return known + otherHtml;
+    }
+
+    function assessmentModelStatsHtml(nonDetectedCount) {
+      if (!currentResults) return '';
+      const synthesis = computeSynthesis(currentResults, currentPersonalContext || loadPersonalContext(sessionId, params));
+      return `<div class="findings-stats">
+        <div class="findings-stat"><div class="findings-stat-count">${synthesis.empty ? 0 : synthesis.materialCount}</div><div class="findings-stat-label">Materially Influencing</div></div>
+        <div class="findings-stat"><div class="findings-stat-count">${synthesis.empty ? 0 : synthesis.backgroundCount}</div><div class="findings-stat-label">Background / Platform</div></div>
+        <div class="findings-stat"><div class="findings-stat-count">${nonDetectedCount}</div><div class="findings-stat-label">Suggested / Manual / Planned</div></div>
+      </div>`;
+    }
+
+    function renderApplicationsTab(container) {
+      const allItems = combinedApplicationItems();
+      const statsHtml = assessmentModelStatsHtml(allItems.filter((i) => i.source !== 'detected').length);
+      container.innerHTML = `
+        <div class="workspace-heading">Applications</div>
+        <div class="workspace-subtext">Your assessment model for applications — detected, suggested from your Use Case, and anything you've added yourself, combined and organized by category.</div>
+        ${statsHtml}
+        <div class="manual-add-row"><input type="text" id="app-search-input" placeholder="Search applications..."></div>
+        <div class="manual-add-row"><input type="text" id="app-manual-input" placeholder="Add an application you use..."><button type="button" id="app-manual-add">Add</button></div>
+        <div class="manual-add-row"><input type="text" id="app-planned-input" placeholder="Add a future / planned application..."><button type="button" id="app-planned-add">Add</button></div>
+        <div id="app-results"></div>
+      `;
+      function refreshResults() {
+        const q = document.getElementById('app-search-input').value.trim().toLowerCase();
+        const items = combinedApplicationItems();
+        const filtered = q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items;
+        const html = categorizedSectionsHtml(filtered, APP_CATEGORIES);
+        document.getElementById('app-results').innerHTML = html || '<p class="workspace-empty">No matches — try a different search, or add it yourself below.</p>';
+      }
+      refreshResults();
+      document.getElementById('app-search-input').addEventListener('input', refreshResults);
+      function addManualApp() {
+        const input = document.getElementById('app-manual-input');
+        const val = input.value.trim();
+        if (!val) return;
+        manualApps.push(val);
+        input.value = '';
+        refreshResults();
+      }
+      document.getElementById('app-manual-add').addEventListener('click', addManualApp);
+      document.getElementById('app-manual-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') addManualApp(); });
+      function addPlannedApp() {
+        const input = document.getElementById('app-planned-input');
+        const val = input.value.trim();
+        if (!val) return;
+        plannedApps.push(val);
+        input.value = '';
+        refreshResults();
+      }
+      document.getElementById('app-planned-add').addEventListener('click', addPlannedApp);
+      document.getElementById('app-planned-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') addPlannedApp(); });
+    }
+
+    function renderDevicesTab(container) {
+      const allItems = combinedDeviceItems();
+      const statsHtml = currentResults ? `<div class="findings-stats">
+        <div class="findings-stat"><div class="findings-stat-count">${(currentResults.devices || []).length}</div><div class="findings-stat-label">Detected</div></div>
+        <div class="findings-stat"><div class="findings-stat-count">${allItems.filter((i) => i.source !== 'detected').length}</div><div class="findings-stat-label">Suggested / Manual / Planned</div></div>
+      </div>` : '';
+      container.innerHTML = `
+        <div class="workspace-heading">Devices</div>
+        <div class="workspace-subtext">Your assessment model for devices — detected, suggested from your Use Case, and anything you've added yourself, combined and organized by category.</div>
+        ${statsHtml}
+        <div class="manual-add-row"><input type="text" id="device-search-input" placeholder="Search devices..."></div>
+        <div class="manual-add-row"><input type="text" id="device-manual-input" placeholder="Add a device you use..."><button type="button" id="device-manual-add">Add</button></div>
+        <div class="manual-add-row"><input type="text" id="device-planned-input" placeholder="Add a future / planned device..."><button type="button" id="device-planned-add">Add</button></div>
+        <div id="device-results"></div>
+      `;
+      function refreshResults() {
+        const q = document.getElementById('device-search-input').value.trim().toLowerCase();
+        const items = combinedDeviceItems();
+        const filtered = q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items;
+        const html = categorizedSectionsHtml(filtered, DEVICE_CATEGORIES);
+        document.getElementById('device-results').innerHTML = html || '<p class="workspace-empty">No matches — try a different search, or add it yourself below.</p>';
+      }
+      refreshResults();
+      document.getElementById('device-search-input').addEventListener('input', refreshResults);
+      function addManualDevice() {
+        const input = document.getElementById('device-manual-input');
+        const val = input.value.trim();
+        if (!val) return;
+        manualDevices.push(val);
+        input.value = '';
+        refreshResults();
+      }
+      document.getElementById('device-manual-add').addEventListener('click', addManualDevice);
+      document.getElementById('device-manual-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') addManualDevice(); });
+      function addPlannedDevice() {
+        const input = document.getElementById('device-planned-input');
+        const val = input.value.trim();
+        if (!val) return;
+        plannedDevices.push(val);
+        input.value = '';
+        refreshResults();
+      }
+      document.getElementById('device-planned-add').addEventListener('click', addPlannedDevice);
+      document.getElementById('device-planned-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') addPlannedDevice(); });
     }
 
     // ───────────────────────────────────────────────────────────────────
@@ -1925,12 +2523,12 @@
       'report': 'View Detailed Report',
     };
     const WHAT_NEXT_PRIMARY_TARGET = {
-      'questions': { tab: 'intended-use' },
-      'start': { tab: 'intended-use' },
-      'scan': { tab: 'current-computer' },
-      'optional-scan': { tab: 'current-computer' },
-      'none-needed': { tab: 'intended-use' },
-      'refine': { tab: 'findings' },
+      'questions': { tab: 'use-case' },
+      'start': { tab: 'use-case' },
+      'scan': { tab: 'detected-apps' },
+      'optional-scan': { tab: 'detected-apps' },
+      'none-needed': { tab: 'use-case' },
+      'refine': { tab: 'applications' },
       'report': { link: 'report' },
     };
     // Secondary action — one reasonable complementary action per kind, or
@@ -1938,18 +2536,21 @@
     // renders as a dash placeholder rather than inventing busywork — see
     // renderWhatNextPanel()). Intentionally NOT exhaustive of every
     // navigation option; the dashboard recommends, it doesn't try to list
-    // everything the tabs already make reachable.
+    // everything the tabs already make reachable. "Browse Community Data"
+    // now points off-page (href) rather than at a console tab — Community
+    // is reachable via the top nav's own Community menu, not this console.
     const WHAT_NEXT_SECONDARY = {
       'questions': { label: 'View Detailed Report', link: 'report', title: 'See the full compatibility breakdown behind your current read.' },
-      'start': { label: 'Run a Scan', tab: 'current-computer', title: 'A real scan replaces guesswork with your machine’s actual evidence.' },
-      'scan': { label: 'Browse Community Data', tab: 'community', title: 'See what other CheckMyARM users have already found.' },
-      'optional-scan': { label: 'Browse Community Data', tab: 'community', title: 'See what other CheckMyARM users have already found.' },
-      'none-needed': { label: 'Run a Scan (Optional)', tab: 'current-computer', title: 'Your answers may already be enough — scanning adds hard evidence if you want it.' },
+      'start': { label: 'Run a Scan', tab: 'detected-apps', title: 'A real scan replaces guesswork with your machine’s actual evidence.' },
+      'scan': { label: 'Browse Community Data', href: '/my-submissions.html', title: 'See what other CheckMyARM users have already found.' },
+      'optional-scan': { label: 'Browse Community Data', href: '/my-submissions.html', title: 'See what other CheckMyARM users have already found.' },
+      'none-needed': { label: 'Run a Scan (Optional)', tab: 'detected-apps', title: 'Your answers may already be enough — scanning adds hard evidence if you want it.' },
       'refine': { label: 'View Detailed Report', link: 'report', title: 'See the full compatibility breakdown behind today’s recommendation.' },
       'report': { label: 'Open Full Workspace', link: 'workspace', title: 'Dig into every app and device, and share what you find.' },
     };
 
     function whatNextActionHref(action) {
+      if (action.href) return action.href;
       if (action.link === 'report') return reportUrlFor(sessionId, scanLevelParam);
       if (action.link === 'workspace') return workspaceUrlFor(sessionId, scanLevelParam);
       return '#';
@@ -2024,12 +2625,12 @@
         slots.push(whatNextSlotEl({
           label: 'Start Scan', tone: 'primary',
           title: 'Scan this computer to gather real compatibility evidence.',
-          onClick: (e) => { e.preventDefault(); switchTab('current-computer'); },
+          onClick: (e) => { e.preventDefault(); switchTab('detected-apps'); },
         }));
         slots.push(whatNextSlotEl({
           label: 'Answer Questions', tone: 'primary',
           title: 'Answer a couple of quick questions for an early read — no scan required.',
-          onClick: (e) => { e.preventDefault(); switchTab('intended-use'); },
+          onClick: (e) => { e.preventDefault(); switchTab('use-case'); },
         }));
         const canImport = window.NavShell && typeof window.NavShell.triggerImport === 'function';
         slots.push(canImport ? whatNextSlotEl({
@@ -2427,9 +3028,10 @@
       // Reuses the same kind→tab mapping the What Next? primary button
       // targets (WHAT_NEXT_PRIMARY_TARGET) — 'report' has no tab entry
       // there (it's an off-page link), so it correctly falls back to
-      // 'current-computer' here too, unchanged from the prior behavior.
+      // 'use-case', the deliberate default/home tab (see
+      // EVIDENCE_CATEGORIES comment above).
       const target = WHAT_NEXT_PRIMARY_TARGET[next.kind];
-      activeTabId = (target && target.tab) || 'current-computer';
+      activeTabId = (target && target.tab) || 'use-case';
     }
 
     function renderAll() {
