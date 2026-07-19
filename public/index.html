@@ -284,95 +284,115 @@
       flex: 1 1 auto;
     }
 
-    /* Scanner — a compact two-line readout (label, then a bold status
-       word) sitting BENEATH the evidence meters inside the same panel,
-       never a standalone card of its own — the large separate Scanner
-       card from the prior pass was a real complaint this pass corrects.
-       Explicitly prototype-level, not a final implementation. */
+    /* Scanner — a compact ONE-LINE dashboard INDICATOR sitting BENEATH the
+       evidence meters inside the same panel, never a standalone card of
+       its own. This is an instrument reading, not a workflow step: fixed
+       label, fixed dot position, left-aligned status text that never
+       wraps. See setScannerActivity()/SCANNER_STATE_META for the color
+       model (neutral/dim/amber/blue/green/red). */
     .scanner-inline {
       margin-top: 0.4rem;
-      padding-top: 0.4rem;
+      padding-top: 0.35rem;
       border-top: 1px solid #1e293b;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .scanner-inline-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      flex-shrink: 0;
     }
 
     .scanner-inline-value {
-      font-size: 0.82rem;
+      font-size: 0.68rem;
       font-weight: 800;
       color: #e2e8f0;
       text-transform: uppercase;
       letter-spacing: 0.03em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    /* What Next's readout — a short, machine-generated-feeling sentence.
-       Monospace is deliberate: the goal is for this area to visibly read
-       as a live, generated readout rather than ordinary prose sitting on
-       the page (see CLAUDE.md). min-height trimmed this pass to fit one
-       typical line — long text still wraps and grows the panel rather
-       than clipping, it just no longer reserves room for two lines by
-       default (most next.text values, after firstSentence() truncation,
-       fit on one line at this column width). */
-    .what-next-blurb {
+    /* ─── WHAT NEXT — a ranked recommendation QUEUE, not a paragraph with
+       buttons underneath it. Each .whatnext-slot is a fixed-height row in
+       descending priority order (highest-value recommendation first); an
+       unused slot renders as a subtle dash placeholder rather than being
+       omitted, so the panel's vertical shape never jumps as evidence
+       changes. Monospace + a leading "›" marker are deliberate — the goal
+       is to read as a live, generated recommendation display, not ordinary
+       page prose. Explanatory text moved to native title="" tooltips (see
+       renderWhatNextPanel()) so the panel itself stays visually calm. */
+    .whatnext-queue {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .whatnext-slot {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-      font-size: 0.78rem;
-      color: #cbd5e1;
-      line-height: 1.4;
-      margin: 0 auto 0.5rem auto;
-      min-height: 1.4rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .what-next-actions {
-      display: flex;
-      justify-content: center;
-      gap: 0.45rem;
-      flex-wrap: wrap;
-    }
-
-    .what-next-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.35rem;
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       font-weight: 700;
-      padding: 0.38rem 0.75rem;
-      border-radius: 8px;
-      cursor: pointer;
-      text-align: center;
-      line-height: 1.2;
+      min-height: 1.9rem;
+      box-sizing: border-box;
+      padding: 0 0.55rem;
+      border-radius: 6px;
       border: 1px solid transparent;
       text-decoration: none;
+      cursor: pointer;
+      text-align: left;
     }
 
-    .what-next-btn.primary {
+    .whatnext-slot-marker {
+      flex-shrink: 0;
+      opacity: 0.65;
+      font-size: 0.7rem;
+    }
+
+    .whatnext-slot-label {
+      flex: 1 1 auto;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .whatnext-slot.primary {
       background: #3b82f6;
       color: white;
     }
 
-    .what-next-btn.primary:hover {
+    .whatnext-slot.primary:hover {
       background: #2563eb;
     }
 
-    .what-next-btn.secondary {
-      background: rgba(148, 163, 184, 0.1);
+    .whatnext-slot.secondary {
+      background: rgba(148, 163, 184, 0.08);
       border-color: #334155;
       color: #cbd5e1;
     }
 
-    .what-next-btn.secondary:hover {
+    .whatnext-slot.secondary:hover {
       border-color: #64748b;
       color: #f1f5f9;
     }
 
-    /* Deliberately-inert variant — the true empty state, where the panel
-       says so honestly rather than nudging toward one entry path (both
-       real action buttons still render alongside it — see
-       renderWhatNextPanel()). */
-    .what-next-blurb.inert {
-      color: #64748b;
+    /* Empty slot — "no further worthwhile recommendation right now,"
+       deliberately not filled with busywork. Dashed border reads as an
+       inert placeholder rather than a disabled button. */
+    .whatnext-slot.empty {
+      justify-content: center;
+      color: #334155;
+      border-style: dashed;
+      border-color: #1e293b;
+      cursor: default;
     }
 
     /* Compact helper row — fixed position, controls always visible. */
@@ -484,9 +504,14 @@
       margin-bottom: 0.35rem;
     }
 
+    /* Compacted further this pass (0.74rem → 0.66rem, plus tighter row/
+       track dimensions below) specifically so the Evidence column's total
+       height visually balances against the fixed 148px Conclusions gauges
+       beside it, rather than reading as the visually "heaviest" of the
+       three panels. */
     .evidence-summary-list {
       list-style: none;
-      font-size: 0.74rem;
+      font-size: 0.66rem;
     }
 
     .evidence-summary-label {
@@ -509,7 +534,7 @@
        filled/empty state rather than implying a percentage that doesn't
        exist. */
     .evidence-summary-row {
-      padding: 0.22rem 0;
+      padding: 0.14rem 0;
       border-bottom: 1px solid #1e293b;
     }
 
@@ -520,25 +545,24 @@
     .evidence-summary-toprow {
       display: flex;
       justify-content: space-between;
-      gap: 0.6rem;
-      margin-bottom: 0.18rem;
+      gap: 0.5rem;
+      margin-bottom: 0.12rem;
     }
 
-    /* Blockier "contributor bar" treatment (vs. the prior thin hairline) —
-       these are confidence CONTRIBUTORS, not workflow-completion bars, so
-       the visual leans toward a level meter rather than a progress pill.
-       position:relative so the marker lines below can sit inside it. */
+    /* Thinner this pass (6px → 4px) — still a level-meter, not a hairline,
+       just proportioned to sit comfortably beside the smaller type above
+       it rather than reading as heavier than the row's own text. */
     .evidence-meter-track {
       position: relative;
-      height: 6px;
-      border-radius: 3px;
+      height: 4px;
+      border-radius: 2px;
       background: #1e293b;
       overflow: visible;
     }
 
     .evidence-meter-fill {
       height: 100%;
-      border-radius: 3px;
+      border-radius: 2px;
       background: #3b82f6;
       transition: width 0.4s ease;
     }
@@ -552,8 +576,8 @@
        they stay visible at any fill level. */
     .evidence-meter-marker {
       position: absolute;
-      top: -2px;
-      bottom: -2px;
+      top: -1px;
+      bottom: -1px;
       width: 1px;
       background: rgba(148, 163, 184, 0.4);
     }
@@ -1043,15 +1067,15 @@
         <div class="display-eyebrow"><span class="display-dot"></span>Evidence</div>
         <div id="evidence-meters"></div>
         <div class="scanner-inline" id="scanner-display">
-          <div class="display-eyebrow"><span class="display-dot" id="scanner-activity-dot"></span>Scanner</div>
-          <div class="scanner-inline-value" id="scanner-activity-value">Ready</div>
+          <span class="scanner-inline-label">Scanner</span>
+          <span class="display-dot" id="scanner-activity-dot"></span>
+          <span class="scanner-inline-value" id="scanner-activity-value">Ready</span>
         </div>
       </div>
-      <!-- RIGHT: What Next? -->
+      <!-- RIGHT: What Next? — a ranked recommendation queue, not a paragraph with buttons -->
       <div class="panel panel-whatnext" id="what-next-display">
         <div class="display-eyebrow"><span class="display-dot"></span>What Next?</div>
-        <div class="what-next-blurb" id="what-next-blurb">Start a new assessment by choosing a starting point below.</div>
-        <div class="what-next-actions" id="what-next-actions"></div>
+        <div class="whatnext-queue" id="whatnext-queue"></div>
       </div>
     </div>
     <div class="dashboard-helpers">
@@ -1253,17 +1277,26 @@
     // back to "Ready."
     // ───────────────────────────────────────────────────────────────────
     const SCANNER_ACTIVITY_BRIDGE_KEY = 'ngpcx_scanner_activity_bridge_v1';
-    // A short status word only — the Composition Correction pass dropped
-    // the longer caption sentence entirely (not just visually hid it) to
-    // keep Scanner a compact two-line readout ("SCANNER" / "READY") rather
-    // than its own tall card. See CLAUDE.md.
+    // A short status word only, on one line ("SCANNER  ● READY") — see
+    // CLAUDE.md, Dashboard Instruments/Coherence addenda for the prior
+    // two-line prototype this replaces. Color model is a genuine six-state
+    // indicator, not a workflow-step tracker:
+    //   unavailable (neutral) — scanning genuinely can't be used here
+    //   ready       (dim)     — idle, valid, nothing happening
+    //   downloading/waiting (amber) — in progress
+    //   connected/receiving (blue)  — live handshake with the local scanner
+    //   updated     (green)   — a real result just landed
+    //   error       (red)     — a real, confirmed failure (session creation
+    //                           failed), never a generic/speculative state
     const SCANNER_STATE_META = {
-      ready: { value: 'Ready', dot: '#475569', active: false },
-      downloading: { value: 'Downloading', dot: '#3b82f6', active: true },
+      unavailable: { value: 'Not Available', dot: '#475569', active: false },
+      ready: { value: 'Ready', dot: '#64748b', active: false },
+      downloading: { value: 'Downloading', dot: '#f59e0b', active: true },
       waiting: { value: 'Waiting', dot: '#f59e0b', active: true },
-      connected: { value: 'Connected', dot: '#10b981', active: true },
-      receiving: { value: 'Receiving', dot: '#10b981', active: true },
-      updated: { value: 'Updated', dot: '#10b981', active: false },
+      connected: { value: 'Connected', dot: '#3b82f6', active: true },
+      receiving: { value: 'Receiving', dot: '#3b82f6', active: true },
+      updated: { value: 'Completed', dot: '#10b981', active: false },
+      error: { value: 'Error', dot: '#ef4444', active: false },
     };
     function setScannerActivity(state) {
       const meta = SCANNER_STATE_META[state] || SCANNER_STATE_META.ready;
@@ -1420,7 +1453,7 @@
         } catch (err) {
           btn.textContent = 'Error — try again';
           btn.style.background = '#ef4444';
-          setScannerActivity('ready');
+          setScannerActivity('error');
           return;
         }
 
@@ -1799,6 +1832,16 @@
     // link (Report/Workspace/Community) — nothing new was invented to
     // populate a second button; where no second real action exists, the
     // panel just shows one.
+    // ─── WHAT NEXT? as a ranked recommendation QUEUE ──────────────────────
+    // Not navigation, not a wizard — a prioritized list generated from the
+    // current assessment, highest-value recommendation first. Reuses
+    // nextActionFor()'s existing {kind, text} output verbatim as the sole
+    // source of what's recommended (this file only presents it — it never
+    // re-derives the recommendation itself). Every slot targets a real,
+    // already-reachable destination (an evidence tab, or an existing
+    // Report/Workspace/Import action) — nothing invented to fill a slot.
+    // Explanatory text moved entirely to title="" tooltips (task 6) so the
+    // panel itself stays a short, generated-feeling list of labels.
     const WHAT_NEXT_PRIMARY_LABEL = {
       'questions': 'Add Intended Use',
       'start': 'Add More Detail',
@@ -1818,17 +1861,19 @@
       'report': { link: 'report' },
     };
     // Secondary action — one reasonable complementary action per kind, or
-    // none where a second real action doesn't exist yet. Intentionally NOT
-    // exhaustive of every navigation option; the dashboard recommends, it
-    // doesn't try to list everything the tabs already make reachable.
+    // none where a second real action doesn't exist yet (an unused slot
+    // renders as a dash placeholder rather than inventing busywork — see
+    // renderWhatNextPanel()). Intentionally NOT exhaustive of every
+    // navigation option; the dashboard recommends, it doesn't try to list
+    // everything the tabs already make reachable.
     const WHAT_NEXT_SECONDARY = {
-      'questions': { label: 'View Detailed Report', link: 'report' },
-      'start': { label: 'Run a Scan', tab: 'current-computer' },
-      'scan': { label: 'Browse Community Data', tab: 'community' },
-      'optional-scan': { label: 'Browse Community Data', tab: 'community' },
-      'none-needed': { label: 'Run a Scan (Optional)', tab: 'current-computer' },
-      'refine': { label: 'View Detailed Report', link: 'report' },
-      'report': { label: 'Open Full Workspace', link: 'workspace' },
+      'questions': { label: 'View Detailed Report', link: 'report', title: 'See the full compatibility breakdown behind your current read.' },
+      'start': { label: 'Run a Scan', tab: 'current-computer', title: 'A real scan replaces guesswork with your machine’s actual evidence.' },
+      'scan': { label: 'Browse Community Data', tab: 'community', title: 'See what other CheckMyARM users have already found.' },
+      'optional-scan': { label: 'Browse Community Data', tab: 'community', title: 'See what other CheckMyARM users have already found.' },
+      'none-needed': { label: 'Run a Scan (Optional)', tab: 'current-computer', title: 'Your answers may already be enough — scanning adds hard evidence if you want it.' },
+      'refine': { label: 'View Detailed Report', link: 'report', title: 'See the full compatibility breakdown behind today’s recommendation.' },
+      'report': { label: 'Open Full Workspace', link: 'workspace', title: 'Dig into every app and device, and share what you find.' },
     };
 
     function whatNextActionHref(action) {
@@ -1843,57 +1888,86 @@
       // link actions are plain <a href> — no JS handler needed.
     }
 
-    // "Keep the recommendation concise. One sentence is usually enough" —
-    // a presentation-only trim, not a rewrite of nextActionFor()'s text.
-    // Most of its strings are already one sentence; the couple that carry
-    // a second clarifying clause ("...or review your answers below") lose
-    // it here, since the action buttons beneath already make that clause
-    // redundant. The full underlying string is untouched in assessment.js.
-    function firstSentence(text) {
-      const match = text.match(/^[^.!?]*[.!?]/);
-      return match ? match[0].trim() : text;
+    // Builds one queue slot — a real recommendation (anchor, ranked) or an
+    // empty placeholder (a plain dash, non-interactive). Kept as one small
+    // builder so every slot — real or empty — gets identical fixed sizing.
+    function whatNextSlotEl({ label, title, tone, onClick, href }) {
+      if (!label) {
+        const empty = document.createElement('div');
+        empty.className = 'whatnext-slot empty';
+        empty.innerHTML = '<span class="whatnext-slot-marker">—</span>';
+        return empty;
+      }
+      const el = document.createElement('a');
+      el.className = 'whatnext-slot ' + tone;
+      el.href = href || '#';
+      if (title) el.title = title;
+      el.innerHTML = '<span class="whatnext-slot-marker">›</span><span class="whatnext-slot-label"></span>';
+      el.querySelector('.whatnext-slot-label').textContent = label;
+      if (onClick) el.addEventListener('click', onClick);
+      return el;
     }
 
     function renderWhatNextPanel(next) {
-      const blurb = document.getElementById('what-next-blurb');
-      const actions = document.getElementById('what-next-actions');
-      blurb.textContent = firstSentence(next.text);
-      blurb.classList.toggle('inert', next.kind === 'start-empty');
-      actions.innerHTML = '';
+      const queue = document.getElementById('whatnext-queue');
+      queue.innerHTML = '';
+      const slots = [];
 
       if (next.kind === 'start-empty') {
-        // No single recommended action yet — both entry paths shown with
-        // equal visual weight, matching this surface's original "two
-        // equally prominent entry paths" design.
-        actions.innerHTML = `
-          <a href="#" class="what-next-btn primary" data-tab="current-computer">Start Scan</a>
-          <a href="#" class="what-next-btn primary" data-tab="intended-use">Answer Questions</a>`;
-        actions.querySelectorAll('[data-tab]').forEach((el) => {
-          el.addEventListener('click', (e) => { e.preventDefault(); switchTab(el.dataset.tab); });
-        });
+        // No single recommendation outranks the other yet — both entry
+        // paths shown with equal weight, matching this surface's original
+        // "two equally prominent entry paths" design. A real, already-
+        // wired third option (Load Assessment) rounds out the queue: when
+        // there's no evidence at all, picking up a previously saved
+        // assessment is genuinely the next most relevant thing to offer.
+        slots.push(whatNextSlotEl({
+          label: 'Start Scan', tone: 'primary',
+          title: 'Scan this computer to gather real compatibility evidence.',
+          onClick: (e) => { e.preventDefault(); switchTab('current-computer'); },
+        }));
+        slots.push(whatNextSlotEl({
+          label: 'Answer Questions', tone: 'primary',
+          title: 'Answer a couple of quick questions for an early read — no scan required.',
+          onClick: (e) => { e.preventDefault(); switchTab('intended-use'); },
+        }));
+        const canImport = window.NavShell && typeof window.NavShell.triggerImport === 'function';
+        slots.push(canImport ? whatNextSlotEl({
+          label: 'Load Assessment', tone: 'secondary',
+          title: 'Import a previously saved assessment file to pick up where you left off.',
+          onClick: (e) => { e.preventDefault(); window.NavShell.triggerImport(); },
+        }) : whatNextSlotEl({}));
+        slots.forEach((el) => queue.appendChild(el));
         return;
       }
 
       const primaryLabel = WHAT_NEXT_PRIMARY_LABEL[next.kind];
       const primaryTarget = WHAT_NEXT_PRIMARY_TARGET[next.kind];
       const secondary = WHAT_NEXT_SECONDARY[next.kind];
-      if (!primaryLabel || !primaryTarget) return; // defensive — every real kind is mapped above
 
-      const primaryBtn = document.createElement('a');
-      primaryBtn.href = primaryTarget.link ? whatNextActionHref(primaryTarget) : '#';
-      primaryBtn.className = 'what-next-btn primary';
-      primaryBtn.textContent = primaryLabel;
-      wireWhatNextButton(primaryBtn, primaryTarget);
-      actions.appendChild(primaryBtn);
+      // The primary slot's tooltip is nextActionFor()'s own full reasoning
+      // (next.text) — the exact explanatory prose the dashboard used to
+      // show inline now lives here instead, on hover, per task 6.
+      slots.push(primaryLabel && primaryTarget ? whatNextSlotEl({
+        label: primaryLabel, tone: 'primary', title: next.text,
+        href: primaryTarget.link ? whatNextActionHref(primaryTarget) : '#',
+        onClick: primaryTarget.tab ? (e) => { e.preventDefault(); switchTab(primaryTarget.tab); } : null,
+      }) : whatNextSlotEl({}));
 
-      if (secondary) {
-        const secondaryBtn = document.createElement('a');
-        secondaryBtn.href = secondary.link ? whatNextActionHref(secondary) : '#';
-        secondaryBtn.className = 'what-next-btn secondary';
-        secondaryBtn.textContent = secondary.label;
-        wireWhatNextButton(secondaryBtn, secondary);
-        actions.appendChild(secondaryBtn);
-      }
+      slots.push(secondary ? whatNextSlotEl({
+        label: secondary.label, tone: 'secondary', title: secondary.title,
+        href: secondary.link ? whatNextActionHref(secondary) : '#',
+        onClick: secondary.tab ? (e) => { e.preventDefault(); switchTab(secondary.tab); } : null,
+      }) : whatNextSlotEl({}));
+
+      // Third slot deliberately stays empty for every real (non-empty)
+      // state today — no third genuinely worthwhile recommendation exists
+      // yet beyond the primary/secondary pair (see task 5: blank slots are
+      // intentional, not a gap to fill with busywork). Rendering it keeps
+      // the queue's vertical shape identical across every assessment
+      // state, including the two/three-slot start-empty case above.
+      slots.push(whatNextSlotEl({}));
+
+      slots.forEach((el) => queue.appendChild(el));
     }
 
     // Tracked across renders so a genuine change in Confidence can trigger
@@ -2267,7 +2341,15 @@
       // ever plays when results are genuinely new.
       const scanJustHappened = !!sessionStorage.getItem(SCANNER_ACTIVITY_BRIDGE_KEY);
       sessionStorage.removeItem(SCANNER_ACTIVITY_BRIDGE_KEY);
-      if (scanJustHappened) setScannerActivity('receiving');
+      if (scanJustHappened) {
+        setScannerActivity('receiving');
+      } else if (isLikelyNonWindows()) {
+        // A one-time, static fact about the viewing device (not the
+        // assessed one) — scanning genuinely cannot be used from here, so
+        // the indicator says so honestly rather than sitting on a "Ready"
+        // that would never actually do anything if clicked.
+        setScannerActivity('unavailable');
+      }
       function announceResultsIfScanJustHappened() {
         if (!scanJustHappened) return;
         setScannerActivity('updated');
@@ -2309,6 +2391,15 @@
     }
 
     loadSessionIfPresent();
+
+    // window.NavShell (nav.js) resolves asynchronously (it awaits its own
+    // /api/auth-status fetch), so it's very often still undefined at the
+    // moment loadSessionIfPresent() first renders the dashboard — which is
+    // exactly when the true-empty What Next queue's "Load Assessment" slot
+    // needs it. Re-rendering once nav.js signals ready (a no-op if the
+    // dashboard already reflects real evidence by then) is what lets that
+    // slot appear without polling.
+    document.addEventListener('navshell:ready', () => { renderDashboard(); }, { once: true });
 
     // The hero's own "Already started?" import affordance now lives in the
     // shared nav shell's header CTA (see nav.js) rather than a
