@@ -52,8 +52,15 @@
        changes shape as evidence accumulates — only the numbers, colors,
        and panel contents do. See CLAUDE.md, Assessment Dashboard milestone.
        ═══════════════════════════════════════════════════════════════════ */
+    /* Widened from the original 720px (a leftover from the old single
+       summary-card layout) — the three-panel instrument row was visibly
+       cramped at that width. 1040px gives the panels real room on a
+       typical desktop without reading as a full-bleed dashboard; the
+       Investigation Console below shares this exact width so the two
+       layers read as one aligned instrument, not two differently-sized
+       blocks stacked on top of each other. */
     .dashboard {
-      max-width: 720px;
+      max-width: 1040px;
       margin: 0 auto 1.5rem auto;
       padding: 0.9rem 1.1rem;
       background: #1e293b;
@@ -284,50 +291,24 @@
       flex: 1 1 auto;
     }
 
-    /* Scanner — a compact ONE-LINE dashboard INDICATOR sitting BENEATH the
-       evidence meters inside the same panel, never a standalone card of
-       its own. This is an instrument reading, not a workflow step: fixed
-       label, fixed dot position, left-aligned status text that never
-       wraps. See setScannerActivity()/SCANNER_STATE_META for the color
-       model (neutral/dim/amber/blue/green/red). */
-    .scanner-inline {
-      margin-top: 0.4rem;
-      padding-top: 0.35rem;
-      border-top: 1px solid #1e293b;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .scanner-inline-label {
-      font-size: 0.6rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #64748b;
-      flex-shrink: 0;
-    }
-
-    .scanner-inline-value {
-      font-size: 0.68rem;
-      font-weight: 800;
-      color: #e2e8f0;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
     /* ─── WHAT NEXT — a ranked recommendation QUEUE, not a paragraph with
        buttons underneath it. Each .whatnext-slot is a fixed-height row in
        descending priority order (highest-value recommendation first); an
-       unused slot renders as a subtle dash placeholder rather than being
+       unused slot renders as a subtle placeholder rather than being
        omitted, so the panel's vertical shape never jumps as evidence
        changes. Monospace + a leading "›" marker are deliberate — the goal
        is to read as a live, generated recommendation display, not ordinary
        page prose. Explanatory text moved to native title="" tooltips (see
-       renderWhatNextPanel()) so the panel itself stays visually calm. */
+       renderWhatNextPanel()) so the panel itself stays visually calm.
+
+       Four fixed rows, always: up to three ranked recommendations, then a
+       permanent fourth row for Scanner (see .whatnext-slot.scanner-slot
+       below) — prototyped here, moved out of the Evidence panel, on the
+       theory that "what to do next" and "is the scanner connected" are
+       both assessment-action concerns, not passive evidence. Scanner
+       keeps its own visual identity within the family (muted, non-
+       interactive, no hover state) so it doesn't read as a fourth
+       recommendation competing with the real ones above it. */
     .whatnext-queue {
       display: flex;
       flex-direction: column;
@@ -385,14 +366,70 @@
     }
 
     /* Empty slot — "no further worthwhile recommendation right now,"
-       deliberately not filled with busywork. Dashed border reads as an
-       inert placeholder rather than a disabled button. */
+       deliberately not filled with busywork. Left-aligned with the same
+       "›" marker every real slot uses, then a dashed placeholder line
+       instead of a centered "—" — the row should read as intentionally
+       available (a queue slot with nothing in it right now), not like a
+       disabled control or an afterthought. */
     .whatnext-slot.empty {
-      justify-content: center;
       color: #334155;
       border-style: dashed;
       border-color: #1e293b;
       cursor: default;
+    }
+
+    .whatnext-slot.empty .whatnext-slot-marker {
+      color: #334155;
+    }
+
+    .whatnext-slot-placeholder-line {
+      flex: 1 1 auto;
+      letter-spacing: 0.12em;
+      overflow: hidden;
+    }
+
+    /* Scanner, relocated here (prototype) from the Evidence panel — the
+       permanent fourth row. Deliberately NOT styled like a recommendation:
+       muted background, no hover state, not clickable, a thin top divider
+       separating it from the real recommendation slots above. The intent
+       is "a persistent assessment utility living alongside the other
+       assessment actions," not a fourth ranked choice. Fixed label, fixed
+       dot position, left-aligned status text that never wraps — same
+       instrument-reading contract as before the move. See
+       setScannerActivity()/SCANNER_STATE_META for the color model
+       (neutral/dim/amber/blue/green/red). */
+    .whatnext-slot.scanner-slot {
+      justify-content: space-between;
+      margin-top: 0.15rem;
+      padding-top: 0.55rem;
+      border-top: 1px solid #1e293b;
+      border-radius: 0;
+      background: transparent;
+      cursor: default;
+      min-height: 1.6rem;
+    }
+
+    .whatnext-slot-left {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: #64748b;
+    }
+
+    .scanner-slot-status {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-shrink: 0;
+    }
+
+    .scanner-slot-value {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #e2e8f0;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
     }
 
     /* Compact helper row — fixed position, controls always visible. */
@@ -583,15 +620,34 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════
-       LAYER 2 — EVIDENCE NAVIGATION
-       A persistent, modular tab bar. Adding/removing/renaming a category is
-       a one-line change to EVIDENCE_CATEGORIES in the script below — no
-       markup duplication per tab.
+       INVESTIGATION CONSOLE — one framed instrument, not a tabbed web
+       page. Same card language as .dashboard (background/border/radius,
+       identical max-width) so the two read as a single aligned unit:
+       Instrument Panel, then Investigation Console, directly beneath it —
+       not "dashboard, then a separate page." See CLAUDE.md, Investigation
+       Console addendum.
+       ═══════════════════════════════════════════════════════════════════ */
+    .console {
+      max-width: 1040px;
+      margin: 0 auto 2.5rem auto;
+      padding: 0.9rem 1.1rem 1.1rem 1.1rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       LAYER 2 — EVIDENCE NAVIGATION (mode selectors)
+       A persistent, modular selector row, styled as the same button
+       family as the What Next queue (rounded rect, blue-active/muted-
+       inactive) rather than protruding page tabs — related to, not
+       identical to, .whatnext-slot: these select a MODE, they don't rank
+       recommendations, so no "›" marker and no monospace. Adding/removing/
+       renaming a category is a one-line change to EVIDENCE_CATEGORIES in
+       the script below — no markup duplication per tab.
        ═══════════════════════════════════════════════════════════════════ */
     .evidence-nav {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 0 1rem;
+      margin: 0 0 0.75rem 0;
       display: flex;
       justify-content: center;
       gap: 0.4rem;
@@ -599,41 +655,43 @@
     }
 
     .evidence-tab {
-      background: #1e293b;
+      background: rgba(148, 163, 184, 0.08);
       border: 1px solid #334155;
-      border-bottom: none;
       color: #94a3b8;
-      font-size: 0.82rem;
-      font-weight: 600;
-      padding: 0.55rem 1rem;
-      border-radius: 10px 10px 0 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
       cursor: pointer;
-      position: relative;
-      top: 1px;
     }
 
     .evidence-tab:hover {
+      border-color: #64748b;
       color: #e2e8f0;
     }
 
     .evidence-tab.active {
-      color: #f1f5f9;
-      background: #16233b;
-      border-color: #3b82f6;
+      color: white;
+      background: #3b82f6;
+      border-color: transparent;
     }
 
     /* ═══════════════════════════════════════════════════════════════════
-       LAYER 3 — DETAILS WORKSPACE
+       LAYER 3 — DETAILS WORKSPACE (the one active display)
        Only this region substantially changes when a different evidence
-       category is selected. Dashboard and nav above stay put.
+       category is selected. Console frame and mode selectors above stay
+       put. Styled as an inset sub-panel — same treatment .panel already
+       uses inside the dashboard (dark fill, subtle border, soft inset
+       shadow) — rather than its own separately-bordered card, so the
+       console reads as one instrument with a display inside it, not a
+       monitor nested inside another monitor.
        ═══════════════════════════════════════════════════════════════════ */
     .details-workspace {
-      max-width: 720px;
-      margin: 0 auto 2.5rem auto;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.35);
       padding: 1.5rem 1.75rem;
-      background: #16233b;
-      border: 1px solid #3b82f6;
-      border-radius: 0 0 14px 14px;
       min-height: 180px;
     }
 
@@ -1023,6 +1081,9 @@
         font-size: 0.76rem;
         padding: 0.5rem 0.7rem;
       }
+      .console {
+        padding: 0.75rem 0.85rem 0.9rem 0.85rem;
+      }
       .details-workspace {
         padding: 1.25rem;
       }
@@ -1062,17 +1123,15 @@
           <div class="gauge-label-sub"></div>
         </div>
       </div>
-      <!-- MIDDLE: Evidence / Signals — permanently visible, never behind a toggle -->
+      <!-- MIDDLE: Evidence / Signals — permanently visible, never behind a toggle.
+           Scanner moved out of here (prototype) — see .panel-whatnext's 4th slot. -->
       <div class="panel panel-evidence">
         <div class="display-eyebrow"><span class="display-dot"></span>Evidence</div>
         <div id="evidence-meters"></div>
-        <div class="scanner-inline" id="scanner-display">
-          <span class="scanner-inline-label">Scanner</span>
-          <span class="display-dot" id="scanner-activity-dot"></span>
-          <span class="scanner-inline-value" id="scanner-activity-value">Ready</span>
-        </div>
       </div>
-      <!-- RIGHT: What Next? — a ranked recommendation queue, not a paragraph with buttons -->
+      <!-- RIGHT: What Next? — a ranked recommendation queue, not a paragraph with buttons.
+           Renders 4 fixed slots: up to 3 ranked recommendations, then a permanent
+           Scanner utility row — see renderWhatNextPanel(). -->
       <div class="panel panel-whatnext" id="what-next-display">
         <div class="display-eyebrow"><span class="display-dot"></span>What Next?</div>
         <div class="whatnext-queue" id="whatnext-queue"></div>
@@ -1088,11 +1147,18 @@
     <div class="helper-panel" id="helper-panel-more-info" hidden></div>
   </div>
 
-  <!-- LAYER 2: EVIDENCE NAVIGATION -->
-  <nav class="evidence-nav" id="evidence-nav"></nav>
+  <!-- INVESTIGATION CONSOLE — one framed unit, not two stacked page
+       sections. Mode selectors sit inside the frame (LAYER 2) above a
+       single full-width display (LAYER 3), instead of tabs protruding
+       above a separate content box. See CLAUDE.md, Investigation Console
+       addendum. -->
+  <div class="console">
+    <!-- LAYER 2: EVIDENCE NAVIGATION (mode selectors) -->
+    <nav class="evidence-nav" id="evidence-nav"></nav>
 
-  <!-- LAYER 3: DETAILS WORKSPACE -->
-  <div class="details-workspace" id="details-workspace"></div>
+    <!-- LAYER 3: DETAILS WORKSPACE (the one active display) -->
+    <div class="details-workspace" id="details-workspace"></div>
+  </div>
 
   <!-- HOW IT WORKS -->
   <div class="how-it-works">
@@ -1298,7 +1364,14 @@
       updated: { value: 'Completed', dot: '#10b981', active: false },
       error: { value: 'Error', dot: '#ef4444', active: false },
     };
+    // Tracked independently of the DOM (prototype: Scanner now lives
+    // inside the What Next queue, rebuilt on every renderWhatNextPanel()
+    // call — see whatNextScannerSlotEl()) — the logical state must survive
+    // a rebuild even when it changes before the slot's DOM nodes exist yet
+    // (e.g. loadSessionIfPresent() calling this before the first render).
+    let currentScannerState = 'ready';
     function setScannerActivity(state) {
+      currentScannerState = state;
       const meta = SCANNER_STATE_META[state] || SCANNER_STATE_META.ready;
       const dot = document.getElementById('scanner-activity-dot');
       const value = document.getElementById('scanner-activity-value');
@@ -1889,13 +1962,17 @@
     }
 
     // Builds one queue slot — a real recommendation (anchor, ranked) or an
-    // empty placeholder (a plain dash, non-interactive). Kept as one small
-    // builder so every slot — real or empty — gets identical fixed sizing.
+    // empty placeholder. Kept as one small builder so every slot — real or
+    // empty — gets identical fixed sizing. The empty case keeps the same
+    // leading "›" marker every real slot uses, then a dashed line instead
+    // of a centered "—" — the row should read as an intentionally
+    // available spot in the queue, not a disabled control.
     function whatNextSlotEl({ label, title, tone, onClick, href }) {
       if (!label) {
         const empty = document.createElement('div');
         empty.className = 'whatnext-slot empty';
-        empty.innerHTML = '<span class="whatnext-slot-marker">—</span>';
+        empty.innerHTML = '<span class="whatnext-slot-marker">›</span>'
+          + '<span class="whatnext-slot-placeholder-line">' + '-'.repeat(20) + '</span>';
         return empty;
       }
       const el = document.createElement('a');
@@ -1905,6 +1982,30 @@
       el.innerHTML = '<span class="whatnext-slot-marker">›</span><span class="whatnext-slot-label"></span>';
       el.querySelector('.whatnext-slot-label').textContent = label;
       if (onClick) el.addEventListener('click', onClick);
+      return el;
+    }
+
+    // The fourth, permanent slot — Scanner, prototyped here out of the
+    // Evidence panel (see CLAUDE.md, Investigation Console addendum).
+    // Deliberately NOT built from the same {label, tone, ...} shape as a
+    // recommendation slot — it's a persistent assessment utility, not a
+    // ranked choice, so it gets its own non-interactive markup with the
+    // exact ids setScannerActivity() already targets. Called at the end of
+    // every renderWhatNextPanel() to re-sync the freshly-created dot/value
+    // nodes to currentScannerState, since queue.innerHTML='' destroys and
+    // recreates them on every render.
+    function whatNextScannerSlotEl() {
+      const el = document.createElement('div');
+      el.className = 'whatnext-slot scanner-slot';
+      el.id = 'scanner-display';
+      el.innerHTML = '<span class="whatnext-slot-left">'
+        + '<span class="whatnext-slot-marker">›</span>'
+        + '<span class="whatnext-slot-label">Scanner</span>'
+        + '</span>'
+        + '<span class="scanner-slot-status">'
+        + '<span class="display-dot" id="scanner-activity-dot"></span>'
+        + '<span class="scanner-slot-value" id="scanner-activity-value">Ready</span>'
+        + '</span>';
       return el;
     }
 
@@ -1936,7 +2037,9 @@
           title: 'Import a previously saved assessment file to pick up where you left off.',
           onClick: (e) => { e.preventDefault(); window.NavShell.triggerImport(); },
         }) : whatNextSlotEl({}));
+        slots.push(whatNextScannerSlotEl());
         slots.forEach((el) => queue.appendChild(el));
+        setScannerActivity(currentScannerState);
         return;
       }
 
@@ -1967,7 +2070,14 @@
       // state, including the two/three-slot start-empty case above.
       slots.push(whatNextSlotEl({}));
 
+      // Fourth slot: the permanent Scanner utility row — see
+      // whatNextScannerSlotEl(). Re-applying currentScannerState after
+      // appending is required, not cosmetic: the slot's dot/value nodes
+      // were just recreated fresh by this same render pass.
+      slots.push(whatNextScannerSlotEl());
+
       slots.forEach((el) => queue.appendChild(el));
+      setScannerActivity(currentScannerState);
     }
 
     // Tracked across renders so a genuine change in Confidence can trigger
