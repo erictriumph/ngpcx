@@ -1154,23 +1154,53 @@ function adaptiveContextKey(sessionId) {
 // Small, fixed vocabularies — modest and explicit, not an open-ended tagging
 // system. Matches this codebase's standing preference (isSystemComponent,
 // isMicrosoftAppxPackage) for a short, named list over a sprawling taxonomy.
-const INTENDED_USE_OPTIONS = ['gaming', 'development', 'creative', 'productivity', 'web_email'];
+// This is the real Use Case taxonomy (Attention & Relevance / IA Prototype
+// follow-up) — the same six top-level categories the Applications/Devices
+// assessment-model workspaces already group by (see APP_CATEGORIES/
+// DEVICE_CATEGORIES in index.html), deliberately unified into one vocabulary
+// rather than maintaining two parallel category systems.
+const INTENDED_USE_OPTIONS = ['office', 'development', 'gaming', 'media', 'creative', 'utilities'];
 const INTENDED_USE_LABELS = {
-    gaming: 'Gaming',
+    office: 'Office',
     development: 'Development',
-    creative: 'Creative work',
-    productivity: 'Office / Productivity',
-    web_email: 'Mostly web & email',
+    gaming: 'Gaming',
+    media: 'Media',
+    creative: 'Creative',
+    utilities: 'Utilities',
 };
-const RELATIONSHIP_OPTIONS = ['primary_replacement', 'secondary_travel', 'not_sure'];
+// One level deeper, per top-level workload — hand-authored and modest (2-4
+// entries each), the same "small fixed vocabulary" discipline, not a
+// generalized tagging system. Purely descriptive: nothing here changes
+// scoring or is treated as evidence beyond the same flat presence/absence
+// signal a top-level workload selection already contributes.
+const WORKLOAD_SUBCATEGORIES = {
+    office: ['productivity', 'collaboration', 'accounting', 'project_management'],
+    development: ['web_dev', 'mobile_dev', 'devops', 'data_science'],
+    gaming: ['pc_gaming', 'streaming', 'emulation'],
+    media: ['video_playback', 'music', 'streaming_services'],
+    creative: ['photo_editing', 'video_editing', 'design', 'audio_production'],
+    utilities: ['system_tools', 'security', 'backup_sync'],
+};
+const WORKLOAD_SUBCATEGORY_LABELS = {
+    productivity: 'Productivity', collaboration: 'Collaboration', accounting: 'Accounting', project_management: 'Project Management',
+    web_dev: 'Web Development', mobile_dev: 'Mobile Development', devops: 'DevOps', data_science: 'Data Science',
+    pc_gaming: 'PC Gaming', streaming: 'Streaming', emulation: 'Emulation',
+    video_playback: 'Video Playback', music: 'Music', streaming_services: 'Streaming Services',
+    photo_editing: 'Photo Editing', video_editing: 'Video Editing', design: 'Design', audio_production: 'Audio Production',
+    system_tools: 'System Tools', security: 'Security', backup_sync: 'Backup & Sync',
+};
+const RELATIONSHIP_OPTIONS = ['primary', 'replacement', 'travel', 'secondary', 'shared', 'other'];
 const RELATIONSHIP_LABELS = {
-    primary_replacement: 'Replacing my main computer',
-    secondary_travel: 'A second or travel computer',
-    not_sure: "I'm not sure yet",
+    primary: 'Primary computer',
+    replacement: 'Replacement',
+    travel: 'Travel companion',
+    secondary: 'Secondary computer',
+    shared: 'Shared computer',
+    other: 'Other',
 };
 
 function defaultAdaptiveContext() {
-    return { intended_use: [], relationship: null, updated_at: null };
+    return { intended_use: [], sub_workloads: {}, relationship: null, updated_at: null };
 }
 
 // Same discipline as sanitizeImportedEntry(): never trust stored/parsed
@@ -1180,9 +1210,21 @@ function sanitizeAdaptiveContext(raw) {
     const intended_use = Array.isArray(raw.intended_use)
         ? raw.intended_use.filter((v) => INTENDED_USE_OPTIONS.includes(v))
         : [];
+    // sub_workloads: { [workload]: [subKey, ...] } — only kept for a
+    // workload that's actually selected, and only sub-keys that are real
+    // for that workload, so a stale/tampered value can never resurrect a
+    // sub-selection whose parent checkbox is unchecked.
+    const sub_workloads = {};
+    if (raw.sub_workloads && typeof raw.sub_workloads === 'object') {
+        intended_use.forEach((w) => {
+            const valid = WORKLOAD_SUBCATEGORIES[w] || [];
+            const chosen = Array.isArray(raw.sub_workloads[w]) ? raw.sub_workloads[w].filter((v) => valid.includes(v)) : [];
+            if (chosen.length > 0) sub_workloads[w] = chosen;
+        });
+    }
     const relationship = RELATIONSHIP_OPTIONS.includes(raw.relationship) ? raw.relationship : null;
     const updated_at = typeof raw.updated_at === 'string' ? raw.updated_at : null;
-    return { intended_use, relationship, updated_at };
+    return { intended_use, sub_workloads, relationship, updated_at };
 }
 
 function hasAdaptiveContext(ctx) {
@@ -1212,6 +1254,7 @@ function loadAdaptiveContext(sessionId) {
 function saveAdaptiveContext(sessionId, context) {
     const payload = JSON.stringify({
         intended_use: context.intended_use,
+        sub_workloads: context.sub_workloads || {},
         relationship: context.relationship,
         updated_at: new Date().toISOString(),
     });
@@ -1237,7 +1280,11 @@ const WORKLOAD_HINT_PATTERNS = {
     gaming: /steam|epic games|battle\.net|xbox|riot vanguard|ubisoft connect|ea app|ea desktop|discord/i,
     development: /visual studio|git\b|docker|node\.js|python|jetbrains|intellij|pycharm|github desktop|windows terminal|wsl|postman/i,
     creative: /photoshop|premiere|illustrator|after effects|davinci resolve|blender|figma|lightroom|audition/i,
-    productivity: /microsoft 365|outlook|excel|powerpoint|onedrive|microsoft teams|slack|zoom/i,
+    office: /microsoft 365|outlook|excel|powerpoint|onedrive|microsoft teams|slack|zoom/i,
+    // media/utilities deliberately have no hint pattern yet — no reliable
+    // app-name signal was identified for either at this taxonomy's
+    // introduction; absence of a hint here is honest (no inference), not a
+    // gap to fill with a guess.
 };
 
 // Scans classified app names for the patterns above. Deliberately reads
@@ -1261,7 +1308,7 @@ function inferWorkloadHints(results) {
 // suggestion, never a conclusion — lives entirely here.
 function inferRelationshipHint(results) {
     if (!results || !results.system || typeof results.system.battery_present !== 'boolean') return null;
-    return results.system.battery_present === false ? 'secondary_travel' : null;
+    return results.system.battery_present === false ? 'secondary' : null;
 }
 
 // ─────────────────────────────────────────
@@ -1329,8 +1376,8 @@ function contextualReadFor(adaptiveContext) {
     if (uses.length === 0) return { available: false };
 
     const specialized = uses.some((u) => u === 'gaming' || u === 'development' || u === 'creative');
-    const travelCompanion = adaptiveContext.relationship === 'secondary_travel';
-    const onlyLightweight = uses.every((u) => u === 'productivity' || u === 'web_email');
+    const travelCompanion = adaptiveContext.relationship === 'travel' || adaptiveContext.relationship === 'secondary';
+    const onlyLightweight = uses.every((u) => u === 'office' || u === 'media' || u === 'utilities');
 
     if (specialized) {
         return {
@@ -1356,7 +1403,7 @@ function contextualReadFor(adaptiveContext) {
     }
     // Defensive fallback for a future workload option that is neither
     // "specialized" nor "lightweight" — unreachable with the current
-    // 5-option vocabulary (every option is one or the other), kept so this
+    // 6-option vocabulary (every option is one or the other), kept so this
     // function fails safely rather than silently if that vocabulary grows.
     return {
         available: true,

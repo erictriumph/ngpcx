@@ -868,46 +868,69 @@
       margin-bottom: 0.6rem;
     }
 
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .pill {
-      border: 1px solid #334155;
-      background: #0f172a;
-      color: #f1f5f9;
-      padding: 0.45rem 0.9rem;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-    }
-
-    .pill:hover {
-      border-color: #3b82f6;
-    }
-
-    .pill.selected {
-      border-color: #3b82f6;
-      background: rgba(59, 130, 246, 0.18);
-      color: #93c5fd;
-      font-weight: 600;
-    }
-
-    /* Suggested-but-not-yet-confirmed — a ring, not a fill, so "we
-       guessed this" always reads differently from "you confirmed this."
-       Never used at the same time as .selected. */
-    .pill.suggested {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 1px #3b82f6;
-    }
-
     .hypothesis-note {
       font-size: 0.75rem;
       color: #93c5fd;
       margin-top: 0.6rem;
+    }
+
+    /* Use Case — real form controls (radio/checkbox), not pills, for the
+       relationship + workload/sub-workload taxonomy. A deliberate shift
+       from decoration toward literal form semantics: this is now the
+       heart of the assessment, and should read as a real form being
+       filled out, not a row of tappable tags. */
+    .radio-list, .checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .radio-option, .checkbox-option {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      background: #0f172a;
+      cursor: pointer;
+      font-size: 0.88rem;
+      color: #f1f5f9;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .radio-option:hover, .checkbox-option:hover {
+      border-color: #3b82f6;
+    }
+
+    .radio-option.selected, .checkbox-option.selected {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.14);
+      color: #93c5fd;
+      font-weight: 600;
+    }
+
+    /* Same "ring, not a fill" hinted-but-unconfirmed convention as .pill.suggested. */
+    .radio-option.suggested, .checkbox-option.suggested {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px #3b82f6;
+    }
+
+    .radio-option input, .checkbox-option input {
+      accent-color: #3b82f6;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    /* "Nothing below the top section should be fixed — the lower portion
+       should expand naturally." A sub-workload section only exists once
+       its parent workload is checked; the indent + left rule is what
+       visually communicates "this expands from that checkbox above." */
+    .subworkload-section {
+      margin-left: 1.25rem;
+      padding-left: 0.9rem;
+      border-left: 2px solid #334155;
     }
 
     /* Small stat trio — reused by the Applications tab's "what's actually
@@ -984,6 +1007,68 @@
     .source-tag.suggested { color: #c4b5fd; background: rgba(167, 139, 250, 0.12); }
     .source-tag.manual { color: #6ee7b7; background: rgba(16, 185, 129, 0.1); }
     .source-tag.planned { color: #fda4af; background: rgba(244, 114, 182, 0.1); }
+    .source-tag.not-detected { color: #64748b; }
+
+    /* Applications item row — restored compatibility as one more property
+       alongside importance/evidence, plus a real inclusion checkbox (see
+       applicationItemRowHtml()/computeIncluded()). Multi-line by design,
+       unlike the compact single-line Detected-tab row. */
+    .app-item-row {
+      align-items: flex-start;
+    }
+
+    .app-item-row.needs-verification {
+      border-color: rgba(245, 158, 11, 0.35);
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    .item-row-checkbox {
+      padding-top: 0.15rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .item-row-checkbox input {
+      accent-color: #3b82f6;
+      width: 16px;
+      height: 16px;
+    }
+
+    .item-row-body {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .item-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .item-row-top .item-row-name {
+      white-space: normal;
+    }
+
+    .item-compat {
+      font-size: 0.76rem;
+      color: #cbd5e1;
+      margin-top: 0.2rem;
+    }
+
+    .item-compat.muted {
+      color: #64748b;
+    }
+
+    /* "Please verify" is a note, not a badge — a sentence explaining
+       exactly why an item defaulted to unchecked, so the user can agree
+       or correct it in one click instead of guessing what a status means. */
+    .item-verify-note {
+      font-size: 0.76rem;
+      color: #fbbf24;
+      margin-top: 0.35rem;
+      line-height: 1.45;
+    }
 
     .item-list {
       display: flex;
@@ -1413,7 +1498,7 @@
       </div>
       <div class="step">
         <div class="step-number">2</div>
-        <h3>Add Intended Use</h3>
+        <h3>Describe Your Use Case</h3>
         <p>Tell us what you're trying to accomplish — a scan alone can't know your intent.</p>
       </div>
       <div class="step">
@@ -1760,11 +1845,8 @@
         const levelInput = document.querySelector('input[name="scan-level"]:checked');
         const scanLevel = levelInput ? levelInput.value : 'quick';
 
-        btn.textContent = 'Starting...';
-        btn.style.background = '#475569';
-        btn.style.cursor = 'default';
-        btn.style.pointerEvents = 'none';
         setScannerActivity('downloading');
+        refreshScanProgressDisplay();
 
         let newSessionId;
         try {
@@ -1772,9 +1854,8 @@
           const data = await res.json();
           newSessionId = data.session_id;
         } catch (err) {
-          btn.textContent = 'Error — try again';
-          btn.style.background = '#ef4444';
           setScannerActivity('error');
+          refreshScanProgressDisplay();
           return;
         }
 
@@ -1783,9 +1864,8 @@
         link.download = 'ngpcx-scanner.exe';
         link.click();
 
-        btn.textContent = '⏳ Waiting for scanner...';
         setScannerActivity('waiting');
-        showWaitingMessage();
+        refreshScanProgressDisplay();
 
         // Marks "connected" and stashes a one-shot bridge flag so the
         // fresh page load after the redirect below can pick up the
@@ -1793,6 +1873,7 @@
         // sequence — see SCANNER_ACTIVITY_BRIDGE_KEY comment above.
         function handoffToResults() {
           setScannerActivity('connected');
+          refreshScanProgressDisplay();
           sessionStorage.setItem(SCANNER_ACTIVITY_BRIDGE_KEY, '1');
           window.location.href = assessUrlFor(newSessionId, scanLevel);
         }
@@ -1819,19 +1900,48 @@
       });
     }
 
-    function showWaitingMessage() {
-      const container = document.getElementById('details-workspace');
-      const msg = document.createElement('div');
-      msg.id = 'waiting-msg';
-      msg.className = 'workspace-note';
-      msg.style.marginTop = '1rem';
-      msg.innerHTML = `
-        <strong style="color:#f1f5f9">Scanner downloaded!</strong><br>
-        Run <code style="color:#3b82f6">ngpcx-scanner.exe</code> to scan your machine.
-        This page updates automatically once it's done.<br>
-        <span style="font-size:0.8rem;">Download didn't start? <a href="/ngpcx-scanner.exe" download="ngpcx-scanner.exe" style="color:#3b82f6;">Click here</a>.</span>
+    // ───────────────────────────────────────────────────────────────────
+    // SCAN LIFECYCLE — completing it. Whichever Observed-zone tab is
+    // active owns scan state while a scan is in flight: the CTA disappears
+    // entirely (never "Run Scan" next to an already-running scan) and a
+    // live progress readout takes its place, regardless of which tab the
+    // click originated from or whether the user switches away and back.
+    // Results flow in automatically once the scan completes — the existing
+    // redirect-on-complete mechanism already does this; this section only
+    // makes the WAITING window itself honest.
+    // ───────────────────────────────────────────────────────────────────
+    const SCAN_ACTIVE_STATES = ['downloading', 'waiting', 'connected', 'receiving'];
+    function isScanActive() {
+      return SCAN_ACTIVE_STATES.includes(currentScannerState);
+    }
+
+    // Re-renders whichever Observed-zone tab is currently active, so its
+    // content reflects the just-changed currentScannerState. A no-op if
+    // the user has navigated to a different tab — that tab doesn't show
+    // scan state, and will pick up the current state honestly the moment
+    // the user comes back (isScanActive() is read fresh on every render).
+    function refreshScanProgressDisplay() {
+      if (activeTabId === 'detected-apps' || activeTabId === 'detected-devices') {
+        renderDetailsWorkspace();
+      }
+    }
+
+    function scanProgressHtml(noun) {
+      const meta = SCANNER_STATE_META[currentScannerState] || SCANNER_STATE_META.ready;
+      const waitingExtra = currentScannerState === 'waiting' ? `
+        <p style="margin-top:0.9rem; font-size:0.85rem; color:#cbd5e1; line-height:1.5;">
+          Run <code style="color:#3b82f6;">ngpcx-scanner.exe</code> to scan your machine. This page updates automatically once it's done.<br>
+          <span style="font-size:0.8rem; color:#64748b;">Download didn't start? <a href="/ngpcx-scanner.exe" download="ngpcx-scanner.exe" style="color:#3b82f6;">Click here</a>.</span>
+        </p>` : '';
+      return `
+        <div class="workspace-heading">Scan In Progress</div>
+        <div class="workspace-subtext">This ${noun} list fills in automatically once results arrive — no need to wait here, feel free to look around.</div>
+        <div class="scan-cta-box" style="text-align:center; padding:1.75rem 1.25rem;">
+          <div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; margin-bottom:0.4rem;">Scanner</div>
+          <div style="font-size:1.15rem; font-weight:800; color:#e2e8f0;">${escapeHtml(meta.value)}</div>
+        </div>
+        ${waitingExtra}
       `;
-      container.appendChild(msg);
     }
 
     if (params.get('rescan') === '1' && sessionStorage.getItem(CARRY_FORWARD_KEY)) {
@@ -1843,20 +1953,39 @@
     }
 
     // ───────────────────────────────────────────────────────────────────
-    // USE CASE (Intent zone) — the pill-based hypothesis editor, and the
-    // deliberate default/home tab. "Understand what success looks like for
-    // this user" — lightweight by design, and works identically whether or
-    // not a scan has ever run, per this milestone's "a scan is an
-    // accelerator, not a prerequisite."
+    // USE CASE (Intent zone) — now built from real form controls (radio +
+    // checkbox), and the deliberate default/home tab. "Understand what
+    // success looks like for this user" — lightweight by design, and works
+    // identically whether or not a scan has ever run, per this milestone's
+    // "a scan is an accelerator, not a prerequisite."
     // ───────────────────────────────────────────────────────────────────
-    function renderPillGroup(containerId, options, labels, selectedValues, onToggle) {
+    function renderRadioGroup(containerId, options, labels, selectedValue, onSelect) {
       const container = document.getElementById(containerId);
-      container.innerHTML = options.map((opt) => {
-        const isSelected = selectedValues.includes(opt);
-        return `<button type="button" class="pill${isSelected ? ' selected' : ''}" data-value="${opt}">${labels[opt]}</button>`;
-      }).join('');
-      container.querySelectorAll('.pill').forEach((el) => {
-        el.addEventListener('click', () => onToggle(el.dataset.value));
+      container.innerHTML = options.map((opt) => `
+        <label class="radio-option${selectedValue === opt ? ' selected' : ''}">
+          <input type="radio" name="${containerId}" value="${escapeHtml(opt)}"${selectedValue === opt ? ' checked' : ''}>
+          <span></span>
+        </label>`).join('');
+      container.querySelectorAll('.radio-option').forEach((el, i) => {
+        el.querySelector('span').textContent = labels[options[i]];
+      });
+      container.querySelectorAll('input[type="radio"]').forEach((el) => {
+        el.addEventListener('change', () => onSelect(el.value));
+      });
+    }
+
+    function renderCheckboxGroup(containerId, options, labels, selectedValues, onToggle) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = options.map((opt) => `
+        <label class="checkbox-option${selectedValues.includes(opt) ? ' selected' : ''}">
+          <input type="checkbox" value="${escapeHtml(opt)}"${selectedValues.includes(opt) ? ' checked' : ''}>
+          <span></span>
+        </label>`).join('');
+      container.querySelectorAll('.checkbox-option').forEach((el, i) => {
+        el.querySelector('span').textContent = labels[options[i]];
+      });
+      container.querySelectorAll('input[type="checkbox"]').forEach((el) => {
+        el.addEventListener('change', () => onToggle(el.value));
       });
     }
 
@@ -1864,7 +1993,9 @@
     // used to drive recommendation/next-action logic, which always reads
     // the raw stored context via currentAdaptiveContext(). See
     // assessment.js's Adaptive Assessment Surface section for the full
-    // "infer aggressively, commit conservatively" rationale.
+    // "infer aggressively, commit conservatively" rationale. Sub-workloads
+    // are never hinted/inferred — only real, explicit selections exist at
+    // that level.
     function effectiveIntendedUse(ctx) {
       if (ctx.updated_at) return ctx.intended_use;
       const hints = inferWorkloadHints(currentResults);
@@ -1875,20 +2006,48 @@
       return inferRelationshipHint(currentResults) || ctx.relationship;
     }
 
+    // "Nothing below the top section should be fixed — the lower portion
+    // should expand naturally." One sub-workload section per currently-
+    // selected top-level workload, rendered fresh every time the workload
+    // selection changes (via the parent renderUseCaseTab() re-render).
+    function renderSubWorkloadSections(selectedWorkloads, subWorkloadMap) {
+      const container = document.getElementById('subworkload-sections');
+      const withSubs = selectedWorkloads.filter((w) => (WORKLOAD_SUBCATEGORIES[w] || []).length > 0);
+      if (withSubs.length === 0) { container.innerHTML = ''; return; }
+      container.innerHTML = withSubs.map((w) => `
+        <div class="question-group subworkload-section">
+          <span class="question-group-label">${escapeHtml(INTENDED_USE_LABELS[w])}</span>
+          <div class="checkbox-list" id="sub-${w}"></div>
+        </div>`).join('');
+      withSubs.forEach((w) => {
+        const subs = WORKLOAD_SUBCATEGORIES[w];
+        const selected = subWorkloadMap[w] || [];
+        renderCheckboxGroup('sub-' + w, subs, WORKLOAD_SUBCATEGORY_LABELS, selected, (value) => {
+          const current = currentAdaptiveContext();
+          const currentSub = (current.sub_workloads && current.sub_workloads[w]) || [];
+          const nextForW = currentSub.includes(value) ? currentSub.filter((v) => v !== value) : currentSub.concat([value]);
+          const nextSub = Object.assign({}, current.sub_workloads, { [w]: nextForW });
+          saveAdaptiveContext(sessionId, { intended_use: current.intended_use, sub_workloads: nextSub, relationship: current.relationship });
+          renderAll();
+        });
+      });
+    }
+
     function renderUseCaseTab(container) {
       container.innerHTML = `
         <div class="workspace-heading">What Are You Trying to Accomplish?</div>
         <div class="workspace-subtext">A scan can't know your intent — this is the other half of the evidence a scan alone can't provide.</div>
         <div class="question-group">
-          <span class="question-group-label">What will you use it for? (pick any that apply)</span>
-          <div class="pill-row" id="intended-use-pills"></div>
+          <span class="question-group-label">How will this PC fit into your lineup?</span>
+          <div class="radio-list" id="relationship-radios"></div>
         </div>
         <div class="question-group">
-          <span class="question-group-label">How does this fit into your setup?</span>
-          <div class="pill-row" id="relationship-pills"></div>
+          <span class="question-group-label">Primary workloads (pick any that apply)</span>
+          <div class="checkbox-list" id="workload-checkboxes"></div>
         </div>
+        <div id="subworkload-sections"></div>
         <div class="hypothesis-note" id="hypothesis-note" style="display:none;">
-          Pre-filled based on what your scan found — tap any pill to correct us.
+          Pre-filled based on what your scan found — pick any option to correct us.
         </div>
       `;
 
@@ -1897,22 +2056,27 @@
       const effRel = effectiveRelationship(ctx);
       const isHinted = !ctx.updated_at && (effUse.length > 0 || !!effRel);
 
-      renderPillGroup('intended-use-pills', INTENDED_USE_OPTIONS, INTENDED_USE_LABELS, effUse, (value) => {
-        const displayed = effectiveIntendedUse(currentAdaptiveContext());
-        const next = displayed.includes(value) ? displayed.filter((v) => v !== value) : displayed.concat([value]);
-        saveAdaptiveContext(sessionId, { intended_use: next, relationship: effectiveRelationship(currentAdaptiveContext()) });
+      renderRadioGroup('relationship-radios', RELATIONSHIP_OPTIONS, RELATIONSHIP_LABELS, effRel, (value) => {
+        const current = currentAdaptiveContext();
+        saveAdaptiveContext(sessionId, { intended_use: effectiveIntendedUse(current), sub_workloads: current.sub_workloads, relationship: value });
         renderAll();
       });
 
-      renderPillGroup('relationship-pills', RELATIONSHIP_OPTIONS, RELATIONSHIP_LABELS, effRel ? [effRel] : [], (value) => {
-        const displayedRel = effectiveRelationship(currentAdaptiveContext());
-        const next = displayedRel === value ? null : value; // click again to clear
-        saveAdaptiveContext(sessionId, { intended_use: effectiveIntendedUse(currentAdaptiveContext()), relationship: next });
+      renderCheckboxGroup('workload-checkboxes', INTENDED_USE_OPTIONS, INTENDED_USE_LABELS, effUse, (value) => {
+        const current = currentAdaptiveContext();
+        const displayed = effectiveIntendedUse(current);
+        const nowSelected = displayed.includes(value);
+        const next = nowSelected ? displayed.filter((v) => v !== value) : displayed.concat([value]);
+        const nextSub = Object.assign({}, current.sub_workloads);
+        if (nowSelected) delete nextSub[value]; // unchecking a workload clears its sub-selections too
+        saveAdaptiveContext(sessionId, { intended_use: next, sub_workloads: nextSub, relationship: effectiveRelationship(current) });
         renderAll();
       });
+
+      renderSubWorkloadSections(effUse, ctx.sub_workloads || {});
 
       if (isHinted) {
-        document.querySelectorAll('#intended-use-pills .pill.selected, #relationship-pills .pill.selected')
+        document.querySelectorAll('#relationship-radios .radio-option.selected, #workload-checkboxes .checkbox-option.selected')
           .forEach((el) => { el.classList.remove('selected'); el.classList.add('suggested'); });
         document.getElementById('hypothesis-note').style.display = 'block';
       }
@@ -2035,6 +2199,10 @@
     }
 
     function renderDetectedAppsTab(container) {
+      if (!currentResults && isScanActive()) {
+        container.innerHTML = scanProgressHtml('application');
+        return;
+      }
       if (!currentResults) {
         container.innerHTML = `
           <div class="workspace-heading">Detected Apps</div>
@@ -2064,6 +2232,10 @@
     }
 
     function renderDetectedDevicesTab(container) {
+      if (!currentResults && isScanActive()) {
+        container.innerHTML = scanProgressHtml('device');
+        return;
+      }
       if (!currentResults) {
         container.innerHTML = `
           <div class="workspace-heading">Detected Devices</div>
@@ -2134,21 +2306,24 @@
     // richer as Use Case fills in" a real, observable behavior rather than
     // a claim, even though the suggestion content itself is placeholder.
     const SUGGESTED_APPS_BY_USE_CASE = {
-      gaming: ['Steam', 'Discord', 'NVIDIA App'],
+      office: ['Microsoft 365', 'Notion'],
       development: ['Visual Studio Code', 'Git', 'Docker Desktop'],
+      gaming: ['Steam', 'Discord', 'NVIDIA App'],
+      media: ['Spotify', 'VLC'],
       creative: ['Adobe Photoshop', 'DaVinci Resolve', 'Figma'],
-      productivity: ['Microsoft 365', 'Notion'],
-      web_email: ['Google Chrome', 'Mozilla Thunderbird'],
+      utilities: ['Google Chrome', '7-Zip'],
     };
     const SUGGESTED_DEVICES_BY_USE_CASE = {
-      gaming: ['Gaming Headset', 'Mechanical Keyboard'],
+      office: ['Wireless Mouse', 'Webcam'],
       development: ['External Monitor', 'Docking Station'],
+      gaming: ['Gaming Headset', 'Mechanical Keyboard'],
+      media: ['Bluetooth Headphones', 'Streaming Speaker'],
       creative: ['Drawing Tablet', 'Color-Accurate Monitor'],
-      productivity: ['Wireless Mouse', 'Webcam'],
-      web_email: ['Bluetooth Headphones'],
+      utilities: ['External Backup Drive'],
     };
     const SUGGESTED_DEVICES_BY_RELATIONSHIP = {
-      secondary_travel: ['USB-C Travel Dock', 'Portable SSD'],
+      travel: ['USB-C Travel Dock', 'Portable SSD'],
+      secondary: ['USB-C Travel Dock', 'Portable SSD'],
     };
 
     // In-memory only, per this page load — deliberately not persisted
@@ -2158,22 +2333,70 @@
     let manualDevices = [];
     let plannedDevices = [];
 
+    // Restored per explicit instruction: compatibility is not a separate
+    // page or workflow, it's one more PROPERTY of every application,
+    // alongside importance and evidence. Reuses the exact labels/glyphs
+    // report.html's own bucket tables already use (native/emulated/
+    // unsupported/unknown/supported) — one vocabulary, not a second one
+    // invented for this workspace.
+    const COMPAT_BUCKET_LABELS = {
+      native: '✓ Native ARM64', emulated: '⚡ Emulated', unsupported: '✗ Unsupported',
+      unknown: '? Unknown', supported: '✓ Browser-Hosted (Supported)',
+    };
+    const COMPAT_BUCKET_TONE = { native: 'important', emulated: 'possible', unsupported: 'background', unknown: 'possible', supported: 'important' };
+
+    // "Please verify" — not a state, a conversation. A DETECTED app whose
+    // category doesn't match any currently-selected top-level workload
+    // (and at least one workload IS selected, so there's something real to
+    // compare against) starts unchecked with an explanation, rather than
+    // being silently auto-included or auto-hidden.
+    function appNeedsVerification(item, ctx) {
+      if (item.source !== 'detected') return false;
+      const selectedLabels = (ctx.intended_use || []).map((w) => INTENDED_USE_LABELS[w]);
+      if (selectedLabels.length === 0) return false;
+      return !selectedLabels.includes(item.category);
+    }
+
+    // The checkbox IS the real Personal Context override — checked/
+    // unchecked writes through applyImportanceOverride() exactly like
+    // Detected Apps' Important/Background buttons (same function, same
+    // storage), so ticking a box here genuinely changes what counts
+    // toward Confidence/Suitability for a real catalog-matched app. Manual/
+    // Suggested/Planned items get the same mechanism for consistency, even
+    // though they're outside classifyPopulation()'s population today and
+    // so have no score effect yet.
+    function computeIncluded(decision, needsVerification) {
+      if (decision && decision.critical_to_me) return true;
+      if (decision && decision.decision === 'doesnt_matter') return false;
+      return !needsVerification;
+    }
+
     function combinedApplicationItems() {
       const items = [];
       const seen = new Set();
-      function addItem(name, source, tier) {
+      const ctx = currentAdaptiveContext();
+      currentPersonalContext = loadPersonalContext(sessionId, params);
+      function addItem(name, source, extra) {
         const norm = normalizeAppName(name);
         if (!norm || seen.has(norm)) return;
         seen.add(norm);
-        items.push({ name, source, tier: tier || null, category: categorizeAppName(name) });
+        const rawRef = (extra && extra.rawRef) || { name, id: null };
+        const key = decisionKey(rawRef);
+        const decision = currentPersonalContext.get(key);
+        const needsVerification = appNeedsVerification({ source, category: categorizeAppName(name) }, ctx) && !decision;
+        items.push(Object.assign({
+          name, source, key, rawRef,
+          tier: null, effectiveBucket: null,
+          category: categorizeAppName(name),
+          needsVerification,
+          included: computeIncluded(decision, needsVerification),
+        }, extra || {}));
       }
       if (currentResults) {
-        currentPersonalContext = loadPersonalContext(sessionId, params);
-        classifyPopulation(currentResults, currentPersonalContext).forEach(({ app, decision }) => {
-          addItem(app.name, 'detected', appImportanceTier(app, decision));
+        classifyPopulation(currentResults, currentPersonalContext).forEach(({ app, decision, effectiveBucket }) => {
+          addItem(app.name, 'detected', { tier: appImportanceTier(app, decision), effectiveBucket, rawRef: app });
         });
       }
-      const ctx = currentAdaptiveContext();
       (ctx.intended_use || []).forEach((use) => {
         (SUGGESTED_APPS_BY_USE_CASE[use] || []).forEach((name) => addItem(name, 'suggested'));
       });
@@ -2218,17 +2441,47 @@
       </div>`;
     }
 
-    function categorizedSectionsHtml(items, categories) {
+    // Applications-specific row: a checkbox (real inclusion state — see
+    // computeIncluded()/applyImportanceOverride()), a Detected/Not Detected
+    // fact, and — restored per explicit instruction — compatibility as one
+    // more property alongside importance and evidence, not a separate page.
+    // "Please verify" is a note, not a badge: a sentence explaining exactly
+    // why this item defaulted to unchecked, so the user can agree or
+    // correct it in one click rather than guessing what a status means.
+    function applicationItemRowHtml(item) {
+      const compatHtml = item.effectiveBucket
+        ? `<div class="item-compat">${COMPAT_BUCKET_LABELS[item.effectiveBucket] || item.effectiveBucket}</div>`
+        : `<div class="item-compat muted">Not yet assessed</div>`;
+      const verifyNote = item.needsVerification
+        ? `<div class="item-verify-note">Please verify — detected, but <strong>${escapeHtml(item.category)}</strong> isn't currently part of your selected workloads.</div>`
+        : '';
+      return `<div class="item-row app-item-row${item.needsVerification ? ' needs-verification' : ''}">
+        <label class="item-row-checkbox">
+          <input type="checkbox" data-key="${escapeHtml(item.key)}"${item.included ? ' checked' : ''}>
+        </label>
+        <div class="item-row-body">
+          <div class="item-row-top">
+            <span class="item-row-name">${escapeHtml(item.name)}</span>
+            <span class="source-tag ${item.source === 'detected' ? 'detected' : 'not-detected'}">${item.source === 'detected' ? 'Detected' : 'Not Detected'}</span>
+          </div>
+          ${compatHtml}
+          ${verifyNote}
+        </div>
+      </div>`;
+    }
+
+    function categorizedSectionsHtml(items, categories, rowFn) {
+      const renderRow = rowFn || assessmentItemRowHtml;
       const groups = {};
       categories.forEach((c) => { groups[c] = []; });
       const other = [];
       items.forEach((item) => (groups[item.category] || other).push(item));
       const known = categories.map((cat) => {
         if (!groups[cat].length) return '';
-        return `<div class="category-section"><div class="category-heading">${escapeHtml(cat)}<span class="category-heading-count">${groups[cat].length}</span></div><div class="item-list">${groups[cat].map(assessmentItemRowHtml).join('')}</div></div>`;
+        return `<div class="category-section"><div class="category-heading">${escapeHtml(cat)}<span class="category-heading-count">${groups[cat].length}</span></div><div class="item-list">${groups[cat].map(renderRow).join('')}</div></div>`;
       }).join('');
       const otherHtml = other.length
-        ? `<div class="category-section"><div class="category-heading">Other<span class="category-heading-count">${other.length}</span></div><div class="item-list">${other.map(assessmentItemRowHtml).join('')}</div></div>`
+        ? `<div class="category-section"><div class="category-heading">Other<span class="category-heading-count">${other.length}</span></div><div class="item-list">${other.map(renderRow).join('')}</div></div>`
         : '';
       return known + otherHtml;
     }
@@ -2258,9 +2511,22 @@
       function refreshResults() {
         const q = document.getElementById('app-search-input').value.trim().toLowerCase();
         const items = combinedApplicationItems();
+        const byKey = new Map(items.map((i) => [i.key, i]));
         const filtered = q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items;
-        const html = categorizedSectionsHtml(filtered, APP_CATEGORIES);
-        document.getElementById('app-results').innerHTML = html || '<p class="workspace-empty">No matches — try a different search, or add it yourself below.</p>';
+        const html = categorizedSectionsHtml(filtered, APP_CATEGORIES, applicationItemRowHtml);
+        const results = document.getElementById('app-results');
+        results.innerHTML = html || '<p class="workspace-empty">No matches — try a different search, or add it yourself below.</p>';
+        results.querySelectorAll('input[type="checkbox"][data-key]').forEach((cb) => {
+          cb.addEventListener('change', () => {
+            // applyImportanceOverride() already re-renders the active tab
+            // (renderDetailsWorkspace()) and the dashboard — no separate
+            // refreshResults() call needed here, that would just re-render
+            // a container the fresh renderApplicationsTab() call already
+            // replaced.
+            const item = byKey.get(cb.dataset.key);
+            if (item) applyImportanceOverride(item.rawRef, false, cb.checked ? 'important' : 'background');
+          });
+        });
       }
       refreshResults();
       document.getElementById('app-search-input').addEventListener('input', refreshResults);
@@ -2488,7 +2754,7 @@
         return `A one-word answer isn't quite enough for even an early read — adding ${missing} would complete the
           picture.`;
       }
-      return `There's no evidence yet to read from. Add evidence from Current Computer or Intended Use to get
+      return `There's no evidence yet to read from. Add evidence from Scanner or Use Case to get
         started.`;
     }
 
@@ -2514,7 +2780,7 @@
     // Explanatory text moved entirely to title="" tooltips (task 6) so the
     // panel itself stays a short, generated-feeling list of labels.
     const WHAT_NEXT_PRIMARY_LABEL = {
-      'questions': 'Add Intended Use',
+      'questions': 'Add Use Case',
       'start': 'Add More Detail',
       'scan': 'Run a Scan',
       'optional-scan': 'Run a Scan (Optional)',
@@ -2913,11 +3179,15 @@
       const findingsStatus = findings.presence === 'absent' ? 'Not applicable yet'
         : findingsNeedsAttention ? 'Some require attention' : 'None';
 
+      // Labels realigned to the five questions this whole surface answers
+      // (Scanner: what exists? / Use Case: what are you trying to
+      // accomplish? / Community / Please Verify: what doesn't quite add
+      // up? — the same language Applications' own verify-note now uses).
       const rows = [
-        evidenceMeterRow('Current Computer', scanStatus, evidenceMeterPct(scan), '#3b82f6'),
-        evidenceMeterRow('Intended Use', intendedUseStatus, evidenceMeterPct(workload, relationship), '#3b82f6'),
+        evidenceMeterRow('Scanner', scanStatus, evidenceMeterPct(scan), '#3b82f6'),
+        evidenceMeterRow('Use Case', intendedUseStatus, evidenceMeterPct(workload, relationship), '#3b82f6'),
         evidenceMeterRow('Community', communityStatus, evidenceMeterPct(community), '#64748b'),
-        evidenceMeterRow('Findings', findingsStatus, evidenceMeterPct(findings), findingsNeedsAttention ? '#f59e0b' : '#10b981'),
+        evidenceMeterRow('Please Verify', findingsStatus, evidenceMeterPct(findings), findingsNeedsAttention ? '#f59e0b' : '#10b981'),
       ];
       return `<ul class="evidence-summary-list">${rows.join('')}</ul>`;
     }
@@ -2943,7 +3213,7 @@
         whyBody.innerHTML = `<p>${escapeHtml(contextualReadFor(ctx).explanation)}</p>`;
       } else {
         whyBody.innerHTML = `<p>There's not enough evidence yet to explain a recommendation. Add evidence from
-          Current Computer or Intended Use — even one is enough for an early read.</p>`;
+          Scanner or Use Case — even one is enough for an early read.</p>`;
       }
 
       if (state === ASSESSMENT_STATE_SCAN_BACKED && currentResults) {
@@ -2976,13 +3246,13 @@
             <div class="helper-stat"><div class="helper-stat-count">${appTotal}</div><div class="helper-stat-label">Apps</div></div>
             <div class="helper-stat"><div class="helper-stat-count">${deviceTotal}</div><div class="helper-stat-label">Devices</div></div>
           </div>
-          <p>This assessment is based on a ${escapeHtml(scanLevelParam)} scan${hasAdaptiveContext(ctx) ? ' plus your Intended Use answers' : ''}.</p>
+          <p>This assessment is based on a ${escapeHtml(scanLevelParam)} scan${hasAdaptiveContext(ctx) ? ' plus your Use Case answers' : ''}.</p>
           <div class="helper-links">
             <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
             <a href="/how-it-thinks.html">How CheckMyARM Thinks →</a>
           </div>`;
       } else {
-        moreInfoBody.innerHTML = `<p>No summary yet — this fills in once you scan or add Intended Use. The
+        moreInfoBody.innerHTML = `<p>No summary yet — this fills in once you scan or add Use Case. The
           Evidence panel above already reflects what's known so far.</p>
           <div class="helper-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>`;
       }
