@@ -62,7 +62,7 @@
     .dashboard {
       max-width: 1040px;
       margin: 0 auto 1.5rem auto;
-      padding: 0.9rem 1.1rem;
+      padding: 0.8rem 1rem;
       background: #1e293b;
       border: 1px solid #334155;
       border-radius: 14px;
@@ -86,7 +86,7 @@
       background: #0f172a;
       border: 1px solid #334155;
       border-radius: 10px;
-      padding: 0.55rem 0.7rem;
+      padding: 0.5rem 0.65rem;
     }
 
     /* LEFT — What Next?, moved here from the right — see CLAUDE.md,
@@ -95,8 +95,11 @@
        "what should I do" -> "what effect did that have" -> "what
        recommendation have we earned" (What Next -> Instrument Cluster ->
        Suitability), so DOM order changed to match, not just visual order. */
+    /* Narrowed a touch (visual-refinement pass) — the recovered share
+       went to .panel-instrument-cluster below, mainly to give the
+       Confidence gauge more room to grow. */
     .panel-whatnext {
-      flex: 1 1 0;
+      flex: 0.82 1 0;
       min-width: 0;
       display: flex;
       flex-direction: column;
@@ -109,7 +112,7 @@
        visual focus. A slightly brighter border marks it as the focal
        panel without introducing a new color language. */
     .panel-instrument-cluster {
-      flex: 1.7 1 0;
+      flex: 1.9 1 0;
       min-width: 0;
       display: flex;
       flex-direction: row;
@@ -157,18 +160,22 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 108px;
-      height: 148px;
+      width: 128px;
+      height: 158px;
       justify-content: flex-start;
     }
 
     /* A permanently-sized box for the gauge SVG — the SVG itself always
-       renders at the same pixel size (78x61 — see the GAUGE_* constants in
-       the script below) regardless of the value/color passed to it. */
+       renders at the same pixel size (92x72 — see the GAUGE_* constants in
+       the script below) regardless of the value/color passed to it.
+       Enlarged this pass (visual-refinement: "use the recovered space to
+       enlarge the Confidence gauge") — CSS dimensions here are kept in
+       sync by hand with the JS GAUGE_* constants, since there's no shared
+       source between a compile-time CSS value and a runtime JS one. */
     .gauge-svg-wrap {
       position: relative;
-      width: 78px;
-      height: 61px;
+      width: 92px;
+      height: 72px;
     }
 
     .gauge-svg-wrap svg {
@@ -192,7 +199,7 @@
       font-weight: 700;
       color: #e2e8f0;
       text-align: center;
-      max-width: 108px;
+      max-width: 124px;
       line-height: 1.15;
     }
 
@@ -617,30 +624,41 @@
     }
 
     /* Segmented LED-style meter — replaces the old continuous fill bar
-       (see CLAUDE.md, Dashboard Instrument Cluster prototype). Always
-       renders its full fixed range; unlit segments read as dim outline
-       ("this part of the assessment still contains uncertainty"), lit
-       segments take a color keyed to overall completeness (red -> orange
-       -> yellow -> green), never to whether the underlying value is
-       "good" or "bad" — these meters answer "how much do we know," not
-       "is that a good result." See evidenceLedSegments()/ledColorForPct(). */
+       (see CLAUDE.md, Dashboard Instrument Cluster prototype).
+       Real-instrument LED behavior, per visual-refinement pass: every
+       segment ALWAYS carries its assigned color (a fixed red -> orange ->
+       yellow -> green gradient by POSITION, identical on every row — see
+       the :nth-child rules below) — the color never changes. What changes
+       is only whether that LED is powered on (full brightness) or powered
+       down (dim, via opacity alone so the hue stays visibly red/orange/
+       yellow/green rather than reading as gray). Completeness is
+       expressed by HOW MANY of the fixed-position LEDs are lit, not by
+       which color is chosen — a cleaner read of "how much do we know"
+       than the row-level single-color version this replaced. See
+       evidenceLedSegments() in the script below. */
     .evidence-led-row {
       display: flex;
       gap: 2px;
-      margin-top: 0.18rem;
+      margin-top: 0.2rem;
     }
 
     .evidence-led {
       flex: 1 1 0;
-      height: 7px;
+      height: 8px;
       border-radius: 1px;
-      background: #1e293b;
-      border: 1px solid #263449;
-      transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+      opacity: 0.32;
+      transition: opacity 0.4s ease, box-shadow 0.4s ease;
     }
 
+    .evidence-led:nth-child(1), .evidence-led:nth-child(2) { --led-color: #ef4444; }
+    .evidence-led:nth-child(3), .evidence-led:nth-child(4) { --led-color: #f97316; }
+    .evidence-led:nth-child(5), .evidence-led:nth-child(6) { --led-color: #eab308; }
+    .evidence-led:nth-child(7), .evidence-led:nth-child(8) { --led-color: #10b981; }
+    .evidence-led { background: var(--led-color); }
+
     .evidence-led.lit {
-      border-color: transparent;
+      opacity: 1;
+      box-shadow: 0 0 4px var(--led-color);
     }
 
     /* "Newly earned evidence segments briefly brighten before settling" —
@@ -666,12 +684,17 @@
        the 4 real recommendation tiers recommendationFor() already returns
        (Poor Fit / Proceed with Caution / Probably a Good Fit / Good Fit —
        deliberately the SAME labels used on Results/Workspace, not a
-       second, renamed vocabulary). Three visual states per segment:
-       locked (outline only — this range hasn't been earned by evidence
-       yet), unlocked (dim — "we're willing to evaluate this range," driven
-       by Confidence), lit (full tier color — the actual recommendation,
-       capped at whatever's unlocked). See CLAUDE.md, Dashboard Instrument
-       Cluster prototype, and renderSuitabilityLeds() in the script below.
+       second, renamed vocabulary). Three visual states per segment, same
+       "the LED color never changes, only its brightness does" language as
+       the evidence meters above: locked (that tier's color, barely lit —
+       this range hasn't been earned by evidence yet), unlocked (that
+       tier's color, dim but clearly its hue — "we're willing to evaluate
+       this range," driven by Confidence), lit (that tier's color at full
+       brightness plus a glow — the actual recommendation, capped at
+       whatever's unlocked). Each tier group sets its own --tier-color
+       once; every segment inside just toggles opacity. See CLAUDE.md,
+       Dashboard Instrument Cluster prototype, and renderSuitabilityLeds()
+       in the script below.
        ═══════════════════════════════════════════════════════════════════ */
     .suitability-body {
       display: flex;
@@ -682,7 +705,7 @@
 
     .suitability-led-column {
       width: 58px;
-      height: 176px;
+      height: 158px;
       display: flex;
       flex-direction: column-reverse;
       gap: 5px;
@@ -697,7 +720,8 @@
        outer column's own column-reverse then places tier 0 (Poor Fit) at
        the bottom and the highest tier at the top. Grouping (rather than
        one flat 12-segment stack) is what gives clean gaps between tiers
-       without fighting margin direction inside a reversed flex column. */
+       without fighting margin direction inside a reversed flex column;
+       it's also where --tier-color is set once for all 3 of its segments. */
     .suitability-tier-group {
       flex: 1 1 0;
       display: flex;
@@ -709,29 +733,29 @@
     .suitability-segment {
       flex: 1 1 0;
       border-radius: 2px;
-      background: transparent;
-      border: 1px dashed #1e293b;
-      transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+      background: var(--tier-color);
+      opacity: 0.26;
+      transition: opacity 0.5s ease, box-shadow 0.5s ease;
     }
 
     .suitability-segment.unlocked {
-      background: rgba(148, 163, 184, 0.16);
-      border: 1px solid #334155;
+      opacity: 0.52;
     }
 
     .suitability-segment.lit {
-      border: 1px solid transparent;
+      opacity: 1;
+      box-shadow: 0 0 6px var(--tier-color);
     }
 
     /* A newly unlocked (still-dim) segment softly "powers on" rather than
-       simply appearing. */
+       simply appearing — settles to the same opacity .unlocked rests at. */
     .suitability-segment.power-on {
       animation: led-power-on 0.8s ease-out;
     }
 
     @keyframes led-power-on {
-      0% { background: rgba(148, 163, 184, 0.55); }
-      100% { background: rgba(148, 163, 184, 0.16); }
+      0% { opacity: 0.9; }
+      100% { opacity: 0.52; }
     }
 
     /* A newly illuminated (recommendation) segment flares brighter than
@@ -749,7 +773,7 @@
     .suitability-tier-labels {
       display: flex;
       flex-direction: column-reverse;
-      height: 176px;
+      height: 158px;
       width: 84px;
       font-size: 0.56rem;
       font-weight: 600;
@@ -1615,7 +1639,6 @@
         <div class="gauge-label-area">
           <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
         </div>
-        <div class="gauge-value-area" id="gauge-rec-value"></div>
         <div class="gauge-label-sub" id="gauge-rec-sub"></div>
       </div>
     </div>
@@ -2766,7 +2789,11 @@
     // <path> arc command specifically to avoid that command's large-arc/
     // sweep-flag ambiguity for a >180deg sweep — this is more verbose but
     // unambiguous and easy to verify by inspection.
-    const GAUGE_R = 34, GAUGE_STROKE = 8, GAUGE_PAD = 5;
+    // R/STROKE/PAD enlarged this pass (visual-refinement: "use the
+    // recovered space to enlarge the Confidence gauge" — see .gauge-block/
+    // .gauge-svg-wrap above, kept in sync by hand since CSS can't read
+    // these JS constants). 34/8/5 -> 40/9/6 yields a 92x72 SVG (was 78x61).
+    const GAUGE_R = 40, GAUGE_STROKE = 9, GAUGE_PAD = 6;
     const GAUGE_START_ANGLE = 150, GAUGE_SWEEP = 240; // degrees; 150->390(=30) sweeps through the top (270)
     const GAUGE_WIDTH = GAUGE_R * 2 + GAUGE_PAD * 2;
     const GAUGE_CY = GAUGE_R + GAUGE_PAD;
@@ -2898,21 +2925,25 @@
     // needle's rotation, which does — see gaugeStaticSvg() above).
     let lastSuitabilityUnlocked = 0;
     let lastSuitabilityIlluminated = 0;
+    // Each tier group sets --tier-color ONCE (a CSS custom property) —
+    // every segment inside just inherits it via `background: var(--tier-
+    // color)` and toggles opacity/box-shadow by state class. Real-
+    // instrument LED behavior (visual-refinement pass): the color is fixed
+    // per tier and never changes; locked/unlocked/lit only ever change how
+    // brightly that same color shows.
     function renderSuitabilityLeds(unlockedCount, illuminatedCount) {
       const col = document.getElementById('suitability-led-column');
       col.innerHTML = '';
       for (let t = 0; t < SUITABILITY_TIERS.length; t++) {
         const group = document.createElement('div');
         group.className = 'suitability-tier-group';
-        const tierColor = SUITABILITY_TIER_COLORS[SUITABILITY_TIERS[t]];
+        group.style.setProperty('--tier-color', SUITABILITY_TIER_COLORS[SUITABILITY_TIERS[t]]);
         for (let local = 0; local < SUITABILITY_SEGMENTS_PER_TIER; local++) {
           const i = t * SUITABILITY_SEGMENTS_PER_TIER + local;
           const seg = document.createElement('div');
           seg.className = 'suitability-segment';
           if (i < illuminatedCount) {
             seg.classList.add('lit');
-            seg.style.background = tierColor;
-            seg.style.boxShadow = `0 0 6px ${tierColor}99`;
             if (i >= lastSuitabilityIlluminated) seg.classList.add('flash-on');
           } else if (i < unlockedCount) {
             seg.classList.add('unlocked');
@@ -3265,23 +3296,15 @@
       // zero — only the dim "unlocked" range can move before the gate
       // opens.
       const eligible = isSuitabilityEligible(state, evidenceSources);
-      let recColor, recLabel, recSub, recValue, recTierIndex;
-      recValue = '';
+      let recColor, recLabel, recSub, recTierIndex;
       recTierIndex = null;
       if (eligible && state === ASSESSMENT_STATE_SCAN_BACKED) {
         const rec = recommendationFor(synthesis);
         recColor = rec.color; recLabel = rec.label; recSub = '';
-        // The exact same synthesis.score already computed for Results/
-        // Workspace (never a second score) — clamped only for display.
-        recValue = String(Math.round(Math.max(0, Math.min(100, synthesis.score))));
         recTierIndex = suitabilityTierIndex(rec.label);
       } else if (eligible && state === ASSESSMENT_STATE_CONTEXTUAL) {
         const read = contextualReadFor(ctx);
         recColor = '#2dd4bf'; recLabel = read.label; recSub = 'Early Read';
-        // No continuous number exists for a contextual read (no scan, no
-        // score) — leaving the value line empty here is deliberate, not an
-        // oversight: inventing one would be exactly the "pretend to know
-        // more than it does" this pass's design philosophy rules out.
         recTierIndex = read.verdict === 'positive' ? suitabilityTierIndex('Probably a Good Fit') : suitabilityTierIndex('Proceed with Caution');
       } else if (state === ASSESSMENT_STATE_NO_READ) {
         recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recSub = '';
@@ -3295,7 +3318,11 @@
       renderSuitabilityLeds(suitabilityUnlocked, suitabilityIlluminated);
       document.getElementById('gauge-rec-label').textContent = recLabel;
       document.getElementById('gauge-rec-label').style.color = eligible ? recColor : '#94a3b8';
-      document.getElementById('gauge-rec-value').textContent = recValue;
+      // Numeric score line beneath the recommendation removed this pass
+      // (visual-refinement: "remove the numeric Suitability score beneath
+      // the recommendation") — synthesis.score itself is untouched and
+      // still drives everything else (illuminated segment count, Results/
+      // Workspace); this only stops ALSO printing it as text here.
       const recSubEl = document.getElementById('gauge-rec-sub');
       if (!eligible && state !== ASSESSMENT_STATE_NO_READ) {
         // "Need More Evidence" — offer the Why? affordance in the same
@@ -3370,24 +3397,17 @@
       // implying a percentage that doesn't exist.
       return evidenceEntries.some((e) => e.presence === 'present') ? 100 : 0;
     }
-    // Segmented LED meters — "the colors indicate assessment completeness.
-    // They do not indicate whether the result is good or bad." Per the
-    // Dashboard Instrument Cluster prototype, a row's lit segments now take
-    // ONE color derived purely from how complete that dimension is (red ->
-    // orange -> yellow -> green), replacing the old fixed per-source colors
-    // (Scanner/Use Case were always blue, Community always gray, Please
-    // Verify amber-when-needing-attention/green-otherwise) — a deliberate,
-    // explicit behavior change this pass, not an oversight. The urgency
-    // information Please Verify's old amber color used to carry hasn't
-    // been lost — its status TEXT still says "Some require attention" —
-    // it's just no longer encoded redundantly as color too, since color
-    // here now means one thing consistently across all four rows.
-    function ledColorForPct(pct) {
-      if (pct < 25) return '#ef4444';
-      if (pct < 50) return '#f97316';
-      if (pct < 75) return '#eab308';
-      return '#10b981';
-    }
+    // Segmented LED meters — real-instrument LED behavior (visual-
+    // refinement pass, see CLAUDE.md): every segment carries a FIXED color
+    // by position (red -> orange -> yellow -> green across the 8 slots,
+    // identical on every row — see the :nth-child rules on .evidence-led
+    // in the stylesheet). The color assignment never changes; only
+    // brightness does (plain unlit vs. `.lit`, driven by CSS opacity) —
+    // "the LED itself never changes color, it simply turns on or off."
+    // Completeness is expressed by HOW MANY of the fixed-position LEDs are
+    // lit, which is what actually varies per source's own percentage —
+    // replacing an earlier version of this meter that picked one color for
+    // the whole row based on completeness (ledColorForPct(), removed).
     const EVIDENCE_LED_SEGMENTS = 8;
     // Tracked per row (by key) across renders so only the segments that
     // just newly lit get the "brighten before settling" flash — see
@@ -3398,15 +3418,12 @@
     function evidenceLedSegments(key, pct) {
       const clamped = Math.max(0, Math.min(100, pct));
       const lit = Math.round((clamped / 100) * EVIDENCE_LED_SEGMENTS);
-      const color = ledColorForPct(clamped);
       const prevLit = lastEvidenceLit[key] || 0;
       let html = '';
       for (let i = 0; i < EVIDENCE_LED_SEGMENTS; i++) {
         const isLit = i < lit;
         const isNew = isLit && i >= prevLit;
-        html += `<span class="evidence-led${isLit ? ' lit' : ''}${isNew ? ' flash-on' : ''}"`
-          + (isLit ? ` style="background:${color}; box-shadow:0 0 4px ${color}99;"` : '')
-          + `></span>`;
+        html += `<span class="evidence-led${isLit ? ' lit' : ''}${isNew ? ' flash-on' : ''}"></span>`;
       }
       lastEvidenceLit[key] = lit;
       return html;
