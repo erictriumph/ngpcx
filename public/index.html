@@ -89,21 +89,12 @@
       padding: 0.55rem 0.7rem;
     }
 
-    .panel-conclusions {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.85rem;
-    }
-
-    .panel-evidence {
-      flex: 1.3 1 0;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
+    /* LEFT — What Next?, moved here from the right — see CLAUDE.md,
+       Dashboard Instrument Cluster prototype. This is now deliberately the
+       first thing a returning user sees: the desired reading order is
+       "what should I do" -> "what effect did that have" -> "what
+       recommendation have we earned" (What Next -> Instrument Cluster ->
+       Suitability), so DOM order changed to match, not just visual order. */
     .panel-whatnext {
       flex: 1 1 0;
       min-width: 0;
@@ -111,6 +102,45 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+    }
+
+    /* CENTER — Instrument Cluster: the Confidence gauge and Evidence
+       meters side by side (horizontal, not stacked), the dashboard's
+       visual focus. A slightly brighter border marks it as the focal
+       panel without introducing a new color language. */
+    .panel-instrument-cluster {
+      flex: 1.7 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.9rem;
+      padding: 0.65rem 0.85rem;
+      border-color: #3b4a63;
+    }
+
+    .panel-evidence {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* RIGHT — Suitability: a fixed-width column housing the vertical LED
+       instrument (see .suitability-* rules further down). */
+    .panel-suitability {
+      flex: 0 0 auto;
+      width: 152px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+    }
+
+    .panel-suitability.pulse {
+      animation: gauge-pulse 0.7s ease-out;
+      border-radius: 10px;
     }
 
     /* Fixed-dimension gauge block — the housing itself never resizes or
@@ -586,37 +616,151 @@
       margin-bottom: 0.12rem;
     }
 
-    /* Thinner this pass (6px → 4px) — still a level-meter, not a hairline,
-       just proportioned to sit comfortably beside the smaller type above
-       it rather than reading as heavier than the row's own text. */
-    .evidence-meter-track {
-      position: relative;
-      height: 4px;
-      border-radius: 2px;
+    /* Segmented LED-style meter — replaces the old continuous fill bar
+       (see CLAUDE.md, Dashboard Instrument Cluster prototype). Always
+       renders its full fixed range; unlit segments read as dim outline
+       ("this part of the assessment still contains uncertainty"), lit
+       segments take a color keyed to overall completeness (red -> orange
+       -> yellow -> green), never to whether the underlying value is
+       "good" or "bad" — these meters answer "how much do we know," not
+       "is that a good result." See evidenceLedSegments()/ledColorForPct(). */
+    .evidence-led-row {
+      display: flex;
+      gap: 2px;
+      margin-top: 0.18rem;
+    }
+
+    .evidence-led {
+      flex: 1 1 0;
+      height: 7px;
+      border-radius: 1px;
       background: #1e293b;
-      overflow: visible;
+      border: 1px solid #263449;
+      transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
     }
 
-    .evidence-meter-fill {
-      height: 100%;
+    .evidence-led.lit {
+      border-color: transparent;
+    }
+
+    /* "Newly earned evidence segments briefly brighten before settling" —
+       plays once on insertion (a fresh DOM node needs no prior state to
+       transition from), gated by comparing this render's lit count against
+       the previous one — see lastEvidenceLit in the script below. */
+    .evidence-led.flash-on {
+      animation: led-flash-on 0.9s ease-out;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .evidence-led.flash-on { animation: none; }
+    }
+
+    @keyframes led-flash-on {
+      0% { filter: brightness(2); }
+      100% { filter: brightness(1); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SUITABILITY — a vertical segmented instrument, replacing the old
+       round recommendation dial. Segments illuminate bottom-to-top across
+       the 4 real recommendation tiers recommendationFor() already returns
+       (Poor Fit / Proceed with Caution / Probably a Good Fit / Good Fit —
+       deliberately the SAME labels used on Results/Workspace, not a
+       second, renamed vocabulary). Three visual states per segment:
+       locked (outline only — this range hasn't been earned by evidence
+       yet), unlocked (dim — "we're willing to evaluate this range," driven
+       by Confidence), lit (full tier color — the actual recommendation,
+       capped at whatever's unlocked). See CLAUDE.md, Dashboard Instrument
+       Cluster prototype, and renderSuitabilityLeds() in the script below.
+       ═══════════════════════════════════════════════════════════════════ */
+    .suitability-body {
+      display: flex;
+      flex-direction: row;
+      gap: 0.45rem;
+      align-items: stretch;
+    }
+
+    .suitability-led-column {
+      width: 58px;
+      height: 176px;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 5px;
+      padding: 6px;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      background: #0f172a;
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.35);
+    }
+
+    /* One group per recommendation tier, appended lowest-tier-first — the
+       outer column's own column-reverse then places tier 0 (Poor Fit) at
+       the bottom and the highest tier at the top. Grouping (rather than
+       one flat 12-segment stack) is what gives clean gaps between tiers
+       without fighting margin direction inside a reversed flex column. */
+    .suitability-tier-group {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 3px;
+      min-height: 0;
+    }
+
+    .suitability-segment {
+      flex: 1 1 0;
       border-radius: 2px;
-      background: #3b82f6;
-      transition: width 0.4s ease;
+      background: transparent;
+      border: 1px dashed #1e293b;
+      transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
     }
 
-    /* Subtle reference lines — "roughly enough to matter" and "a strong
-       contribution" — NOT literal thresholds this source must clear (nor
-       the same numbers as the aggregate Confidence tiers elsewhere on this
-       page, which operate on a different, combined scale); illustrative
-       markers in the same spirit, scoped to a single source's own 0-100
-       fill. Absolutely positioned inside the track, drawn over the fill so
-       they stay visible at any fill level. */
-    .evidence-meter-marker {
-      position: absolute;
-      top: -1px;
-      bottom: -1px;
-      width: 1px;
-      background: rgba(148, 163, 184, 0.4);
+    .suitability-segment.unlocked {
+      background: rgba(148, 163, 184, 0.16);
+      border: 1px solid #334155;
+    }
+
+    .suitability-segment.lit {
+      border: 1px solid transparent;
+    }
+
+    /* A newly unlocked (still-dim) segment softly "powers on" rather than
+       simply appearing. */
+    .suitability-segment.power-on {
+      animation: led-power-on 0.8s ease-out;
+    }
+
+    @keyframes led-power-on {
+      0% { background: rgba(148, 163, 184, 0.55); }
+      100% { background: rgba(148, 163, 184, 0.16); }
+    }
+
+    /* A newly illuminated (recommendation) segment flares brighter than
+       its resting glow before settling — "recommendation changes animate
+       smoothly." Reuses the same flash keyframe the evidence LEDs use. */
+    .suitability-segment.flash-on {
+      animation: led-flash-on 0.9s ease-out;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .suitability-segment.power-on,
+      .suitability-segment.flash-on { animation: none; }
+    }
+
+    .suitability-tier-labels {
+      display: flex;
+      flex-direction: column-reverse;
+      height: 176px;
+      width: 84px;
+      font-size: 0.56rem;
+      font-weight: 600;
+      color: #64748b;
+      line-height: 1.15;
+    }
+
+    .suitability-tier-labels div {
+      flex: 1 1 0;
+      display: flex;
+      align-items: center;
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -1429,17 +1573,17 @@
   <!-- LAYER 1: ASSESSMENT DASHBOARD -->
   <div class="dashboard" id="dashboard">
     <div class="dashboard-panels">
-      <!-- LEFT: Conclusions -->
-      <div class="panel panel-conclusions">
-        <div class="gauge-block" id="gauge-recommendation">
-          <div class="gauge-eyebrow">ARM Suitability</div>
-          <div class="gauge-svg-wrap" id="gauge-rec-svg-wrap"></div>
-          <div class="gauge-label-area">
-            <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
-          </div>
-          <div class="gauge-value-area" id="gauge-rec-value"></div>
-          <div class="gauge-label-sub" id="gauge-rec-sub"></div>
-        </div>
+      <!-- LEFT: What Next? — a ranked recommendation queue, not a paragraph with buttons.
+           Moved here from the right: "what should I do" is now the first thing a
+           returning user sees. Renders 4 fixed slots: up to 3 ranked recommendations,
+           then a permanent Scanner utility row — see renderWhatNextPanel(). -->
+      <div class="panel panel-whatnext" id="what-next-display">
+        <div class="display-eyebrow"><span class="display-dot"></span>What Next?</div>
+        <div class="whatnext-queue" id="whatnext-queue"></div>
+      </div>
+      <!-- CENTER: Instrument Cluster — the dashboard's visual focus. Confidence
+           gauge on the left, Evidence meters to its right, laid out horizontally. -->
+      <div class="panel panel-instrument-cluster">
         <div class="gauge-block" id="gauge-confidence">
           <div class="gauge-eyebrow">Confidence</div>
           <div class="gauge-svg-wrap" id="gauge-conf-svg-wrap"></div>
@@ -1449,19 +1593,30 @@
           <div class="gauge-value-area" id="gauge-conf-value">0%</div>
           <div class="gauge-label-sub"></div>
         </div>
+        <div class="panel-evidence">
+          <div class="display-eyebrow"><span class="display-dot"></span>Evidence</div>
+          <div id="evidence-meters"></div>
+        </div>
       </div>
-      <!-- MIDDLE: Evidence / Signals — permanently visible, never behind a toggle.
-           Scanner moved out of here (prototype) — see .panel-whatnext's 4th slot. -->
-      <div class="panel panel-evidence">
-        <div class="display-eyebrow"><span class="display-dot"></span>Evidence</div>
-        <div id="evidence-meters"></div>
-      </div>
-      <!-- RIGHT: What Next? — a ranked recommendation queue, not a paragraph with buttons.
-           Renders 4 fixed slots: up to 3 ranked recommendations, then a permanent
-           Scanner utility row — see renderWhatNextPanel(). -->
-      <div class="panel panel-whatnext" id="what-next-display">
-        <div class="display-eyebrow"><span class="display-dot"></span>What Next?</div>
-        <div class="whatnext-queue" id="whatnext-queue"></div>
+      <!-- RIGHT: Suitability — a vertical segmented instrument. Segments illuminate
+           bottom-to-top; only the outline exists until evidence earns the right to
+           show a reading — see renderSuitabilityLeds() / isSuitabilityEligible(). -->
+      <div class="panel panel-suitability" id="gauge-recommendation">
+        <div class="gauge-eyebrow">ARM Suitability</div>
+        <div class="suitability-body">
+          <div class="suitability-led-column" id="suitability-led-column"></div>
+          <div class="suitability-tier-labels">
+            <div>Poor Fit</div>
+            <div>Proceed with Caution</div>
+            <div>Probably a Good Fit</div>
+            <div>Good Fit</div>
+          </div>
+        </div>
+        <div class="gauge-label-area">
+          <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
+        </div>
+        <div class="gauge-value-area" id="gauge-rec-value"></div>
+        <div class="gauge-label-sub" id="gauge-rec-sub"></div>
       </div>
     </div>
     <div class="dashboard-helpers">
@@ -2636,8 +2791,8 @@
     // Tick marks — 5 short radial hairlines at 0/25/50/75/100% of the
     // sweep, purely decorative (an instrument reads as an instrument
     // partly because it has hash marks, not because each one denotes a
-    // precise threshold). Same 5 positions double as the ARM Suitability
-    // gauge's discrete tier stops — see gaugeSvg()'s needlePercent.
+    // precise threshold). Confidence-only now — ARM Suitability moved to
+    // its own vertical LED instrument, see the SUITABILITY_* block below.
     const GAUGE_TICK_FRACTIONS = [0, 0.25, 0.5, 0.75, 1];
     function gaugeTicksSvg() {
       const inner = GAUGE_R - GAUGE_STROKE * 0.65;
@@ -2650,55 +2805,125 @@
       }).join('');
     }
 
-    // Needle — a simple radial pointer plus a small hub, at whatever
-    // percent position is meaningful for THIS gauge (see the two call
-    // sites in renderDashboard(): a genuine 0-100% position for Confidence,
-    // a discrete 5-tier stop position for ARM Suitability). Deliberately
-    // lightweight — two SVG primitives, no library.
-    function gaugeNeedleSvg(needlePercent) {
-      const clamped = Math.max(0, Math.min(100, needlePercent));
-      const angle = GAUGE_START_ANGLE + GAUGE_SWEEP * (clamped / 100);
-      const tip = gaugePoint(angle, GAUGE_R - GAUGE_STROKE * 0.55);
-      return `<line x1="${GAUGE_CX}" y1="${GAUGE_CY}" x2="${tip.x.toFixed(2)}" y2="${tip.y.toFixed(2)}" stroke="#f1f5f9" stroke-width="1.5" stroke-linecap="round"/>
-        <circle cx="${GAUGE_CX}" cy="${GAUGE_CY}" r="2.5" fill="#f1f5f9"/>`;
-    }
-
-    // fillPercent drives the colored arc (categorical gauges pass 100 for
-    // a full status-color ring — see CLAUDE.md); needlePercent (defaults to
-    // fillPercent) drives the pointer position independently, since a
-    // categorical reading's "fill" and its "position" are different ideas.
-    // glyph (optional) replaces the needle with a centered character — used
-    // for the "Recommendation Eligible" gate's inactive state (a "?"),
-    // where showing a needle pointed anywhere would imply a reading that
-    // hasn't actually been earned yet. When glyph is set, fill is forced to
-    // 0 regardless of fillPercent — an inactive gauge has an empty track.
-    function gaugeSvg(fillPercent, color, needlePercent, glyph) {
-      const clamped = glyph ? 0 : Math.max(0, Math.min(100, fillPercent));
-      const needleAt = needlePercent === undefined ? clamped : needlePercent;
+    // ─── CONFIDENCE GAUGE — persistent SVG, animated needle ────────────────
+    // Suitability no longer uses this round-dial machinery at all (see the
+    // vertical LED instrument below) — this block is now Confidence-only.
+    // To animate the needle smoothly (the brief's explicit ask), the SVG can
+    // no longer be thrown away and rebuilt via innerHTML on every render —
+    // a freshly-inserted element has no prior state for the browser to
+    // transition FROM. Instead the static parts (track, ticks, a needle
+    // <g> with a CSS transition already on it) are built exactly ONCE per
+    // page load; every later render only updates the fill arc (redrawn
+    // instantly — animating a variable-length polyline smoothly is a
+    // separate, harder problem this pass didn't take on, see the summary)
+    // and the needle group's `transform: rotate()`, which the browser DOES
+    // animate since that exact element already existed a moment ago at a
+    // different angle.
+    function gaugeStaticSvg() {
       const trackPts = gaugeArcPoints(GAUGE_START_ANGLE, GAUGE_SWEEP, 48);
+      const tip = gaugePoint(GAUGE_START_ANGLE, GAUGE_R - GAUGE_STROKE * 0.55);
+      return `<svg width="${GAUGE_WIDTH}" height="${GAUGE_HEIGHT}" viewBox="0 0 ${GAUGE_WIDTH} ${GAUGE_HEIGHT}">
+        <polyline points="${trackPts}" fill="none" stroke="#334155" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>
+        <g class="gauge-fill"></g>
+        ${gaugeTicksSvg()}
+        <g class="gauge-needle" style="transform-origin:${GAUGE_CX}px ${GAUGE_CY}px; transform:rotate(0deg); transition: transform 0.7s cubic-bezier(0.22,1,0.36,1);">
+          <line x1="${GAUGE_CX}" y1="${GAUGE_CY}" x2="${tip.x.toFixed(2)}" y2="${tip.y.toFixed(2)}" stroke="#f1f5f9" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="${GAUGE_CX}" cy="${GAUGE_CY}" r="2.5" fill="#f1f5f9"/>
+        </g>
+      </svg>`;
+    }
+    function ensureGaugeBuilt(wrapEl) {
+      if (!wrapEl.querySelector('svg')) wrapEl.innerHTML = gaugeStaticSvg();
+    }
+    function updateGaugeFill(wrapEl, fillPercent, color) {
+      const clamped = Math.max(0, Math.min(100, fillPercent));
       const fillSweep = GAUGE_SWEEP * (clamped / 100);
       const fillSegments = Math.max(1, Math.round(48 * (clamped / 100)));
       const fillPts = gaugeArcPoints(GAUGE_START_ANGLE, fillSweep, fillSegments);
-      return `<svg width="${GAUGE_WIDTH}" height="${GAUGE_HEIGHT}" viewBox="0 0 ${GAUGE_WIDTH} ${GAUGE_HEIGHT}">
-        <polyline points="${trackPts}" fill="none" stroke="#334155" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>
-        ${clamped > 0 ? `<polyline points="${fillPts}" fill="none" stroke="${color}" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
-        ${gaugeTicksSvg()}
-        ${glyph
-          ? `<text x="${GAUGE_CX}" y="${GAUGE_CY}" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="#475569">${escapeHtml(glyph)}</text>`
-          : gaugeNeedleSvg(needleAt)}
-      </svg>`;
+      const fillGroup = wrapEl.querySelector('.gauge-fill');
+      fillGroup.innerHTML = clamped > 0
+        ? `<polyline points="${fillPts}" fill="none" stroke="${color}" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>`
+        : '';
+    }
+    function updateGaugeNeedle(wrapEl, needlePercent) {
+      const clamped = Math.max(0, Math.min(100, needlePercent));
+      const rotateDeg = GAUGE_SWEEP * (clamped / 100);
+      wrapEl.querySelector('.gauge-needle').style.transform = `rotate(${rotateDeg}deg)`;
     }
 
-    // Discrete 5-tier stop positions for the ARM Suitability needle — the
-    // recommendation taxonomy is categorical (see recommendationFor()), so
-    // the needle points at one of 5 fixed tick positions rather than a
-    // continuous percent. This is presentation-only: it never feeds back
-    // into recommendationFor() or any scoring, and the color-fill logic
-    // (full ring per category color) is completely unchanged.
-    const RECOMMENDATION_TIER_ORDER = ['Too Early to Tell', 'Poor Fit', 'Proceed with Caution', 'Probably a Good Fit', 'Good Fit'];
-    function recommendationNeedlePercent(label) {
-      const idx = RECOMMENDATION_TIER_ORDER.indexOf(label);
-      return idx === -1 ? 0 : (idx / (RECOMMENDATION_TIER_ORDER.length - 1)) * 100;
+    // ─── SUITABILITY — vertical segmented instrument ────────────────────────
+    // The 4 real recommendation tiers recommendationFor() returns, in
+    // ascending order (deliberately the SAME labels shown on Results/
+    // Workspace — no second, renamed vocabulary). "Too Early to Tell" is
+    // not a tier here — it's the ineligible/no-read state, handled outside
+    // this array (see renderDashboard()'s eligible branch).
+    const SUITABILITY_TIERS = ['Poor Fit', 'Proceed with Caution', 'Probably a Good Fit', 'Good Fit'];
+    const SUITABILITY_TIER_COLORS = {
+      'Poor Fit': '#ef4444',
+      'Proceed with Caution': '#f59e0b',
+      'Probably a Good Fit': '#22c55e',
+      'Good Fit': '#10b981',
+    };
+    const SUITABILITY_TOTAL_SEGMENTS = 12;
+    const SUITABILITY_SEGMENTS_PER_TIER = SUITABILITY_TOTAL_SEGMENTS / SUITABILITY_TIERS.length;
+    function suitabilityTierIndex(label) {
+      const idx = SUITABILITY_TIERS.indexOf(label);
+      return idx === -1 ? 0 : idx;
+    }
+    // How far up the instrument evidence has earned the right to show ANY
+    // reading at all (dim, not yet a verdict) — driven by the exact same
+    // confPct the Confidence gauge itself displays, so the two instruments
+    // can never silently disagree about how much evidence exists. Zero
+    // evidence -> zero unlocked segments -> the instrument is "asleep"
+    // (outline only). The first sliver of real evidence (confPct > 0)
+    // always reveals at least one dim segment, per the brief's own
+    // "reveal the lowest dim segments" language.
+    function suitabilityUnlockedCount(confPct) {
+      if (confPct <= 0) return 0;
+      return Math.max(1, Math.min(SUITABILITY_TOTAL_SEGMENTS, Math.round((confPct / 100) * SUITABILITY_TOTAL_SEGMENTS)));
+    }
+    // How many segments actually illuminate with a real recommendation
+    // color — zero unless the Recommendation Eligible gate has opened
+    // (isSuitabilityEligible()), and never more than what's unlocked so
+    // far, even if the earned tier would imply more — "we only display
+    // recommendation ranges we have earned enough evidence to evaluate."
+    function suitabilityIlluminatedCount(eligible, tierIndex, unlockedCount) {
+      if (!eligible || tierIndex === null) return 0;
+      const earned = (tierIndex + 1) * SUITABILITY_SEGMENTS_PER_TIER;
+      return Math.min(earned, unlockedCount, SUITABILITY_TOTAL_SEGMENTS);
+    }
+    // Tracked across renders so newly unlocked/illuminated segments can
+    // play a brief one-shot animation on insertion — a fresh DOM node
+    // needs no prior state for a keyframe animation (unlike the Confidence
+    // needle's rotation, which does — see gaugeStaticSvg() above).
+    let lastSuitabilityUnlocked = 0;
+    let lastSuitabilityIlluminated = 0;
+    function renderSuitabilityLeds(unlockedCount, illuminatedCount) {
+      const col = document.getElementById('suitability-led-column');
+      col.innerHTML = '';
+      for (let t = 0; t < SUITABILITY_TIERS.length; t++) {
+        const group = document.createElement('div');
+        group.className = 'suitability-tier-group';
+        const tierColor = SUITABILITY_TIER_COLORS[SUITABILITY_TIERS[t]];
+        for (let local = 0; local < SUITABILITY_SEGMENTS_PER_TIER; local++) {
+          const i = t * SUITABILITY_SEGMENTS_PER_TIER + local;
+          const seg = document.createElement('div');
+          seg.className = 'suitability-segment';
+          if (i < illuminatedCount) {
+            seg.classList.add('lit');
+            seg.style.background = tierColor;
+            seg.style.boxShadow = `0 0 6px ${tierColor}99`;
+            if (i >= lastSuitabilityIlluminated) seg.classList.add('flash-on');
+          } else if (i < unlockedCount) {
+            seg.classList.add('unlocked');
+            if (i >= lastSuitabilityUnlocked) seg.classList.add('power-on');
+          }
+          group.appendChild(seg);
+        }
+        col.appendChild(group);
+      }
+      lastSuitabilityUnlocked = unlockedCount;
+      lastSuitabilityIlluminated = illuminatedCount;
     }
 
     // ─── RECOMMENDATION ELIGIBLE gate ───────────────────────────────────
@@ -2955,6 +3180,10 @@
     // CLAUDE.md, Coherence & Trust addendum, "the feedback loop"). null
     // until the first render so the very first paint never pulses.
     let lastConfPct = null;
+    // Same pattern, for the Suitability panel — pulses whenever the shown
+    // recommendation LABEL changes (including moving in/out of "Need More
+    // Evidence"/"Too Early to Tell"), independent of Confidence's own pulse.
+    let lastRecLabel = null;
     function pulseElement(el) {
       if (!el) return;
       el.classList.remove('pulse');
@@ -2988,52 +3217,82 @@
         findingsAttentionCount,
       });
 
-      // Recommendation gauge — a full colored ring (a status dial, not a
-      // proportional fill) once eligible, since the taxonomy is
-      // categorical, not a continuous 0-100 scale — see CLAUDE.md,
-      // Dashboard Instruments addendum. The instrument's own title ("ARM
-      // Suitability") is fixed in the HTML and never changes per state.
+      // Confidence — how much evidence of ANY kind (scan or Intended Use)
+      // currently supports today's read. See assessment.js,
+      // evidenceSourcesFor() — deliberately NOT the same value as
+      // synthesis.confidencePct (that one is scan-only, unchanged, still
+      // used on Results/Workspace). Computed here, early, since Suitability's
+      // unlock behavior (below) is driven by this exact number — the two
+      // instruments can never silently disagree about how much evidence
+      // exists, because there is only one confPct.
+      const confPct = Math.round(Math.max(0, Math.min(100, evidenceSources.reduce((sum, s) => sum + s.contribution, 0))));
+      const confLabel = dashboardConfidenceLabel(confPct);
+      const confColor = confPct <= 0 ? '#334155' : confidenceDisplayColor(
+        confPct >= 85 ? 'High Confidence' : confPct >= 60 ? 'Moderate Confidence' : 'Limited Data'
+      );
+      const confWrap = document.getElementById('gauge-conf-svg-wrap');
+      ensureGaugeBuilt(confWrap);
+      updateGaugeFill(confWrap, confPct, confColor);
+      updateGaugeNeedle(confWrap, confPct);
+      document.getElementById('gauge-conf-label').textContent = confLabel;
+      document.getElementById('gauge-conf-label').style.color = confPct <= 0 ? '#64748b' : confColor;
+      // Numeric readout on its own centered line beneath the label, not
+      // inline with it — see CLAUDE.md, Coherence & Trust addendum.
+      document.getElementById('gauge-conf-value').textContent = confPct + '%';
+
+      // Visible feedback: a brief pulse on Confidence whenever it actually
+      // moves, so an Intended Use answer that doesn't change Suitability
+      // (by design, on a scan-backed session — see the design-philosophy
+      // note below) still visibly registers SOMEWHERE. Skipped on the
+      // very first render (nothing "changed" yet on page load).
+      if (lastConfPct !== null && lastConfPct !== confPct) {
+        pulseElement(document.getElementById('gauge-confidence'));
+      }
+      lastConfPct = confPct;
+
+      // Suitability — a vertical segmented instrument, replacing the old
+      // round recommendation dial (see CLAUDE.md, Dashboard Instrument
+      // Cluster prototype). The instrument's own title ("ARM Suitability")
+      // is fixed in the HTML and never changes per state.
       //
       // RECOMMENDATION ELIGIBLE GATE: the advisor earns the right to
       // recommend rather than defaulting to one — see
       // isSuitabilityEligible() above for exactly what "earns" means (a
-      // reused threshold, not a new one). Ineligible states show a "?"
-      // glyph and "Need More Evidence" (some evidence, not enough yet) or
-      // "Too Early to Tell" (none at all) instead of a real reading.
+      // reused threshold, not a new one). Ineligible states show
+      // "Need More Evidence" (some evidence, not enough yet) or
+      // "Too Early to Tell" (none at all) instead of a real reading, and
+      // the instrument's illuminated (colored) segment count stays at
+      // zero — only the dim "unlocked" range can move before the gate
+      // opens.
       const eligible = isSuitabilityEligible(state, evidenceSources);
-      let recColor, recLabel, recSub, recNeedlePct, recFill, recGlyph, recValue;
+      let recColor, recLabel, recSub, recValue, recTierIndex;
       recValue = '';
-      recGlyph = null;
+      recTierIndex = null;
       if (eligible && state === ASSESSMENT_STATE_SCAN_BACKED) {
         const rec = recommendationFor(synthesis);
-        recColor = rec.color; recLabel = rec.label; recSub = ''; recFill = 100;
-        // Continuous position + a real number, once eligible — the exact
-        // same synthesis.score already computed for Results/Workspace
-        // (never a second score), clamped only for THIS display (the
-        // needle/number can't render past the dial's own 0-100 ends; the
-        // underlying score is untouched). "Gradual movement as evidence
-        // improves" (the brief) is this: the label stays categorical
-        // (5 tiers), the needle and number move continuously beneath it.
+        recColor = rec.color; recLabel = rec.label; recSub = '';
+        // The exact same synthesis.score already computed for Results/
+        // Workspace (never a second score) — clamped only for display.
         recValue = String(Math.round(Math.max(0, Math.min(100, synthesis.score))));
-        recNeedlePct = Math.max(0, Math.min(100, synthesis.score));
+        recTierIndex = suitabilityTierIndex(rec.label);
       } else if (eligible && state === ASSESSMENT_STATE_CONTEXTUAL) {
         const read = contextualReadFor(ctx);
-        recColor = '#2dd4bf'; recLabel = read.label; recSub = 'Early Read'; recFill = 100;
+        recColor = '#2dd4bf'; recLabel = read.label; recSub = 'Early Read';
         // No continuous number exists for a contextual read (no scan, no
         // score) — leaving the value line empty here is deliberate, not an
         // oversight: inventing one would be exactly the "pretend to know
         // more than it does" this pass's design philosophy rules out.
-        recNeedlePct = read.verdict === 'positive' ? recommendationNeedlePercent('Probably a Good Fit') : recommendationNeedlePercent('Proceed with Caution');
+        recTierIndex = read.verdict === 'positive' ? suitabilityTierIndex('Probably a Good Fit') : suitabilityTierIndex('Proceed with Caution');
       } else if (state === ASSESSMENT_STATE_NO_READ) {
-        recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recSub = ''; recFill = 0;
-        recGlyph = '?'; recNeedlePct = 0;
+        recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recSub = '';
       } else {
         // Evidence exists (a scan or some Intended Use answers) but hasn't
         // cleared the eligibility bar yet.
-        recColor = '#475569'; recLabel = 'Need More Evidence'; recSub = ''; recFill = 0;
-        recGlyph = '?'; recNeedlePct = 0;
+        recColor = '#475569'; recLabel = 'Need More Evidence'; recSub = '';
       }
-      document.getElementById('gauge-rec-svg-wrap').innerHTML = gaugeSvg(recFill, recColor, recNeedlePct, recGlyph);
+      const suitabilityUnlocked = suitabilityUnlockedCount(confPct);
+      const suitabilityIlluminated = suitabilityIlluminatedCount(eligible, recTierIndex, suitabilityUnlocked);
+      renderSuitabilityLeds(suitabilityUnlocked, suitabilityIlluminated);
       document.getElementById('gauge-rec-label').textContent = recLabel;
       document.getElementById('gauge-rec-label').style.color = eligible ? recColor : '#94a3b8';
       document.getElementById('gauge-rec-value').textContent = recValue;
@@ -3050,37 +3309,13 @@
       } else {
         recSubEl.textContent = recSub;
       }
-
-      // Confidence gauge — how much evidence of ANY kind (scan or Intended
-      // Use) currently supports today's read. See assessment.js,
-      // evidenceSourcesFor() — deliberately NOT the same value as
-      // synthesis.confidencePct (that one is scan-only, unchanged, still
-      // used on Results/Workspace). Computed once above, from the explicit
-      // evidence-source array, and passed down to the helper panels below
-      // so the gauge and the evidence summary can never independently
-      // drift apart — they're reading the same array, not two separate
-      // calculations of "how much evidence exists."
-      const confPct = Math.round(Math.max(0, Math.min(100, evidenceSources.reduce((sum, s) => sum + s.contribution, 0))));
-      const confLabel = dashboardConfidenceLabel(confPct);
-      const confColor = confPct <= 0 ? '#334155' : confidenceDisplayColor(
-        confPct >= 85 ? 'High Confidence' : confPct >= 60 ? 'Moderate Confidence' : 'Limited Data'
-      );
-      document.getElementById('gauge-conf-svg-wrap').innerHTML = gaugeSvg(confPct, confColor);
-      document.getElementById('gauge-conf-label').textContent = confLabel;
-      document.getElementById('gauge-conf-label').style.color = confPct <= 0 ? '#64748b' : confColor;
-      // Numeric readout on its own centered line beneath the label, not
-      // inline with it — see CLAUDE.md, Coherence & Trust addendum.
-      document.getElementById('gauge-conf-value').textContent = confPct + '%';
-
-      // Visible feedback: a brief pulse on Confidence whenever it actually
-      // moves, so an Intended Use answer that doesn't change Suitability
-      // (by design, on a scan-backed session — see the design-philosophy
-      // note above) still visibly registers SOMEWHERE. Skipped on the
-      // very first render (nothing "changed" yet on page load).
-      if (lastConfPct !== null && lastConfPct !== confPct) {
-        pulseElement(document.getElementById('gauge-confidence'));
+      // "Recommendation changes animate smoothly" — a brief pulse on the
+      // whole Suitability panel whenever the shown label actually changes
+      // (skipped on first paint, same precedent as Confidence's pulse).
+      if (lastRecLabel !== null && lastRecLabel !== recLabel) {
+        pulseElement(document.getElementById('gauge-recommendation'));
       }
-      lastConfPct = confPct;
+      lastRecLabel = recLabel;
 
       // Evidence / Signals — permanently visible in the middle panel, on
       // every render. This is the Composition Correction fix: the exact
@@ -3135,24 +3370,54 @@
       // implying a percentage that doesn't exist.
       return evidenceEntries.some((e) => e.presence === 'present') ? 100 : 0;
     }
-    // Illustrative marker positions — "roughly enough to matter" and "a
-    // strong contribution" — chosen to rhyme with, but not literally reuse,
-    // the aggregate Confidence tier boundaries (which operate on the
-    // combined dashboard total, a different scale from one source's own
-    // 0-100 fill). Named here so both markers are drawn from one place.
-    const EVIDENCE_MARKER_MIN_USEFUL_PCT = 30;
-    const EVIDENCE_MARKER_STRONG_PCT = 70;
-    function evidenceMeterRow(label, status, pct, color) {
+    // Segmented LED meters — "the colors indicate assessment completeness.
+    // They do not indicate whether the result is good or bad." Per the
+    // Dashboard Instrument Cluster prototype, a row's lit segments now take
+    // ONE color derived purely from how complete that dimension is (red ->
+    // orange -> yellow -> green), replacing the old fixed per-source colors
+    // (Scanner/Use Case were always blue, Community always gray, Please
+    // Verify amber-when-needing-attention/green-otherwise) — a deliberate,
+    // explicit behavior change this pass, not an oversight. The urgency
+    // information Please Verify's old amber color used to carry hasn't
+    // been lost — its status TEXT still says "Some require attention" —
+    // it's just no longer encoded redundantly as color too, since color
+    // here now means one thing consistently across all four rows.
+    function ledColorForPct(pct) {
+      if (pct < 25) return '#ef4444';
+      if (pct < 50) return '#f97316';
+      if (pct < 75) return '#eab308';
+      return '#10b981';
+    }
+    const EVIDENCE_LED_SEGMENTS = 8;
+    // Tracked per row (by key) across renders so only the segments that
+    // just newly lit get the "brighten before settling" flash — see
+    // .evidence-led.flash-on. A fresh DOM node needs no prior state for a
+    // one-shot keyframe animation, unlike the Confidence needle's smooth
+    // rotation (which does — see gaugeStaticSvg() above).
+    let lastEvidenceLit = {};
+    function evidenceLedSegments(key, pct) {
+      const clamped = Math.max(0, Math.min(100, pct));
+      const lit = Math.round((clamped / 100) * EVIDENCE_LED_SEGMENTS);
+      const color = ledColorForPct(clamped);
+      const prevLit = lastEvidenceLit[key] || 0;
+      let html = '';
+      for (let i = 0; i < EVIDENCE_LED_SEGMENTS; i++) {
+        const isLit = i < lit;
+        const isNew = isLit && i >= prevLit;
+        html += `<span class="evidence-led${isLit ? ' lit' : ''}${isNew ? ' flash-on' : ''}"`
+          + (isLit ? ` style="background:${color}; box-shadow:0 0 4px ${color}99;"` : '')
+          + `></span>`;
+      }
+      lastEvidenceLit[key] = lit;
+      return html;
+    }
+    function evidenceMeterRow(key, label, status, pct) {
       return `<li class="evidence-summary-row">
         <div class="evidence-summary-toprow">
           <span class="evidence-summary-label">${escapeHtml(label)}</span>
           <span class="evidence-summary-status">${escapeHtml(status)}</span>
         </div>
-        <div class="evidence-meter-track">
-          <div class="evidence-meter-fill" style="width:${pct}%; background:${color};"></div>
-          <div class="evidence-meter-marker" style="left:${EVIDENCE_MARKER_MIN_USEFUL_PCT}%;"></div>
-          <div class="evidence-meter-marker" style="left:${EVIDENCE_MARKER_STRONG_PCT}%;"></div>
-        </div>
+        <div class="evidence-led-row">${evidenceLedSegments(key, pct)}</div>
       </li>`;
     }
     function evidenceSummaryHtml(sources) {
@@ -3184,10 +3449,10 @@
       // accomplish? / Community / Please Verify: what doesn't quite add
       // up? — the same language Applications' own verify-note now uses).
       const rows = [
-        evidenceMeterRow('Scanner', scanStatus, evidenceMeterPct(scan), '#3b82f6'),
-        evidenceMeterRow('Use Case', intendedUseStatus, evidenceMeterPct(workload, relationship), '#3b82f6'),
-        evidenceMeterRow('Community', communityStatus, evidenceMeterPct(community), '#64748b'),
-        evidenceMeterRow('Please Verify', findingsStatus, evidenceMeterPct(findings), findingsNeedsAttention ? '#f59e0b' : '#10b981'),
+        evidenceMeterRow('scanner', 'Scanner', scanStatus, evidenceMeterPct(scan)),
+        evidenceMeterRow('use-case', 'Use Case', intendedUseStatus, evidenceMeterPct(workload, relationship)),
+        evidenceMeterRow('community', 'Community', communityStatus, evidenceMeterPct(community)),
+        evidenceMeterRow('please-verify', 'Please Verify', findingsStatus, evidenceMeterPct(findings)),
       ];
       return `<ul class="evidence-summary-list">${rows.join('')}</ul>`;
     }
