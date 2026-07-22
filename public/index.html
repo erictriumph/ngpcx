@@ -60,12 +60,17 @@
        layers read as one aligned instrument, not two differently-sized
        blocks stacked on top of each other. */
     .dashboard {
-      max-width: 1040px;
+      max-width: 1180px;
       margin: 0 auto 1.5rem auto;
       padding: 0.8rem 1rem;
       background: #1e293b;
       border: 1px solid #334155;
       border-radius: 14px;
+      /* Instrument-panel pass: a physical-panel cue (a soft outer shadow
+         plus a faint top highlight) rather than a flat card floating on
+         the page — restrained on purpose, this is a background detail,
+         not the focal treatment. */
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
 
     /* ─── THREE-COLUMN INSTRUMENT ROW ────────────────────────────────────
@@ -360,13 +365,11 @@
        page prose. Explanatory text moved to native title="" tooltips (see
        renderWhatNextPanel()) so the panel itself stays visually calm.
 
-       Four fixed rows, always: up to three ranked recommendations, then a
-       permanent fourth row for Scanner (see .whatnext-slot.scanner-slot
-       below) — prototyped here, moved out of the Evidence panel, on the
-       theory that "what to do next" and "is the scanner connected" are
-       both assessment-action concerns, not passive evidence. Scanner
-       keeps its own visual identity within the family (muted, non-
-       interactive, no hover state) so it doesn't read as a fourth
+       Three fixed rows, always: up to three ranked recommendations (the
+       queue itself never grows/shrinks in height as evidence changes).
+       Scanner is a separate, permanent instrument below this queue — see
+       .scanner-instrument — not a fourth queue slot; it's an Action in
+       its own right (per the instrument-panel pass), not a ranked
        recommendation competing with the real ones above it. */
     .whatnext-queue {
       display: flex;
@@ -381,14 +384,18 @@
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
       font-size: 0.72rem;
       font-weight: 700;
-      min-height: 1.9rem;
+      min-height: 2.15rem;
       box-sizing: border-box;
-      padding: 0 0.55rem;
-      border-radius: 6px;
+      padding: 0 0.6rem;
+      border-radius: 5px;
       border: 1px solid transparent;
       text-decoration: none;
       cursor: pointer;
       text-align: left;
+      /* Command-button feel (instrument panel pass) — a raised cap with a
+         bottom "lip" shadow, pressed flat via :active rather than staying
+         flush with the panel like an ordinary link. */
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease, border-color 0.15s ease;
     }
 
     .whatnext-slot-marker {
@@ -405,23 +412,36 @@
     }
 
     .whatnext-slot.primary {
-      background: #3b82f6;
+      background: linear-gradient(180deg, #4f8ff8 0%, #2f6fe0 100%);
       color: white;
+      border-color: #1d4ed8;
+      box-shadow: 0 2px 0 #1c3f9e, 0 3px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.28);
     }
 
     .whatnext-slot.primary:hover {
-      background: #2563eb;
+      background: linear-gradient(180deg, #5c99f9 0%, #3b7ce6 100%);
+    }
+
+    .whatnext-slot.primary:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 0 #1c3f9e, inset 0 2px 5px rgba(0, 0, 0, 0.4);
     }
 
     .whatnext-slot.secondary {
-      background: rgba(148, 163, 184, 0.08);
-      border-color: #334155;
+      background: linear-gradient(180deg, #2a3a52 0%, #1b2734 100%);
+      border-color: #3a4a63;
       color: #cbd5e1;
+      box-shadow: 0 2px 0 #0e1620, inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
 
     .whatnext-slot.secondary:hover {
       border-color: #64748b;
       color: #f1f5f9;
+    }
+
+    .whatnext-slot.secondary:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 0 #0e1620, inset 0 2px 5px rgba(0, 0, 0, 0.45);
     }
 
     /* Empty slot — "no further worthwhile recommendation right now,"
@@ -447,43 +467,76 @@
       overflow: hidden;
     }
 
-    /* Scanner, relocated here (prototype) from the Evidence panel — the
-       permanent fourth row. Deliberately NOT styled like a recommendation:
-       muted background, no hover state, not clickable, a thin top divider
-       separating it from the real recommendation slots above. The intent
-       is "a persistent assessment utility living alongside the other
-       assessment actions," not a fourth ranked choice. Fixed label, fixed
-       dot position, left-aligned status text that never wraps — same
-       instrument-reading contract as before the move. See
-       setScannerActivity()/SCANNER_STATE_META for the color model
-       (neutral/dim/amber/blue/green/red). */
-    .whatnext-slot.scanner-slot {
-      justify-content: space-between;
-      margin-top: 0.15rem;
-      padding-top: 0.55rem;
-      border-top: 1px solid #1e293b;
-      border-radius: 0;
-      background: transparent;
-      cursor: default;
-      min-height: 1.6rem;
-    }
-
-    .whatnext-slot-left {
+    /* Scanner — a permanent instrument mounted in the Actions panel (per
+       the instrument-panel pass — "the Scanner control also belongs
+       here"), not a temporary status line inside the recommendation
+       queue. Lives as a static, persistent element (a sibling of
+       #whatnext-queue, never destroyed/rebuilt by renderWhatNextPanel())
+       so setScannerActivity() no longer needs to re-sync it after every
+       queue render. The left side ("SCANNER") never changes; the right
+       side is BOTH the state readout and, whenever the scanner is idle
+       (ready/updated/error — see SCANNER_IDLE_STATES), a real Action:
+       clicking it jumps to Detected Apps to run or re-run a scan. See
+       setScannerActivity()/scannerInstrumentActionable(). */
+    .scanner-instrument {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      justify-content: space-between;
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #1e293b;
+    }
+
+    .scanner-instrument-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
       color: #64748b;
     }
 
-    .scanner-slot-status {
+    .scanner-instrument-action {
       display: flex;
       align-items: center;
-      gap: 0.35rem;
-      flex-shrink: 0;
+      gap: 0.4rem;
+      background: none;
+      border: 1px solid transparent;
+      padding: 0.25rem 0.55rem;
+      border-radius: 6px;
+      font-family: inherit;
+      cursor: default;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.15s ease;
     }
 
-    .scanner-slot-value {
-      font-size: 0.68rem;
+    /* Only idle states (ready/updated/error) get the command-button
+       treatment — while a scan is actively in flight there is nothing to
+       click, so it stays a plain, flush readout (no cursor, no bevel). */
+    .scanner-instrument-action.actionable {
+      cursor: pointer;
+      border-color: #334155;
+      background: linear-gradient(180deg, #2a3a52 0%, #1b2734 100%);
+      box-shadow: 0 2px 0 #0e1620, inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .scanner-instrument-action.actionable:hover {
+      border-color: #3b82f6;
+    }
+
+    .scanner-instrument-action.actionable:active {
+      transform: translateY(1px);
+      box-shadow: 0 0 0 #0e1620, inset 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .scanner-instrument-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: #64748b;
+    }
+
+    .scanner-instrument-value {
+      font-size: 0.7rem;
       font-weight: 800;
       color: #e2e8f0;
       text-transform: uppercase;
@@ -502,15 +555,37 @@
       border-top: 1px solid #334155;
     }
 
+    /* Illuminated latching pushbutton (instrument-panel pass) — a View
+       selector, not an ordinary web toggle: idle sits "out" (raised cap,
+       dim indicator dot), active sits "pressed in" (inset shadow +
+       flattened) AND illuminated (a lit dot + a soft glow) at once, and
+       clicking a different one pops this one back out — see
+       .evidence-tab below for the same language applied to the
+       Investigation Console's own View selectors. */
     .helper-toggle {
-      background: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: linear-gradient(180deg, #263449 0%, #1a2534 100%);
       border: 1px solid #334155;
       color: #94a3b8;
       font-size: 0.76rem;
       font-weight: 600;
-      padding: 0.3rem 0.7rem;
+      padding: 0.35rem 0.75rem 0.35rem 0.6rem;
       border-radius: 8px;
       cursor: pointer;
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: transform 0.08s ease, box-shadow 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .helper-toggle::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #334155;
+      flex-shrink: 0;
+      transition: background 0.15s ease, box-shadow 0.15s ease;
     }
 
     .helper-toggle:hover {
@@ -519,9 +594,16 @@
     }
 
     .helper-toggle.active {
-      border-color: #3b82f6;
-      color: #93c5fd;
-      background: rgba(59, 130, 246, 0.1);
+      border-color: #1d4ed8;
+      color: #dbeafe;
+      background: linear-gradient(180deg, #1d4ed8 0%, #2760e0 100%);
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), 0 0 8px rgba(59, 130, 246, 0.4);
+      transform: translateY(1px);
+    }
+
+    .helper-toggle.active::before {
+      background: #93c5fd;
+      box-shadow: 0 0 5px #93c5fd;
     }
 
     .helper-panel {
@@ -819,7 +901,7 @@
        Console addendum.
        ═══════════════════════════════════════════════════════════════════ */
     .console {
-      max-width: 1040px;
+      max-width: 1180px;
       margin: 0 auto 2.5rem auto;
       padding: 0.9rem 1.1rem 1.1rem 1.1rem;
       background: #1e293b;
@@ -857,17 +939,42 @@
       background: #1e293b;
     }
 
+    /* Illuminated latching pushbutton — the same View-selector language
+       as .helper-toggle above, adapted to a taller grid cell: the
+       indicator dot sits ABOVE the (possibly two-line) label rather than
+       inline beside it. white-space:normal lets longer labels ("Detected
+       Apps", "Detected Devices") wrap to two lines instead of forcing the
+       column wider — see the instrument-panel pass in CLAUDE.md. */
     .evidence-tab {
       width: 100%;
-      background: rgba(148, 163, 184, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.32rem;
+      background: linear-gradient(180deg, #26344a 0%, #19232f 100%);
       border: 1px solid #334155;
       color: #94a3b8;
       font-size: 0.8rem;
       font-weight: 700;
-      padding: 0.5rem 1rem;
+      line-height: 1.2;
+      padding: 0.6rem 0.9rem;
       border-radius: 8px;
       cursor: pointer;
       text-align: center;
+      white-space: normal;
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      transition: transform 0.08s ease, box-shadow 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .evidence-tab::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #334155;
+      flex-shrink: 0;
+      transition: background 0.15s ease, box-shadow 0.15s ease;
     }
 
     .evidence-tab:hover {
@@ -877,18 +984,23 @@
 
     .evidence-tab.active {
       color: white;
-      background: #3b82f6;
-      border-color: transparent;
+      background: linear-gradient(180deg, #1d4ed8 0%, #2760e0 100%);
+      border-color: #1d4ed8;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), 0 0 10px rgba(59, 130, 246, 0.4);
+      transform: translateY(1px);
+    }
+
+    .evidence-tab.active::before {
+      background: #93c5fd;
+      box-shadow: 0 0 6px #93c5fd;
     }
 
     /* The Intent zone's one tab spans both rows and centers within that
        taller cell — visually the anchor the two side zones flank, matching
        "a scan is an accelerator, not a prerequisite" (this workspace works
-       identically with or without one). */
+       identically with or without one). Layout/centering now come from the
+       base .evidence-tab rule; only the larger type size is anchor-specific. */
     .evidence-tab.zone-anchor {
-      display: flex;
-      align-items: center;
-      justify-content: center;
       font-size: 0.85rem;
     }
 
@@ -1622,11 +1734,19 @@
     <div class="dashboard-panels">
       <!-- LEFT: What Next? — a ranked recommendation queue, not a paragraph with buttons.
            Moved here from the right: "what should I do" is now the first thing a
-           returning user sees. Renders 4 fixed slots: up to 3 ranked recommendations,
-           then a permanent Scanner utility row — see renderWhatNextPanel(). -->
+           returning user sees. Renders 3 fixed ranked-recommendation slots — see
+           renderWhatNextPanel(). Scanner lives below as its own permanent
+           instrument, not a queue slot — see setScannerActivity(). -->
       <div class="panel panel-whatnext" id="what-next-display">
         <div class="display-eyebrow"><span class="display-dot"></span>What Next?</div>
         <div class="whatnext-queue" id="whatnext-queue"></div>
+        <div class="scanner-instrument">
+          <span class="scanner-instrument-label">Scanner</span>
+          <button type="button" class="scanner-instrument-action" id="scanner-instrument-action">
+            <span class="scanner-instrument-dot" id="scanner-activity-dot"></span>
+            <span class="scanner-instrument-value" id="scanner-activity-value">Ready</span>
+          </button>
+        </div>
       </div>
       <!-- CENTER: Instrument Cluster — the dashboard's visual focus. Confidence
            gauge on the left, Evidence meters to its right, laid out horizontally. -->
@@ -1897,21 +2017,38 @@
       updated: { value: 'Completed', dot: '#10b981', active: false },
       error: { value: 'Error', dot: '#ef4444', active: false },
     };
-    // Tracked independently of the DOM (prototype: Scanner now lives
-    // inside the What Next queue, rebuilt on every renderWhatNextPanel()
-    // call — see whatNextScannerSlotEl()) — the logical state must survive
-    // a rebuild even when it changes before the slot's DOM nodes exist yet
-    // (e.g. loadSessionIfPresent() calling this before the first render).
+    // The three "idle" states — nothing is actively happening, so the
+    // instrument's right side becomes a real Action (per the instrument-
+    // panel pass: "the Scanner control also belongs to Actions") reading
+    // "Scan Now" / "Rescan" instead of its usual status word. Every other
+    // state (unavailable, or a scan genuinely in flight) stays a plain,
+    // non-clickable readout — there is nothing to do yet, or something is
+    // already running.
+    const SCANNER_IDLE_STATES = ['ready', 'updated', 'error'];
+    function scannerInstrumentActionable(state) {
+      return SCANNER_IDLE_STATES.includes(state);
+    }
+    // Scanner is now a permanent instrument living directly in the Actions
+    // panel markup (not rebuilt inside the What Next queue on every render
+    // — see the removed whatNextScannerSlotEl()), so its DOM nodes persist
+    // for the whole page life and no longer need re-syncing after each
+    // renderWhatNextPanel() call. currentScannerState is still tracked as
+    // a plain variable (not read off the DOM) so callers can query it
+    // (see scannerInstrumentActionable()'s click-handler use) without a
+    // round-trip through the DOM.
     let currentScannerState = 'ready';
     function setScannerActivity(state) {
       currentScannerState = state;
       const meta = SCANNER_STATE_META[state] || SCANNER_STATE_META.ready;
       const dot = document.getElementById('scanner-activity-dot');
       const value = document.getElementById('scanner-activity-value');
-      if (!dot || !value) return;
+      const actionBtn = document.getElementById('scanner-instrument-action');
+      if (!dot || !value || !actionBtn) return;
       dot.style.background = meta.dot;
       dot.classList.toggle('active', meta.active);
-      value.textContent = meta.value;
+      const actionable = scannerInstrumentActionable(state);
+      actionBtn.classList.toggle('actionable', actionable);
+      value.textContent = actionable ? (currentResults ? 'Rescan' : 'Scan Now') : meta.value;
     }
 
     // ───────────────────────────────────────────────────────────────────
@@ -3157,30 +3294,6 @@
       return el;
     }
 
-    // The fourth, permanent slot — Scanner, prototyped here out of the
-    // Evidence panel (see CLAUDE.md, Investigation Console addendum).
-    // Deliberately NOT built from the same {label, tone, ...} shape as a
-    // recommendation slot — it's a persistent assessment utility, not a
-    // ranked choice, so it gets its own non-interactive markup with the
-    // exact ids setScannerActivity() already targets. Called at the end of
-    // every renderWhatNextPanel() to re-sync the freshly-created dot/value
-    // nodes to currentScannerState, since queue.innerHTML='' destroys and
-    // recreates them on every render.
-    function whatNextScannerSlotEl() {
-      const el = document.createElement('div');
-      el.className = 'whatnext-slot scanner-slot';
-      el.id = 'scanner-display';
-      el.innerHTML = '<span class="whatnext-slot-left">'
-        + '<span class="whatnext-slot-marker">›</span>'
-        + '<span class="whatnext-slot-label">Scanner</span>'
-        + '</span>'
-        + '<span class="scanner-slot-status">'
-        + '<span class="display-dot" id="scanner-activity-dot"></span>'
-        + '<span class="scanner-slot-value" id="scanner-activity-value">Ready</span>'
-        + '</span>';
-      return el;
-    }
-
     function renderWhatNextPanel(next) {
       const queue = document.getElementById('whatnext-queue');
       queue.innerHTML = '';
@@ -3209,9 +3322,7 @@
           title: 'Import a previously saved assessment file to pick up where you left off.',
           onClick: (e) => { e.preventDefault(); window.NavShell.triggerImport(); },
         }) : whatNextSlotEl({}));
-        slots.push(whatNextScannerSlotEl());
         slots.forEach((el) => queue.appendChild(el));
-        setScannerActivity(currentScannerState);
         return;
       }
 
@@ -3242,14 +3353,7 @@
       // state, including the two/three-slot start-empty case above.
       slots.push(whatNextSlotEl({}));
 
-      // Fourth slot: the permanent Scanner utility row — see
-      // whatNextScannerSlotEl(). Re-applying currentScannerState after
-      // appending is required, not cosmetic: the slot's dot/value nodes
-      // were just recreated fresh by this same render pass.
-      slots.push(whatNextScannerSlotEl());
-
       slots.forEach((el) => queue.appendChild(el));
-      setScannerActivity(currentScannerState);
     }
 
     // Tracked across renders so a genuine change in Confidence can trigger
@@ -3614,6 +3718,18 @@
       });
     });
 
+    // Scanner instrument — wired once, since its DOM (unlike the What Next
+    // queue above it) is static markup, never rebuilt. A no-op click
+    // whenever the instrument isn't in one of its idle states — see
+    // scannerInstrumentActionable(); switchTab() itself already renders
+    // the current scan-progress state honestly if one is genuinely in
+    // flight (see isScanActive() in the scan-lifecycle section below).
+    document.getElementById('scanner-instrument-action').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!scannerInstrumentActionable(currentScannerState)) return;
+      switchTab('detected-apps');
+    });
+
     // ───────────────────────────────────────────────────────────────────
     // Initial tab choice — computed exactly once, from whatever evidence
     // already exists on load (e.g. arriving with ?session= already set).
@@ -3653,6 +3769,13 @@
       // ever plays when results are genuinely new.
       const scanJustHappened = !!sessionStorage.getItem(SCANNER_ACTIVITY_BRIDGE_KEY);
       sessionStorage.removeItem(SCANNER_ACTIVITY_BRIDGE_KEY);
+      // The Scanner instrument is now static, persistent markup (see
+      // .scanner-instrument) rather than something rebuilt fresh on every
+      // render, so — unlike before — it needs one explicit initial sync
+      // call here to pick up its real actionable/label state on first
+      // paint; the two branches below still override this default exactly
+      // as they did previously.
+      setScannerActivity(currentScannerState);
       if (scanJustHappened) {
         setScannerActivity('receiving');
       } else if (isLikelyNonWindows()) {
@@ -3676,6 +3799,11 @@
         if (data.status === 'complete') {
           currentResults = data.results;
           if (currentResults && currentResults.scan_mode) scanLevelParam = currentResults.scan_mode;
+          // Re-sync now that currentResults is real — the initial sync
+          // call above ran before this fetch resolved, so it could only
+          // ever have shown "Scan Now"; a real session existing changes
+          // the idle-state label to "Rescan" (see setScannerActivity()).
+          setScannerActivity(currentScannerState);
           chooseInitialTab();
           renderAll();
           announceResultsIfScanJustHappened();
@@ -3691,6 +3819,7 @@
               clearInterval(waitPoll);
               currentResults = d2.results;
               if (currentResults && currentResults.scan_mode) scanLevelParam = currentResults.scan_mode;
+              setScannerActivity(currentScannerState);
               renderAll();
               announceResultsIfScanJustHappened();
             }
