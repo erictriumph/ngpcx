@@ -162,7 +162,7 @@
        cluster already uses, one step further. */
     .panel-suitability {
       flex: 0 0 auto;
-      width: 182px;
+      width: 224px;
       padding-left: 0.5rem;
       padding-right: 0.5rem;
       display: flex;
@@ -248,20 +248,88 @@
       line-height: 1.15;
     }
 
-    /* Centered numeric readout, its OWN line beneath the label (moved off
-       inline per the Coherence & Trust pass) — a genuine value for
-       Confidence always, and for ARM Suitability once the Recommendation
-       Eligible gate has activated a real reading (see
-       isSuitabilityEligible()). Reserves its line even when empty so an
-       ineligible/no-number state never shifts the block below it. */
-    .gauge-value-area {
+    /* ─── SEVEN-SEGMENT CONFIDENCE INSTRUMENT (Final Instrument Panel
+       Refinement pass) ───────────────────────────────────────────────────
+       Confidence is "the master synthesized output of the assessment" per
+       this pass's own brief — it earns a custom digital-instrument
+       treatment instead of ordinary readout typography (the plain
+       .gauge-value-area text line this replaces). Pure CSS, no font file
+       or SVG glyphs: each digit is a fixed 7-cell absolute-position grid
+       (segments a-g, classic calculator/clock naming: a=top, b=upper-
+       right, c=lower-right, d=bottom, e=lower-left, f=upper-left,
+       g=middle), built ONCE as static markup (see the HTML below) and
+       only ever toggled .lit/unlit per render — never destroyed and
+       rebuilt — so the opacity/glow transition on a genuine value change
+       actually has a prior frame to animate FROM, matching the exact
+       "persistent nodes, not innerHTML rebuild" precedent this file
+       already established for the gauge needle and the Scanner
+       instrument (see updateGaugeNeedle()/renderWhatNextPanel() comments
+       above) after finding the opposite approach silently killed the
+       transition there. Unlit segments stay faintly visible (low
+       opacity) rather than invisible, so the instrument reads as a real
+       multi-segment display at rest, not blank space. Lit color is
+       driven by --seg-color, set in JS from the SAME confColor value
+       that already drives the Confidence gauge's ring/needle/label — one
+       color decision, three instruments, never three independent color
+       computations that could silently disagree.
+       See updateSevenSegValue()/SEVEN_SEG_MAP in the script below. */
+    .sevenseg-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      height: 2.4rem;
+    }
+
+    .sevenseg-digit {
+      position: relative;
+      width: 16px;
+      height: 30px;
+      flex: 0 0 auto;
+    }
+
+    /* The leftmost ("hundreds") position is deliberately NOT a full
+       digit — per this pass's explicit spec, it behaves like a 4-digit
+       digital clock's leading position: only the two RIGHT vertical
+       strokes (b + c) exist at all, blank below 100%, both lit exactly
+       at 100%. This avoids an unnecessary leading zero while still
+       subtly marking 100% as a distinct, special "complete" reading —
+       narrower than a full digit since it only ever needs to house two
+       thin vertical bars, never a full glyph shape. */
+    .sevenseg-digit.sevenseg-partial {
+      width: 7px;
+    }
+
+    .sevenseg-digit .seg {
+      position: absolute;
+      background: var(--seg-color, #7dd3fc);
+      opacity: 0.14;
+      border-radius: 1px;
+      transition: opacity 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .sevenseg-digit .seg.lit {
+      opacity: 1;
+      box-shadow: 0 0 5px var(--seg-color, #7dd3fc);
+    }
+
+    .seg-a { top: 0; left: 2px; width: 12px; height: 3px; }
+    .seg-g { top: 13.5px; left: 2px; width: 12px; height: 3px; }
+    .seg-d { bottom: 0; left: 2px; width: 12px; height: 3px; }
+    .seg-f { top: 3px; left: 0; width: 3px; height: 10.5px; }
+    .seg-b { top: 3px; right: 0; width: 3px; height: 10.5px; }
+    .seg-e { top: 16.5px; left: 0; width: 3px; height: 10.5px; }
+    .seg-c { top: 16.5px; right: 0; width: 3px; height: 10.5px; }
+
+    /* A static, painted "%" — never generated/toggled like the digits
+       themselves, per the brief's explicit "static painted % symbol". */
+    .sevenseg-pct {
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-      height: 1.05rem;
-      line-height: 1.05rem;
-      font-size: 0.92rem;
-      font-weight: 800;
-      font-variant-numeric: tabular-nums;
-      color: #f1f5f9;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #64748b;
+      margin-left: 2px;
+      align-self: center;
     }
 
     /* Qualifier / Why? line — mutually exclusive uses of the same fixed
@@ -338,8 +406,36 @@
       max-width: 100%;
       overflow: hidden;
       display: -webkit-box;
-      -webkit-line-clamp: 3;
+      -webkit-line-clamp: 5;
       -webkit-box-orient: vertical;
+    }
+
+    /* Suitability percentage — deliberately its OWN line between the
+       Recommendation and the explanation (Final Instrument Panel
+       Refinement pass, target hierarchy: Recommendation -> percentage ->
+       explanation -> What's Next -> action). Reuses synthesis.score
+       verbatim (clamped 0-100 for display only, same clamp precedent as
+       the Illuminated-LED pass's now-removed #gauge-rec-value) — no new
+       scoring model, and per that same pass's own design philosophy
+       ("never pretend to know more than it does"), this line is ONLY
+       ever populated for state===SCAN_BACKED && eligible (see
+       renderDashboard() below); every other state leaves the element
+       empty, so the reserved line collapses to zero height (no fixed
+       height reserved here, unlike gauge-value-area, since an empty
+       Suitability percentage is the common case — ineligible/contextual/
+       no-read states — and reserving dead space for it on every render
+       would push the qualifier/next lines down for no reason). */
+    .suitability-display-pct {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 1.3rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: #f1f5f9;
+      line-height: 1.1;
+    }
+
+    .suitability-display-pct:empty {
+      display: none;
     }
 
     .suitability-display-qualifier a {
@@ -363,12 +459,24 @@
       gap: 0.05rem;
     }
 
+    /* Phosphor-green treatment (Final Instrument Panel Refinement pass) —
+       deliberately distinct from every OTHER green already in this file
+       (.badge/tier greens like #10b981/#22c55e, both reserved for
+       compatibility-outcome "success" semantics). This green means ONE
+       thing only: "the assessment is speaking to you, here's what to do
+       next" — operator guidance, not a completion/success state. Never
+       reuse #84e849 for anything else, including an actual "Complete"
+       readout (those stay the existing muted/cyan readout language).
+       Lowercase, not uppercase-tracked like the other instrument labels
+       around it — the brief specifically wants this line to read as a
+       warmer, conversational prompt ("What's Next?"), not another cold
+       instrument caption. */
     .suitability-display-next-label {
-      font-size: 0.54rem;
+      font-size: 0.62rem;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: #64748b;
+      letter-spacing: 0.01em;
+      color: #84e849;
+      text-shadow: 0 0 6px rgba(132, 232, 73, 0.45);
     }
 
     .suitability-display-next-value {
@@ -392,12 +500,12 @@
       font-size: 1.05rem;
       max-width: 210px;
     }
-    .gauge-block .gauge-value-area {
-      height: 2.4rem;
-      line-height: 2.4rem;
-      font-size: 2.1rem;
-      font-weight: 800;
-    }
+    /* No .gauge-block .gauge-value-area override needed anymore — the
+       Confidence readout is now the seven-segment instrument above
+       (.sevenseg-value), sized directly in its own base rule rather than
+       through a .gauge-block-scoped override, since nothing else reuses
+       the seven-segment classes the way Suitability used to reuse
+       .gauge-value-area/.gauge-label. */
 
     .gauge-label-sub-why {
       color: #93c5fd;
@@ -812,7 +920,7 @@
        UI-text grays used for permanent labels, so "Scanned" / "3 detected"
        / "Some need review" immediately reads as an instrument reading,
        not painted-on copy. .evidence-summary-label (the dimension NAME —
-       "Scan", "Understanding", etc.) deliberately keeps its existing
+       "Observation", "Interview", etc.) deliberately keeps its existing
        plain typography — that IS the permanent label. */
     .evidence-summary-status {
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -1045,7 +1153,7 @@
        INSTRUMENT PANEL — BOTTOM ROW: WORKSPACE VIEW SELECTORS
        ONE shared row inside the Instrument Panel (see the .dashboard
        markup) — never a duplicate nav tile grid below it. Primary
-       workflow (Observation/Understanding/Applications/Devices/
+       workflow (Observation/Interview/Applications/Devices/
        Compatibility) sits left-aligned; secondary utilities (Why/
        Unknowns/More Info) sit right-aligned in the SAME row, smaller and
        muted, separated by a vertical divider rather than a second
@@ -1922,7 +2030,18 @@
            renderWhatNextPanel(). Scanner lives below as its own permanent
            instrument, not a queue slot — see setScannerActivity(). -->
       <div class="panel panel-whatnext" id="what-next-display">
-        <div class="display-eyebrow"><span class="display-dot"></span>What Next?</div>
+        <!-- Heading renamed "What Next?" -> "Actions" (Final Instrument
+             Panel Refinement pass): the heading now names the PANEL
+             itself (a collection of available actions — matches the
+             single-word eyebrow pattern "Evidence"/"ARM Suitability"
+             already use), rather than repeating the recommendation
+             already shown, more warmly, in the Suitability display's own
+             "What's Next?" line. Internal identifiers (renderWhatNextPanel
+             (), #whatnext-queue, WHAT_NEXT_PRIMARY_LABEL, etc.) are
+             deliberately NOT renamed — same "mechanism name stays stable,
+             display text can diverge" precedent this codebase already
+             established for Scan/Observation and NGPCX/CheckMyARM. -->
+        <div class="display-eyebrow"><span class="display-dot"></span>Actions</div>
         <div class="whatnext-queue" id="whatnext-queue"></div>
         <div class="scanner-instrument">
           <span class="scanner-instrument-label">Scanner</span>
@@ -1954,7 +2073,27 @@
           <div class="gauge-label-area">
             <div class="gauge-label" id="gauge-conf-label">No Data Yet</div>
           </div>
-          <div class="gauge-value-area" id="gauge-conf-value">0%</div>
+          <!-- Seven-segment digital Confidence instrument — see the CSS
+               block above (.sevenseg-*) for the full design rationale.
+               Built ONCE here as static markup; only .lit classes and
+               the --seg-color custom property are toggled per render
+               (updateSevenSegValue(), below) so the opacity/glow
+               transition has real prior state to animate from. The
+               leftmost digit is deliberately partial (b/c strokes only —
+               a "clock-style" leading position, blank below 100%, both
+               strokes lit exactly at 100%), never a full 0-9 glyph. -->
+          <div class="sevenseg-value" id="gauge-conf-sevenseg">
+            <div class="sevenseg-digit sevenseg-partial" id="sevenseg-hundreds">
+              <i class="seg seg-b" data-seg="b"></i><i class="seg seg-c" data-seg="c"></i>
+            </div>
+            <div class="sevenseg-digit" id="sevenseg-tens">
+              <i class="seg seg-a" data-seg="a"></i><i class="seg seg-b" data-seg="b"></i><i class="seg seg-c" data-seg="c"></i><i class="seg seg-d" data-seg="d"></i><i class="seg seg-e" data-seg="e"></i><i class="seg seg-f" data-seg="f"></i><i class="seg seg-g" data-seg="g"></i>
+            </div>
+            <div class="sevenseg-digit" id="sevenseg-ones">
+              <i class="seg seg-a" data-seg="a"></i><i class="seg seg-b" data-seg="b"></i><i class="seg seg-c" data-seg="c"></i><i class="seg seg-d" data-seg="d"></i><i class="seg seg-e" data-seg="e"></i><i class="seg seg-f" data-seg="f"></i><i class="seg seg-g" data-seg="g"></i>
+            </div>
+            <span class="sevenseg-pct">%</span>
+          </div>
           <div class="gauge-label-sub"></div>
         </div>
         <div class="panel-evidence">
@@ -1988,16 +2127,17 @@
         <div class="suitability-display" id="suitability-display">
           <div class="suitability-display-tag" id="suitability-display-tag"></div>
           <div class="suitability-display-rec gauge-label" id="suitability-display-rec">Too Early to Tell</div>
+          <div class="suitability-display-pct" id="suitability-display-pct"></div>
           <div class="suitability-display-qualifier" id="suitability-display-qualifier"></div>
           <div class="suitability-display-next" id="suitability-display-next-wrap" hidden>
-            <span class="suitability-display-next-label">Next</span>
+            <span class="suitability-display-next-label">What's Next?</span>
             <span class="suitability-display-next-value" id="suitability-display-next-value"></span>
           </div>
         </div>
       </div>
     </div>
-    <!-- PRIMARY ROW: the five evidence-dimension selectors — Scan,
-         Understanding, Applications, Devices, Compatibility — per
+    <!-- PRIMARY ROW: the five evidence-dimension selectors — Observation,
+         Interview, Applications, Devices, Compatibility — per
          ASSESSMENT_ARCHITECTURE.md. Part of the Instrument Panel, not the
          workspace beneath it. See INSTRUMENT_PANEL.md, Bottom Row:
          Workspace View Selectors, for the illuminated-pushbutton language. -->
@@ -2266,45 +2406,60 @@
     // EVIDENCE CATEGORIES — the single source of truth for the Instrument
     // Panel's view-selector rows and the Details Workspace they drive. Per
     // ASSESSMENT_ARCHITECTURE.md (the project's architectural source of
-    // truth as of this pass — read it before changing this array), the
-    // five PRIMARY navigation destinations now map directly onto the
-    // funnel's five evidence dimensions: Scan (Observed Environment) ->
-    // Understanding -> Applications -> Devices -> Compatibility. These are
-    // "the primary navigation controls for reducing uncertainty in each
-    // evidence dimension," per the architecture doc's own framing, and
-    // correspond one-to-one with the five evidence meters (see
-    // evidenceSummaryHtml()).
+    // truth — read it before changing this array), the five PRIMARY
+    // navigation destinations map onto the funnel's five evidence
+    // dimensions: Observation -> Interview -> Applications -> Devices ->
+    // Compatibility. These are "the primary navigation controls for
+    // reducing uncertainty in each evidence dimension," per the
+    // architecture doc's own framing, and correspond one-to-one with the
+    // five evidence meters (see evidenceSummaryHtml()).
     //
     // Why / Unknowns / More Info are marked `secondary: true` — still
     // ordinary entries in this same array, still selected via switchTab()
-    // and rendered into the same #details-workspace. Per this refinement
-    // pass, primary and secondary now share ONE physical row (#evidence-nav)
-    // instead of two stacked rows — see renderEvidenceNav() below, which
-    // renders both groups into their own inner container
-    // (#evidence-nav-primary left-aligned, #evidence-nav-secondary
-    // right-aligned) so the row reads as one instrument-panel strip with a
-    // clear primary/secondary visual split, not two separate navs. This is
-    // a presentation split only — the dispatch mechanism is unchanged.
+    // and rendered into the same #details-workspace. Primary and
+    // secondary share ONE physical row (#evidence-nav) — see
+    // renderEvidenceNav() below, which renders both groups into their own
+    // inner container (#evidence-nav-primary left-aligned,
+    // #evidence-nav-secondary right-aligned) so the row reads as one
+    // instrument-panel strip with a clear primary/secondary visual split,
+    // not two separate navs. This is a presentation split only — the
+    // dispatch mechanism is unchanged.
     //
-    // "Observation" (renamed from "Scan" this pass — the architecture
-    // distinguishes Observation from Understanding as parallel concepts;
-    // "Scan" only names one way observations are gathered) replaces the
-    // old separate Detected Apps / Detected Devices primary destinations
-    // (renderObservationTab() renders both, combined — see that function
-    // for why calling the two original tab renderers directly into sub-
-    // containers is safe here and would NOT be safe from two separate
-    // top-level tabs). The scanning MECHANISM itself — scanCtaHtml(),
-    // wireScanButton(), the Scanner instrument, "Run Scan"/"Rescan" CTA
-    // text — is deliberately NOT renamed; only the workspace/tab identity
-    // changed. "Understanding" is a rename of the old "Use Case" tab (id +
-    // label only — renderUseCaseTab() and its content are unchanged).
+    // "Observation" replaces the old separate Detected Apps / Detected
+    // Devices primary destinations (renderObservationTab() renders both,
+    // combined — see that function for why calling the two original tab
+    // renderers directly into sub-containers is safe here and would NOT
+    // be safe from two separate top-level tabs). The scanning MECHANISM
+    // itself — scanCtaHtml(), wireScanButton(), the Scanner instrument,
+    // "Run Scan"/"Rescan" CTA text — is deliberately NOT renamed; only
+    // the workspace/tab identity changed.
+    //
+    // "Interview" (renamed from "Understanding" this pass, Final
+    // Instrument Panel Refinement) — Observation and Interview are the
+    // architecture's two complementary evidence-gathering phases:
+    // Observation asks "what did we observe?", Interview asks "what did
+    // we learn from the user?" "Interview" better communicates an
+    // interactive back-and-forth than "Understanding," which implied the
+    // system already comprehends the user rather than being actively in
+    // the process of asking. id/label/internal function names only —
+    // renderUseCaseTab() and its actual question content are unchanged.
+    // KNOWN TENSION, documented rather than silently papered over:
+    // ASSESSMENT_ARCHITECTURE.md itself still names this phase
+    // "Understanding" throughout (it predates this rename and wasn't
+    // rewritten here — that document is this project's fixed
+    // architectural source of truth, not something to edit on a UI
+    // wording preference alone). "Interview" is consistent everywhere IN
+    // THE UI; it is NOT yet consistent with the architecture document's
+    // own prose. Worth reconciling in a future pass if "Interview" holds
+    // up in practice.
+    //
     // "Compatibility" is a safe, honest placeholder per
     // ASSESSMENT_ARCHITECTURE.md's Compatibility phase — real curated-item
     // counts, no new interactive curation workflow (out of scope).
     // ───────────────────────────────────────────────────────────────────
     const EVIDENCE_CATEGORIES = [
       { id: 'observation', label: 'Observation', render: renderObservationTab },
-      { id: 'understanding', label: 'Understanding', render: renderUseCaseTab },
+      { id: 'interview', label: 'Interview', render: renderUseCaseTab },
       { id: 'applications', label: 'Applications', render: renderApplicationsTab },
       { id: 'devices', label: 'Devices', render: renderDevicesTab },
       { id: 'compatibility', label: 'Compatibility', render: renderCompatibilityTab },
@@ -2312,13 +2467,13 @@
       { id: 'unknowns', label: 'Unknowns', render: renderUnknownsTab, secondary: true },
       { id: 'more-info', label: 'More Info', render: renderMoreInfoTab, secondary: true },
     ];
-    // Understanding is the deliberate default/home tab — this workspace
+    // Interview is the deliberate default/home tab — this workspace
     // works identically whether or not a scan has ever run, per the
     // brief's own "a scan is an accelerator, not a prerequisite."
     // chooseInitialTab() (below) can still override this once real
     // evidence points somewhere more useful, but this is the fallback and
     // the true empty-state home.
-    let activeTabId = 'understanding';
+    let activeTabId = 'interview';
 
     function switchTab(tabId) {
       activeTabId = tabId;
@@ -3624,11 +3779,11 @@
       'report': 'View Detailed Report',
     };
     const WHAT_NEXT_PRIMARY_TARGET = {
-      'questions': { tab: 'understanding' },
-      'start': { tab: 'understanding' },
+      'questions': { tab: 'interview' },
+      'start': { tab: 'interview' },
       'scan': { tab: 'observation' },
       'optional-scan': { tab: 'observation' },
-      'none-needed': { tab: 'understanding' },
+      'none-needed': { tab: 'interview' },
       'refine': { tab: 'applications' },
       'report': { link: 'report' },
     };
@@ -3707,7 +3862,7 @@
         slots.push(whatNextSlotEl({
           label: 'Answer Questions', tone: 'primary',
           title: 'Answer a couple of quick questions for an early read — no scan required.',
-          onClick: (e) => { e.preventDefault(); switchTab('understanding'); },
+          onClick: (e) => { e.preventDefault(); switchTab('interview'); },
         }));
         const canImport = window.NavShell && typeof window.NavShell.triggerImport === 'function';
         slots.push(canImport ? whatNextSlotEl({
@@ -3804,6 +3959,35 @@
       return { hasSession, ctx, synthesis, state, evidenceSources, eligible };
     }
 
+    // Classic 7-segment glyph maps, a-g naming (a=top, b=upper-right,
+    // c=lower-right, d=bottom, e=lower-left, f=upper-left, g=middle) —
+    // see the .sevenseg-* CSS block above for the full instrument design.
+    const SEVEN_SEG_MAP = {
+      0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc',
+      5: 'afgcd', 6: 'afgecd', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg',
+    };
+    function setSevenSegDigit(containerId, litSegments) {
+      const container = document.getElementById(containerId);
+      container.querySelectorAll('.seg').forEach((seg) => {
+        seg.classList.toggle('lit', litSegments.indexOf(seg.dataset.seg) !== -1);
+      });
+    }
+    // The leftmost ("hundreds") position only ever shows blank or "1"
+    // (the b+c strokes) — see the CSS comment above for why this mirrors
+    // a 4-digit digital clock's leading position rather than a full
+    // glyph. Tens/ones always show a real digit, including a leading
+    // "0" for single-digit values (0% renders "00%", not " 0%") — a
+    // digital clock shows "05" minutes, not a blank leading space, and
+    // only the hundreds position gets the special no-leading-zero
+    // treatment this pass explicitly asked for.
+    function updateSevenSegValue(value, color) {
+      const clamped = Math.max(0, Math.min(100, Math.round(value)));
+      document.getElementById('gauge-conf-sevenseg').style.setProperty('--seg-color', color);
+      setSevenSegDigit('sevenseg-hundreds', clamped === 100 ? 'bc' : '');
+      setSevenSegDigit('sevenseg-tens', SEVEN_SEG_MAP[Math.floor((clamped % 100) / 10)]);
+      setSevenSegDigit('sevenseg-ones', SEVEN_SEG_MAP[clamped % 10]);
+    }
+
     function renderDashboard() {
       const { hasSession, ctx, synthesis, state, evidenceSources, eligible } = computeDashboardState();
 
@@ -3832,9 +4016,12 @@
       updateGaugeNeedle(confWrap, confPct);
       document.getElementById('gauge-conf-label').textContent = confLabel;
       document.getElementById('gauge-conf-label').style.color = confPct <= 0 ? '#64748b' : confColor;
-      // Numeric readout on its own centered line beneath the label, not
-      // inline with it — see CLAUDE.md, Coherence & Trust addendum.
-      document.getElementById('gauge-conf-value').textContent = confPct + '%';
+      // Numeric readout as the seven-segment digital instrument (Final
+      // Instrument Panel Refinement pass) — see updateSevenSegValue()
+      // above. Reuses confColor, the SAME color already driving the
+      // ring/needle/label, so the digits never disagree with the rest
+      // of the instrument about what tier is showing.
+      updateSevenSegValue(confPct, confColor);
 
       // Visible feedback: a brief pulse on Confidence whenever it actually
       // moves, so an Intended Use answer that doesn't change Suitability
@@ -3887,6 +4074,19 @@
       const recEl = document.getElementById('suitability-display-rec');
       recEl.textContent = recLabel;
       recEl.style.color = eligible ? recColor : '#94a3b8';
+
+      // Percentage — ONLY for a real, scan-backed, eligible reading.
+      // synthesis.score is the exact same number Results/Workspace show;
+      // clamped 0-100 for display only (the underlying value can be
+      // negative in edge cases — see computeSynthesis()). Deliberately
+      // absent for the contextual (Early Read) state, matching this
+      // codebase's standing "never fabricate false numeric precision for
+      // a context-only read" rule (Coherence & Trust addendum) — a
+      // directional label is honest there, a percentage would not be.
+      const pctEl = document.getElementById('suitability-display-pct');
+      pctEl.textContent = (eligible && state === ASSESSMENT_STATE_SCAN_BACKED)
+        ? `${Math.max(0, Math.min(100, Math.round(synthesis.score)))}%`
+        : '';
 
       // Qualifier — the SAME explanation the Why tab shows
       // (suitabilityExplanationText(), extracted specifically so the two
@@ -4033,12 +4233,18 @@
       </li>`;
     }
     // Five rows now, one per evidence dimension in ASSESSMENT_ARCHITECTURE.md
-    // (Observation / Understanding / Applications / Devices / Compatibility)
-    // — a one-to-one match with the five primary evidence-nav buttons. Per
-    // CLAUDE.md's own standing note, do not redesign the underlying
-    // confidence mathematics here: Observation and Understanding's BARS
-    // still read the exact same evidenceSourcesFor() contribution/
-    // maxContribution values that feed dashboardConfidencePct()
+    // (Observation / Interview / Applications / Devices / Compatibility) —
+    // a one-to-one match with the five primary evidence-nav buttons.
+    // ASSESSMENT_ARCHITECTURE.md itself still names this phase
+    // "Understanding" (a fixed, already-committed source-of-truth doc, not
+    // edited as part of the Interview rename) — this is a deliberate,
+    // documented terminology tension: the doc describes what the phase
+    // DOES ("What does the user likely need?"), the UI now names how it
+    // FEELS to the user (a conversation, not a completed state of
+    // comprehension). Per CLAUDE.md's own standing note, do not redesign
+    // the underlying confidence mathematics here: Observation and
+    // Interview's BARS still read the exact same evidenceSourcesFor()
+    // contribution/maxContribution values that feed dashboardConfidencePct()
     // (assessment.js, untouched) — only the readout TEXT changed this pass.
     //
     // Readout/Instrument Refinement pass: every status is now
@@ -4075,7 +4281,7 @@
       if (scan.presence === 'partial') return 'Review Results';
       return pendingCount > 0 ? 'Review Results' : 'Complete';
     }
-    function understandingStatusText(answeredCount) {
+    function interviewStatusText(answeredCount) {
       if (answeredCount === 0) return 'Answer Questions';
       if (answeredCount === 1) return 'Review Answers';
       return 'Described';
@@ -4094,6 +4300,46 @@
       if (progress.total === 0 || progress.confirmed === 0) return reviewLabel;
       if (progress.confirmed < progress.total) return `${progress.confirmed} Confirmed`;
       return 'Complete';
+    }
+    // Applications/Devices BAR — deliberately a different axis from the
+    // TEXT above. curationStatusText() (and its progress.confirmed count)
+    // answers "how much manual review has the user done" — a real action-
+    // progress signal, but it reads a blank/near-empty bar for a fresh
+    // scan even though appImportanceTier()/deviceImportanceTier() already
+    // has a real, non-manual opinion about most items (running/pinned/
+    // startup/UserAssist evidence, or Observation's own background-type
+    // detection) the instant a scan completes. Per this pass's brief
+    // ("the bar represents confidence that we understand what software
+    // matters... that confidence may eventually come from Observation /
+    // Interview / Manual confirmation / future heuristics / future
+    // community evidence"), the bar blends automatic + manual by reusing
+    // the EXACT SAME tier functions Detected Apps/Devices already render
+    // with, not a new score: an item counts as "resolved" once its tier
+    // is anything other than 'possible' — and since appImportanceTier()/
+    // deviceImportanceTier() already check decision.critical_to_me/
+    // doesnt_matter FIRST before falling back to the automatic heuristic,
+    // a manual confirmation always "wins" and counts too. This is honest
+    // blending of evidence this codebase already computes, not fabricated
+    // intermediate values — no new field, no new weight, no change to
+    // computeSynthesis()/dashboardConfidencePct() (both untouched).
+    //
+    // Architectural gap, documented rather than glossed over: today only
+    // Observation-derived automatic evidence and Manual confirmation
+    // actually exist as inputs to appImportanceTier()/deviceImportanceTier
+    // (). Interview (workload/relationship answers) does NOT currently
+    // feed either function — SUGGESTED_APPS_BY_USE_CASE/SUGGESTED_DEVICES_
+    // BY_USE_CASE only affect what's offered as a Suggested item on the
+    // Applications/Devices assessment-model tabs, never an existing
+    // Detected item's tier. Future heuristics and future community
+    // evidence are not wired in anywhere yet either. The bar is honest
+    // about what it currently blends (Observation + Manual); it is not
+    // yet the full Observation/Interview/Manual/heuristic/community blend
+    // the long-term vision describes.
+    function curationMeterPct(items, keyFn, tierFn) {
+      if (!items.length) return 0;
+      const personalContext = loadPersonalContext(sessionId, params);
+      const resolved = items.filter((item) => tierFn(item, personalContext.get(keyFn(item))) !== 'possible').length;
+      return Math.round((resolved / items.length) * 100);
     }
     // Compatibility — reused by both the meter row below AND (via
     // suitabilityExplanationText()/the findings source directly) the
@@ -4128,7 +4374,7 @@
       const scanStatus = observationStatusText(scan, observationPendingReviewCount());
 
       const answeredCount = (workload.presence === 'present' ? 1 : 0) + (relationship.presence === 'present' ? 1 : 0);
-      const understandingStatus = understandingStatusText(answeredCount);
+      const interviewStatus = interviewStatusText(answeredCount);
 
       const apps = currentResults ? ['native', 'emulated', 'unsupported', 'unknown'].reduce((list, b) => list.concat(currentResults[b] || []), []) : [];
       const devices = currentResults ? (currentResults.devices || []) : [];
@@ -4141,9 +4387,9 @@
 
       const rows = [
         evidenceMeterRow('observation', 'Observation', scanStatus, evidenceMeterPct(scan)),
-        evidenceMeterRow('understanding', 'Understanding', understandingStatus, evidenceMeterPct(workload, relationship)),
-        evidenceMeterRow('applications', 'Applications', applicationsStatus, appProgress.total > 0 ? Math.round((appProgress.confirmed / appProgress.total) * 100) : 0),
-        evidenceMeterRow('devices', 'Devices', devicesStatus, deviceProgress.total > 0 ? Math.round((deviceProgress.confirmed / deviceProgress.total) * 100) : 0),
+        evidenceMeterRow('interview', 'Interview', interviewStatus, evidenceMeterPct(workload, relationship)),
+        evidenceMeterRow('applications', 'Applications', applicationsStatus, curationMeterPct(apps, decisionKey, appImportanceTier)),
+        evidenceMeterRow('devices', 'Devices', devicesStatus, curationMeterPct(devices, deviceDecisionKey, deviceImportanceTier)),
         evidenceMeterRow('compatibility', 'Compatibility', compatibilityStatus, compatibilityMeterPct(findings)),
       ];
       return `<ul class="evidence-summary-list">${rows.join('')}</ul>`;
@@ -4301,10 +4547,10 @@
       // Reuses the same kind→tab mapping the What Next? primary button
       // targets (WHAT_NEXT_PRIMARY_TARGET) — 'report' has no tab entry
       // there (it's an off-page link), so it correctly falls back to
-      // 'understanding', the deliberate default/home tab (see
+      // 'interview', the deliberate default/home tab (see
       // EVIDENCE_CATEGORIES comment above).
       const target = WHAT_NEXT_PRIMARY_TARGET[next.kind];
-      activeTabId = (target && target.tab) || 'understanding';
+      activeTabId = (target && target.tab) || 'interview';
     }
 
     function renderAll() {
