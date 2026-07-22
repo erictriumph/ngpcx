@@ -103,25 +103,37 @@
     /* Narrowed (visual-refinement passes) — the recovered share went to
        .panel-instrument-cluster below, to give the Confidence gauge real
        room to become the dashboard's visual anchor. */
+    /* justify-content: flex-start (not center) so the "What Next?" title
+       anchors at a consistent top edge across all three panels regardless
+       of which one ends up tallest (see .dashboard-panels' align-items:
+       stretch) — see the matching flex-start on .panel-instrument-cluster
+       and .panel-suitability below, and #whatnext-queue's flex:1 1 auto,
+       which is what lets the Scanner control and the utility row still
+       anchor at the bottom while the title anchors at the top. */
     .panel-whatnext {
       flex: 0.75 1 0;
       min-width: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
     }
 
     /* CENTER — Instrument Cluster: the Confidence gauge and Evidence
        meters side by side (horizontal, not stacked), the dashboard's
        visual focus. A slightly brighter border marks it as the focal
-       panel without introducing a new color language. */
+       panel without introducing a new color language. align-items:
+       flex-start (not center) so both children's own eyebrow titles
+       ("Confidence" / "Evidence") anchor at the same top edge as the
+       other two panels' titles, instead of vertically centering within
+       whatever extra height .dashboard-panels' stretch alignment gives
+       this panel. */
     .panel-instrument-cluster {
       flex: 2.05 1 0;
       min-width: 0;
       display: flex;
       flex-direction: row;
-      align-items: center;
+      align-items: flex-start;
       gap: 0.9rem;
       padding: 0.65rem 0.85rem;
       border-color: #3b4a63;
@@ -135,14 +147,20 @@
     }
 
     /* RIGHT — Suitability: a fixed-width column housing the vertical LED
-       instrument (see .suitability-* rules further down). */
+       instrument (see .suitability-* rules further down). Horizontal
+       padding added (0 -> 0.5rem) so the tier labels — which can wrap to
+       two lines — never touch the panel's own edges; justify-content:
+       flex-start for the same title-alignment reason as the other two
+       panels above. */
     .panel-suitability {
       flex: 0 0 auto;
-      width: 164px;
+      width: 182px;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       gap: 0.3rem;
     }
 
@@ -375,6 +393,12 @@
       display: flex;
       flex-direction: column;
       gap: 0.3rem;
+      /* Grows to fill leftover vertical space so the Scanner control and
+         utility row stay anchored at the panel's bottom while the "What
+         Next?" title above stays anchored at the top (see .panel-whatnext
+         above — justify-content: flex-start). */
+      flex: 1 1 auto;
+      justify-content: center;
     }
 
     .whatnext-slot {
@@ -542,6 +566,51 @@
       text-transform: uppercase;
       letter-spacing: 0.03em;
       white-space: nowrap;
+    }
+
+    /* Persistent assessment-level utility commands (Load / Save / Clear /
+       Sign In) — per this pass's "assessment utility controls" brief.
+       Lives in the lower portion of the left Actions panel, visually
+       separated from the primary What Next queue AND from the Scanner
+       control by its own divider (both already have their own dividers
+       above them; this one gets a third). Deliberately calmer than the
+       command-button What Next slots — "utility actions may use a calmer,
+       more permanent button style" (INSTRUMENT_PANEL.md, Left Panel:
+       Actions) — no gradient, no glow, small muted text. */
+    .dashboard-utility-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #1e293b;
+      flex-wrap: wrap;
+    }
+
+    .dashboard-utility-btn {
+      background: none;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      font-size: 0.64rem;
+      font-weight: 700;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .dashboard-utility-btn:hover {
+      border-color: #64748b;
+      color: #e2e8f0;
+    }
+
+    .dashboard-utility-btn:focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 2px;
     }
 
     /* Content-styling classes reused by the More Info workspace view (see
@@ -914,6 +983,54 @@
     .evidence-tab.active::before {
       background: #93c5fd;
       box-shadow: 0 0 6px #93c5fd;
+    }
+
+    /* Secondary information controls — Why / Unknowns / More Info.
+       Visually subordinate to the five primary evidence-dimension
+       selectors above: smaller, muted, no illuminated-pushbutton
+       treatment, separated by its own divider. Still real
+       EVIDENCE_CATEGORIES entries dispatched through switchTab() — only
+       the visual weight differs, per this pass's "separate secondary
+       information controls" instruction. Deliberately reuses the existing
+       muted palette (#64748b / #334155 / the standing #3b82f6 accent at
+       low opacity) rather than introducing a new color. */
+    .evidence-nav-secondary {
+      margin-top: 0.55rem;
+      padding-top: 0.55rem;
+      border-top: 1px solid #334155;
+      display: flex;
+      justify-content: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .evidence-tab-secondary {
+      background: none;
+      border: 1px solid #334155;
+      color: #64748b;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 0.3rem 0.65rem;
+      border-radius: 7px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    }
+
+    .evidence-tab-secondary:hover {
+      border-color: #64748b;
+      color: #cbd5e1;
+    }
+
+    .evidence-tab-secondary:focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 2px;
+    }
+
+    .evidence-tab-secondary.active {
+      border-color: #3b82f6;
+      color: #93c5fd;
+      background: rgba(59, 130, 246, 0.1);
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -1641,6 +1758,16 @@
             <span class="scanner-instrument-value" id="scanner-activity-value">Ready</span>
           </button>
         </div>
+        <!-- Persistent assessment-level commands — visually separated (its
+             own divider) from both the What Next queue and the Scanner
+             control above it. See ASSESSMENT_ARCHITECTURE.md and
+             wireDashboardUtilityRow() below for what each button does. -->
+        <div class="dashboard-utility-row">
+          <button type="button" class="dashboard-utility-btn" id="utility-load-btn">Load</button>
+          <button type="button" class="dashboard-utility-btn" id="utility-save-btn">Save</button>
+          <button type="button" class="dashboard-utility-btn" id="utility-clear-btn">Clear</button>
+          <button type="button" class="dashboard-utility-btn" id="utility-signin-btn">Sign In</button>
+        </div>
       </div>
       <!-- CENTER: Instrument Cluster — the dashboard's visual focus. Confidence
            gauge on the left, Evidence meters to its right, laid out horizontally. -->
@@ -1679,10 +1806,16 @@
         <div class="gauge-label-sub" id="gauge-rec-sub"></div>
       </div>
     </div>
-    <!-- BOTTOM ROW: all 8 workspace view selectors — part of the
-         Instrument Panel, not the workspace beneath it. See
-         INSTRUMENT_PANEL.md, Bottom Row: Workspace View Selectors. -->
-    <nav class="evidence-nav" id="evidence-nav" role="tablist" aria-label="Workspace views"></nav>
+    <!-- PRIMARY ROW: the five evidence-dimension selectors — Scan,
+         Understanding, Applications, Devices, Compatibility — per
+         ASSESSMENT_ARCHITECTURE.md. Part of the Instrument Panel, not the
+         workspace beneath it. See INSTRUMENT_PANEL.md, Bottom Row:
+         Workspace View Selectors, for the illuminated-pushbutton language. -->
+    <nav class="evidence-nav" id="evidence-nav" role="tablist" aria-label="Evidence dimensions"></nav>
+    <!-- SECONDARY ROW: Why / Unknowns / More Info — subordinate
+         information controls, visually smaller and muted, separated from
+         the primary row by its own divider (see .evidence-nav-secondary). -->
+    <nav class="evidence-nav-secondary" id="evidence-nav-secondary" role="tablist" aria-label="Additional information"></nav>
   </div>
 
   <!-- WORKSPACE beneath the Instrument Panel — begins directly with the
@@ -1937,64 +2070,89 @@
 
     // ───────────────────────────────────────────────────────────────────
     // EVIDENCE CATEGORIES — the single source of truth for the Instrument
-    // Panel's bottom view-selector row and the Details Workspace it drives.
-    // Per INSTRUMENT_PANEL.md, ALL 8 workspace views now live in one flat
-    // selector row inside the Instrument Panel itself (never a duplicate
-    // nav below it, and never a separate expandable strip for Why/
-    // Unknowns/More Info) — adding a category is still a one-entry change,
-    // it just no longer says which zone/grid-cell it belongs to, since the
-    // 3-zone grid concept (Observed | Intent | Assessment) was retired in
-    // favor of one shallow row, per the frozen spec.
+    // Panel's view-selector rows and the Details Workspace they drive. Per
+    // ASSESSMENT_ARCHITECTURE.md (the project's architectural source of
+    // truth as of this pass — read it before changing this array), the
+    // five PRIMARY navigation destinations now map directly onto the
+    // funnel's five evidence dimensions: Scan (Observed Environment) ->
+    // Understanding -> Applications -> Devices -> Compatibility. These are
+    // "the primary navigation controls for reducing uncertainty in each
+    // evidence dimension," per the architecture doc's own framing, and
+    // correspond one-to-one with the five evidence meters (see
+    // evidenceSummaryHtml()).
     //
-    // "Current Computer" (the old scan-trigger tab) stays gone as a
-    // standalone destination — scanning is reached contextually, from
-    // wherever a scan would actually fill a gap (Detected Apps/Devices'
-    // empty state). "Findings" stays folded into Applications. "Community"
-    // is reachable via the top nav's own Community menu.
+    // Why / Unknowns / More Info are marked `secondary: true` — still
+    // ordinary entries in this same array, still selected via switchTab()
+    // and rendered into the same #details-workspace, but rendered into a
+    // visually subordinate SECOND row (see renderSecondaryNav()) rather
+    // than mixed into the five primary buttons, per this pass's explicit
+    // "separate secondary information controls" instruction. This is a
+    // presentation split only — the dispatch mechanism is unchanged.
     //
-    // Why / Unknowns / More Info were previously a separate toggle-panel
-    // system (.helper-toggle/.helper-panel) living inside the Instrument
-    // Panel itself — per INSTRUMENT_PANEL.md's Bottom Row / Workspace
-    // rules, they're now ordinary workspace views like any other, selected
-    // the same way and rendering into the same #details-workspace — see
-    // renderWhyTab()/renderUnknownsTab()/renderMoreInfoTab() below, which
-    // replace the old renderHelperPanels() content logic one-for-one.
+    // "Scan" replaces the old separate Detected Apps / Detected Devices
+    // primary destinations (renderScanTab() renders both, combined — see
+    // that function for why calling the two original tab renderers
+    // directly into sub-containers is safe here and would NOT be safe
+    // from two separate top-level tabs). "Understanding" is a rename of
+    // the old "Use Case" tab (id + label only — renderUseCaseTab() and its
+    // content are unchanged). "Compatibility" is new: a safe, honest
+    // placeholder per ASSESSMENT_ARCHITECTURE.md's Compatibility phase —
+    // real curated-item counts, no new interactive curation workflow (that
+    // remains explicitly out of scope for this pass).
     // ───────────────────────────────────────────────────────────────────
     const EVIDENCE_CATEGORIES = [
+      { id: 'scan', label: 'Scan', render: renderScanTab },
+      { id: 'understanding', label: 'Understanding', render: renderUseCaseTab },
       { id: 'applications', label: 'Applications', render: renderApplicationsTab },
       { id: 'devices', label: 'Devices', render: renderDevicesTab },
-      { id: 'use-case', label: 'Use Case', render: renderUseCaseTab },
-      { id: 'detected-apps', label: 'Detected Apps', render: renderDetectedAppsTab },
-      { id: 'detected-devices', label: 'Detected Devices', render: renderDetectedDevicesTab },
-      { id: 'why', label: 'Why', render: renderWhyTab },
-      { id: 'unknowns', label: 'Unknowns', render: renderUnknownsTab },
-      { id: 'more-info', label: 'More Info', render: renderMoreInfoTab },
+      { id: 'compatibility', label: 'Compatibility', render: renderCompatibilityTab },
+      { id: 'why', label: 'Why', render: renderWhyTab, secondary: true },
+      { id: 'unknowns', label: 'Unknowns', render: renderUnknownsTab, secondary: true },
+      { id: 'more-info', label: 'More Info', render: renderMoreInfoTab, secondary: true },
     ];
-    // Use Case is the deliberate default/home tab — this workspace works
-    // identically whether or not a scan has ever run, per the brief's own
-    // "a scan is an accelerator, not a prerequisite." chooseInitialTab()
-    // (below) can still override this once real evidence points somewhere
-    // more useful, but this is the fallback and the true empty-state home.
-    let activeTabId = 'use-case';
+    // Understanding is the deliberate default/home tab — this workspace
+    // works identically whether or not a scan has ever run, per the
+    // brief's own "a scan is an accelerator, not a prerequisite."
+    // chooseInitialTab() (below) can still override this once real
+    // evidence points somewhere more useful, but this is the fallback and
+    // the true empty-state home.
+    let activeTabId = 'understanding';
 
     function switchTab(tabId) {
       activeTabId = tabId;
       renderEvidenceNav();
+      renderSecondaryNav();
       renderDetailsWorkspace();
     }
 
-    // One shallow flat row of illuminated latching pushbuttons — see
-    // INSTRUMENT_PANEL.md, Bottom Row: Workspace View Selectors. No grid,
-    // no zone dividers; flex-wrap only kicks in if a narrow viewport
-    // genuinely can't fit all 8 on one line, which this pass doesn't
-    // specifically design for (laptop/desktop-first, per the spec).
+    // The five primary evidence-dimension selectors — illuminated latching
+    // pushbuttons, unchanged visual language from the prior pass (see
+    // INSTRUMENT_PANEL.md). One-to-one with the five evidence meters.
     function renderEvidenceNav() {
       const nav = document.getElementById('evidence-nav');
-      nav.innerHTML = EVIDENCE_CATEGORIES.map((cat) =>
+      const primary = EVIDENCE_CATEGORIES.filter((c) => !c.secondary);
+      nav.innerHTML = primary.map((cat) =>
         `<button type="button" class="evidence-tab${cat.id === activeTabId ? ' active' : ''}"
           data-tab="${cat.id}" role="tab" aria-selected="${cat.id === activeTabId ? 'true' : 'false'}">${escapeHtml(cat.label)}</button>`
       ).join('');
       nav.querySelectorAll('.evidence-tab').forEach((el) => {
+        el.addEventListener('click', () => switchTab(el.dataset.tab));
+      });
+    }
+
+    // Secondary information controls (Why / Unknowns / More Info) — smaller,
+    // muted buttons in their own subordinate row beneath the five primary
+    // selectors, separated by a divider. Still real EVIDENCE_CATEGORIES
+    // entries dispatched through the same switchTab()/renderDetailsWorkspace()
+    // path — only the visual weight differs from the primary row.
+    function renderSecondaryNav() {
+      const nav = document.getElementById('evidence-nav-secondary');
+      const secondary = EVIDENCE_CATEGORIES.filter((c) => c.secondary);
+      nav.innerHTML = secondary.map((cat) =>
+        `<button type="button" class="evidence-tab-secondary${cat.id === activeTabId ? ' active' : ''}"
+          data-tab="${cat.id}" role="tab" aria-selected="${cat.id === activeTabId ? 'true' : 'false'}">${escapeHtml(cat.label)}</button>`
+      ).join('');
+      nav.querySelectorAll('.evidence-tab-secondary').forEach((el) => {
         el.addEventListener('click', () => switchTab(el.dataset.tab));
       });
     }
@@ -2148,7 +2306,7 @@
     // scan state, and will pick up the current state honestly the moment
     // the user comes back (isScanActive() is read fresh on every render).
     function refreshScanProgressDisplay() {
-      if (activeTabId === 'detected-apps' || activeTabId === 'detected-devices') {
+      if (activeTabId === 'scan') {
         renderDetailsWorkspace();
       }
     }
@@ -2423,6 +2581,50 @@
           if (raw) applyImportanceOverride(raw, isDevice, btn.dataset.tier);
         });
       });
+    }
+
+    // "Scan" — the primary Observed Environment destination per
+    // ASSESSMENT_ARCHITECTURE.md ("Run scanner / Display discovered
+    // applications / Display discovered devices / Categorize discovered
+    // items / Allow category corrections / Capture observations"). Rather
+    // than inventing a new combined workspace, this wraps the two
+    // existing, fully-functional tab renderers (renderDetectedAppsTab()/
+    // renderDetectedDevicesTab()) unchanged — every capability they already
+    // had (tier classification, overrides, scan-progress display) is
+    // preserved exactly, just reached from one destination instead of two.
+    //
+    // The empty/pre-scan state is handled HERE, once, rather than by
+    // calling the two sub-renderers directly in that state — both of them
+    // render a scan CTA with a fixed id="run-scan-btn" when there's no
+    // scan yet (see scanCtaHtml()), so calling both into the page at once
+    // pre-scan would create two elements sharing that id and silently
+    // break wireScanButton()'s getElementById lookup for one of them. Once
+    // currentResults exists, neither sub-renderer touches that CTA at all
+    // (they go straight to classification), so calling both into separate
+    // sub-containers at that point is safe — confirmed by reading both
+    // functions before wiring this up, not assumed.
+    function renderScanTab(container) {
+      if (!currentResults && isScanActive()) {
+        container.innerHTML = scanProgressHtml('application or device');
+        return;
+      }
+      if (!currentResults) {
+        container.innerHTML = `
+          <div class="workspace-heading">Scan</div>
+          <div class="workspace-subtext">Discover the applications and devices on this computer — scanning is one way to build your assessment, not the only one.</div>
+          ${scanCtaHtml('Run a Readiness Scan', 'A small tool reads your installed apps and connected devices in seconds — low effort, high yield.')}
+        `;
+        wireScanButton();
+        return;
+      }
+      container.innerHTML = `
+        <div class="workspace-heading">Scan</div>
+        <div class="workspace-subtext">What this computer's scan found — every application and device, classified by how likely it is to matter. Nothing is hidden — correct any read below.</div>
+        <div id="scan-apps-section"></div>
+        <div id="scan-devices-section" style="margin-top:1.75rem;"></div>
+      `;
+      renderDetectedAppsTab(document.getElementById('scan-apps-section'));
+      renderDetectedDevicesTab(document.getElementById('scan-devices-section'));
     }
 
     function renderDetectedAppsTab(container) {
@@ -2825,6 +3027,64 @@
       document.getElementById('device-planned-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') addPlannedDevice(); });
     }
 
+    // "Compatibility" — the fifth evidence dimension per
+    // ASSESSMENT_ARCHITECTURE.md ("Will these important things work? How
+    // well? Native or emulated?"). Deliberately a SAFE PLACEHOLDER this
+    // pass, not the real Compatibility workflow described there (surfacing
+    // unknown/known compatibility, collecting research, incorporating
+    // community evidence — that stays out of scope, per this pass's own
+    // scope boundaries). What it does today: a real, honest summary built
+    // entirely from classifyPopulation() (already used elsewhere in this
+    // file, no new classification logic) of curated (non-background,
+    // non-"doesn't matter") apps by effective compatibility bucket, plus a
+    // link into the Detailed Report — where the real per-app compatibility
+    // research (Deeper Research Mode, Share Findings) already lives. This
+    // is "preserve the nearest existing behavior" applied literally: the
+    // nearest existing behavior for evaluating compatibility of specific
+    // items is the Detailed Report/Workspace, not a new page.
+    function renderCompatibilityTab(container) {
+      const heading = '<div class="workspace-heading">Compatibility</div>';
+      const intro = '<div class="workspace-subtext">Will the things that matter to you work — and how well? Native, emulated, or unsupported? This evaluates compatibility only for what you\'ve curated in Applications and Devices.</div>';
+      if (!currentResults) {
+        container.innerHTML = heading + intro + `
+          <p class="workspace-subtext">Compatibility evaluation needs curated evidence first. Run a Scan, then mark what matters in Applications and Devices.</p>
+          <div class="workspace-links"><a href="#" id="compat-go-applications">Go to Applications →</a></div>
+        `;
+        const link = document.getElementById('compat-go-applications');
+        if (link) link.addEventListener('click', (e) => { e.preventDefault(); switchTab('applications'); });
+        return;
+      }
+      const personalContext = loadPersonalContext(sessionId, params);
+      const classified = classifyPopulation(currentResults, personalContext);
+      const material = classified.filter(({ isBackground, decision }) =>
+        !isBackground && !(decision && decision.decision === 'doesnt_matter'));
+      const counts = { compatible: 0, emulated: 0, unsupported: 0, unknown: 0 };
+      material.forEach(({ effectiveBucket }) => {
+        if (effectiveBucket === 'native' || effectiveBucket === 'supported') counts.compatible++;
+        else if (effectiveBucket === 'emulated') counts.emulated++;
+        else if (effectiveBucket === 'unsupported') counts.unsupported++;
+        else counts.unknown++;
+      });
+      const needsAttention = material.filter(({ app, effectiveBucket, decision }) =>
+        classifyAssessmentItem({ decision, bucket: effectiveBucket, app }) === 'deservesAttention');
+      container.innerHTML = heading + intro + `
+        <div class="info-stats">
+          <div class="info-stat"><div class="info-stat-count">${counts.compatible}</div><div class="info-stat-label">Compatible</div></div>
+          <div class="info-stat"><div class="info-stat-count">${counts.emulated}</div><div class="info-stat-label">Emulated</div></div>
+          <div class="info-stat"><div class="info-stat-count">${counts.unsupported}</div><div class="info-stat-label">Unsupported</div></div>
+          <div class="info-stat"><div class="info-stat-count">${counts.unknown}</div><div class="info-stat-label">Unknown</div></div>
+        </div>
+        <p class="workspace-subtext">${material.length === 0
+          ? 'Nothing is currently curated as important — mark what matters in Applications or Devices to evaluate its compatibility here.'
+          : needsAttention.length > 0
+            ? `${needsAttention.length} curated item${needsAttention.length === 1 ? '' : 's'} still ${needsAttention.length === 1 ? 'needs' : 'need'} a closer look.`
+            : 'Every curated item currently has enough compatibility evidence.'}</p>
+        <div class="workspace-links">
+          <a href="${reportUrlFor(sessionId, scanLevelParam)}">Research Compatibility in Detail →</a>
+        </div>
+      `;
+    }
+
     // ───────────────────────────────────────────────────────────────────
     // DASHBOARD — gauges, Next Step pill, Why/Unknowns/More Info. Fixed
     // shape; only values/colors/panel content change.
@@ -3151,11 +3411,11 @@
       'report': 'View Detailed Report',
     };
     const WHAT_NEXT_PRIMARY_TARGET = {
-      'questions': { tab: 'use-case' },
-      'start': { tab: 'use-case' },
-      'scan': { tab: 'detected-apps' },
-      'optional-scan': { tab: 'detected-apps' },
-      'none-needed': { tab: 'use-case' },
+      'questions': { tab: 'understanding' },
+      'start': { tab: 'understanding' },
+      'scan': { tab: 'scan' },
+      'optional-scan': { tab: 'scan' },
+      'none-needed': { tab: 'understanding' },
       'refine': { tab: 'applications' },
       'report': { link: 'report' },
     };
@@ -3169,10 +3429,10 @@
     // is reachable via the top nav's own Community menu, not this console.
     const WHAT_NEXT_SECONDARY = {
       'questions': { label: 'View Detailed Report', link: 'report', title: 'See the full compatibility breakdown behind your current read.' },
-      'start': { label: 'Run a Scan', tab: 'detected-apps', title: 'A real scan replaces guesswork with your machine’s actual evidence.' },
+      'start': { label: 'Run a Scan', tab: 'scan', title: 'A real scan replaces guesswork with your machine’s actual evidence.' },
       'scan': { label: 'Browse Community Data', href: '/my-submissions.html', title: 'See what other CheckMyARM users have already found.' },
       'optional-scan': { label: 'Browse Community Data', href: '/my-submissions.html', title: 'See what other CheckMyARM users have already found.' },
-      'none-needed': { label: 'Run a Scan (Optional)', tab: 'detected-apps', title: 'Your answers may already be enough — scanning adds hard evidence if you want it.' },
+      'none-needed': { label: 'Run a Scan (Optional)', tab: 'scan', title: 'Your answers may already be enough — scanning adds hard evidence if you want it.' },
       'refine': { label: 'View Detailed Report', link: 'report', title: 'See the full compatibility breakdown behind today’s recommendation.' },
       'report': { label: 'Open Full Workspace', link: 'workspace', title: 'Dig into every app and device, and share what you find.' },
     };
@@ -3229,12 +3489,12 @@
         slots.push(whatNextSlotEl({
           label: 'Start Scan', tone: 'primary',
           title: 'Scan this computer to gather real compatibility evidence.',
-          onClick: (e) => { e.preventDefault(); switchTab('detected-apps'); },
+          onClick: (e) => { e.preventDefault(); switchTab('scan'); },
         }));
         slots.push(whatNextSlotEl({
           label: 'Answer Questions', tone: 'primary',
           title: 'Answer a couple of quick questions for an early read — no scan required.',
-          onClick: (e) => { e.preventDefault(); switchTab('use-case'); },
+          onClick: (e) => { e.preventDefault(); switchTab('understanding'); },
         }));
         const canImport = window.NavShell && typeof window.NavShell.triggerImport === 'function';
         slots.push(canImport ? whatNextSlotEl({
@@ -3531,13 +3791,33 @@
         <div class="evidence-led-row">${evidenceLedSegments(key, pct)}</div>
       </li>`;
     }
+    // Five rows now, one per evidence dimension in ASSESSMENT_ARCHITECTURE.md
+    // (Scan / Understanding / Applications / Devices / Compatibility) — a
+    // one-to-one match with the five primary evidence-nav buttons, per this
+    // pass's explicit "clear one-to-one relationship" instruction. Per
+    // CLAUDE.md's own standing note, do not redesign the underlying
+    // confidence mathematics here: Scan and Understanding still read the
+    // exact same evidenceSourcesFor() contribution/maxContribution values
+    // that feed dashboardConfidencePct() (assessment.js, untouched).
+    // Applications and Devices had no dedicated evidence source before this
+    // pass — they're given an honest TEMPORARY completion signal computed
+    // here, display-only (never fed into the confidence sum, matching the
+    // same zero-weight/presence-only pattern Community already used):
+    // whether this computer's scan has detected anything in that dimension
+    // yet. Compatibility reuses the existing zero-weight `findings` source
+    // (deserves-attention count) relabeled — that source already measures
+    // "do curated items currently have enough compatibility evidence,"
+    // which is exactly what this dimension asks. Community's own row is
+    // dropped from this 5-row display (the architecture calls for exactly
+    // five dimensions) — evidenceSourcesFor() itself is unchanged, so
+    // nothing about how Community evidence is computed or could be shown
+    // elsewhere is affected.
     function evidenceSummaryHtml(sources) {
       const byId = {};
       sources.forEach((s) => { byId[s.id] = s; });
       const scan = byId['current-computer-scan'];
       const workload = byId['intended-use-workload'];
       const relationship = byId['intended-use-relationship'];
-      const community = byId['community'];
       const findings = byId['findings'];
 
       let scanStatus;
@@ -3547,23 +3827,23 @@
       else scanStatus = (scan.quality !== null && scan.quality < SCAN_QUALITY_SUFFICIENT_THRESHOLD) ? 'Scanned — limited result' : 'Scanned';
 
       const answeredCount = (workload.presence === 'present' ? 1 : 0) + (relationship.presence === 'present' ? 1 : 0);
-      const intendedUseStatus = answeredCount === 0 ? 'Not described' : answeredCount === 1 ? 'Partially described' : 'Described';
+      const understandingStatus = answeredCount === 0 ? 'Not described' : answeredCount === 1 ? 'Partially described' : 'Described';
 
-      const communityStatus = community.presence === 'absent' ? 'No relevant evidence yet' : 'Evidence available';
+      const appTotal = currentResults ? ['native', 'emulated', 'unsupported', 'unknown'].reduce((n, b) => n + ((currentResults[b] || []).length), 0) : 0;
+      const deviceTotal = currentResults ? (currentResults.devices || []).length : 0;
+      const applicationsStatus = appTotal > 0 ? `${appTotal} detected` : 'Not yet scanned';
+      const devicesStatus = deviceTotal > 0 ? `${deviceTotal} detected` : 'Not yet scanned';
 
       const findingsNeedsAttention = findings.presence === 'present' && findings.explanation.indexOf('Nothing') !== 0;
-      const findingsStatus = findings.presence === 'absent' ? 'Not applicable yet'
-        : findingsNeedsAttention ? 'Some require attention' : 'None';
+      const compatibilityStatus = findings.presence === 'absent' ? 'Not applicable yet'
+        : findingsNeedsAttention ? 'Some need review' : 'None outstanding';
 
-      // Labels realigned to the five questions this whole surface answers
-      // (Scanner: what exists? / Use Case: what are you trying to
-      // accomplish? / Community / Please Verify: what doesn't quite add
-      // up? — the same language Applications' own verify-note now uses).
       const rows = [
-        evidenceMeterRow('scanner', 'Scanner', scanStatus, evidenceMeterPct(scan)),
-        evidenceMeterRow('use-case', 'Use Case', intendedUseStatus, evidenceMeterPct(workload, relationship)),
-        evidenceMeterRow('community', 'Community', communityStatus, evidenceMeterPct(community)),
-        evidenceMeterRow('please-verify', 'Please Verify', findingsStatus, evidenceMeterPct(findings)),
+        evidenceMeterRow('scan', 'Scan', scanStatus, evidenceMeterPct(scan)),
+        evidenceMeterRow('understanding', 'Understanding', understandingStatus, evidenceMeterPct(workload, relationship)),
+        evidenceMeterRow('applications', 'Applications', applicationsStatus, appTotal > 0 ? 100 : 0),
+        evidenceMeterRow('devices', 'Devices', devicesStatus, deviceTotal > 0 ? 100 : 0),
+        evidenceMeterRow('compatibility', 'Compatibility', compatibilityStatus, evidenceMeterPct(findings)),
       ];
       return `<ul class="evidence-summary-list">${rows.join('')}</ul>`;
     }
@@ -3664,7 +3944,60 @@
     document.getElementById('scanner-instrument-action').addEventListener('click', (e) => {
       e.preventDefault();
       if (!scannerInstrumentActionable(currentScannerState)) return;
-      switchTab('detected-apps');
+      switchTab('scan');
+    });
+
+    // Persistent assessment-level commands (Load / Save / Clear / Sign In)
+    // — wired once, since this row is static markup, never rebuilt (same
+    // pattern as the Scanner control above). Every action reuses real,
+    // already-existing behavior rather than inventing new logic:
+    //   Load    -> window.NavShell.triggerImport() — the exact function
+    //              powering "Import Assessment" everywhere else in the app.
+    //   Save    -> window.NavShell.triggerExport() — exports directly when
+    //              a real export function is loaded on the current page,
+    //              otherwise falls back to the Detailed Report (nav.js's
+    //              own existing fallback, unchanged).
+    //   Clear   -> gated behind window.NavShell.confirmReplaceIfNeeded(),
+    //              the SAME confirm() nav.js already uses before Import/
+    //              New Scan would discard unsaved Personal Context. If it
+    //              proceeds, this only navigates to '/' — nothing is
+    //              deleted (matching the confirm dialog's own wording,
+    //              "your current assessment will still exist"). No new
+    //              confirmation UX was invented for this.
+    //   Sign In -> clicks the top nav's own existing sign-in/account
+    //              dropdown trigger rather than re-implementing OAuth
+    //              entry points here.
+    // All four no-op (rather than fabricate a parallel behavior) if
+    // window.NavShell hasn't finished its async init yet — a brief window
+    // right after page load, not worth a second confirmation/fallback path.
+    function wireDashboardUtilityRow() {
+      document.getElementById('utility-load-btn').addEventListener('click', () => {
+        if (window.NavShell && typeof window.NavShell.triggerImport === 'function') window.NavShell.triggerImport();
+      });
+      document.getElementById('utility-save-btn').addEventListener('click', () => {
+        if (window.NavShell && typeof window.NavShell.triggerExport === 'function') window.NavShell.triggerExport();
+      });
+      document.getElementById('utility-clear-btn').addEventListener('click', () => {
+        if (!window.NavShell || typeof window.NavShell.confirmReplaceIfNeeded !== 'function') return;
+        if (window.NavShell.confirmReplaceIfNeeded(sessionId, 'Clearing this assessment')) {
+          window.location.href = '/';
+        }
+      });
+      document.getElementById('utility-signin-btn').addEventListener('click', () => {
+        const trigger = document.querySelector('[data-dropdown="signin"], [data-dropdown="account"]');
+        if (trigger) trigger.click();
+      });
+    }
+    wireDashboardUtilityRow();
+
+    // Reflects real sign-in state once nav.js's async auth check resolves
+    // — reads window.NavShell.auth (already fetched by nav.js, no second
+    // /api/auth-status call) rather than tracking auth state separately.
+    document.addEventListener('navshell:ready', () => {
+      const btn = document.getElementById('utility-signin-btn');
+      if (btn && window.NavShell && window.NavShell.auth) {
+        btn.textContent = window.NavShell.auth.user ? 'Account' : 'Sign In';
+      }
     });
 
     // ───────────────────────────────────────────────────────────────────
@@ -3681,15 +4014,16 @@
       // Reuses the same kind→tab mapping the What Next? primary button
       // targets (WHAT_NEXT_PRIMARY_TARGET) — 'report' has no tab entry
       // there (it's an off-page link), so it correctly falls back to
-      // 'use-case', the deliberate default/home tab (see
+      // 'understanding', the deliberate default/home tab (see
       // EVIDENCE_CATEGORIES comment above).
       const target = WHAT_NEXT_PRIMARY_TARGET[next.kind];
-      activeTabId = (target && target.tab) || 'use-case';
+      activeTabId = (target && target.tab) || 'understanding';
     }
 
     function renderAll() {
       renderDashboard();
       renderEvidenceNav();
+      renderSecondaryNav();
       renderDetailsWorkspace();
     }
 

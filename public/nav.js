@@ -773,10 +773,19 @@
         render(state);
         wireGlobalDismissal(document.getElementById('app-shell'));
         decorateInfoLinks(state);
-        // triggerImport is exposed so page-specific body copy (e.g. index.html's
-        // "Already started? Import your saved Workspace" hero prompt) can reuse
-        // the one universal import mechanism instead of a second implementation.
-        window.NavShell = { auth: auth, session: session, ready: true, triggerImport: () => triggerImport(state) };
+        // triggerImport/triggerExport/confirmReplaceIfNeeded are exposed so
+        // page-specific UI (e.g. index.html's Adaptive Assessment Surface —
+        // "Already started? Import your saved Workspace" hero prompt, and
+        // its left-panel Load/Save/Clear utility controls) can reuse the
+        // one universal implementation instead of a second one. No new
+        // logic here — these three functions already existed for nav.js's
+        // own menu actions; only the export changed.
+        window.NavShell = {
+            auth: auth, session: session, ready: true,
+            triggerImport: () => triggerImport(state),
+            triggerExport: () => triggerExport(state),
+            confirmReplaceIfNeeded: (sessionId, actionLabel) => confirmReplaceIfNeeded(sessionId, actionLabel),
+        };
         document.dispatchEvent(new CustomEvent('navshell:ready', { detail: state }));
         watchForSessionCompletion(state);
     }
