@@ -218,9 +218,19 @@
       margin-top: 0.15rem;
     }
 
+    /* Instrument-readout typography (Instrument Panel Refinement pass) —
+       this text is GENERATED per-assessment (the confidence/suitability
+       reading), not a permanent label painted on the panel, so it gets a
+       distinct monospace treatment (matching the existing .whatnext-slot
+       precedent) to make that distinction immediately legible. Color is
+       deliberately left alone here — it's set dynamically in JS for
+       semantic meaning (green/amber/red tiers, muted "no data" gray) and
+       the readout font is layered on top of that, never replacing it. */
     .gauge-label {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
       font-size: 0.74rem;
       font-weight: 700;
+      letter-spacing: 0.01em;
       color: #e2e8f0;
       text-align: center;
       max-width: 124px;
@@ -234,6 +244,7 @@
        isSuitabilityEligible()). Reserves its line even when empty so an
        ineligible/no-number state never shifts the block below it. */
     .gauge-value-area {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
       height: 1.05rem;
       line-height: 1.05rem;
       font-size: 0.92rem;
@@ -256,6 +267,53 @@
       height: 0.85rem;
       line-height: 0.85rem;
       margin-top: 0.1rem;
+    }
+
+    /* Suitability instrument readout — uses the whitespace beneath the LED
+       meter that used to sit empty. A small recessed "display" box (same
+       inset-shadow/dark-fill language .details-workspace already uses for
+       its own inset sub-panel) housing two compact key/value lines. Values
+       are generated per-assessment, so they get the same monospace
+       readout treatment as .gauge-label/.evidence-summary-status above —
+       consistent instrument-readout language throughout the panel. */
+    .suitability-readout {
+      width: 100%;
+      margin-top: 0.4rem;
+      padding: 0.4rem 0.5rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 7px;
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 0.22rem;
+    }
+
+    .suitability-readout-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.4rem;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 0.6rem;
+      line-height: 1.25;
+    }
+
+    .suitability-readout-key {
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+
+    .suitability-readout-value {
+      color: #7dd3fc;
+      font-weight: 600;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
     }
 
     /* Confidence-only typography scale-up (descendant selectors scoped to
@@ -568,49 +626,66 @@
       white-space: nowrap;
     }
 
-    /* Persistent assessment-level utility commands (Load / Save / Clear /
-       Sign In) — per this pass's "assessment utility controls" brief.
-       Lives in the lower portion of the left Actions panel, visually
-       separated from the primary What Next queue AND from the Scanner
-       control by its own divider (both already have their own dividers
-       above them; this one gets a third). Deliberately calmer than the
-       command-button What Next slots — "utility actions may use a calmer,
-       more permanent button style" (INSTRUMENT_PANEL.md, Left Panel:
-       Actions) — no gradient, no glow, small muted text. */
+    /* Persistent assessment-level utility commands (Load / Save / Clear) —
+       per this pass's "assessment utility controls" brief. Lives in the
+       lower portion of the left Actions panel, visually separated from
+       the primary What Next queue AND from the Scanner control by its own
+       divider (both already have their own dividers above them; this one
+       gets a third). Sign In is deliberately NOT duplicated here — it's
+       already a persistent global control in the top nav (Instrument
+       Panel Refinement pass); repeating it here was redundant, not
+       thorough.
+       Grouped as ONE bordered segmented-control strip (equal-width
+       buttons sharing a single outline, divided by hairlines) rather than
+       three separately-floating pill buttons — reads as one deliberately-
+       designed instrument-panel control, not three afterthought buttons.
+       Still deliberately calmer than the command-button What Next slots —
+       "utility actions may use a calmer, more permanent button style"
+       (INSTRUMENT_PANEL.md, Left Panel: Actions) — no gradient, no glow,
+       small muted text, matching the primary nav buttons' rounded-rect
+       language at a smaller, quieter scale rather than a different one. */
     .dashboard-utility-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.35rem;
       margin-top: 0.6rem;
       padding-top: 0.6rem;
       border-top: 1px solid #1e293b;
-      flex-wrap: wrap;
+    }
+
+    .dashboard-utility-group {
+      display: flex;
+      width: 100%;
+      border: 1px solid #334155;
+      border-radius: 7px;
+      overflow: hidden;
     }
 
     .dashboard-utility-btn {
+      flex: 1 1 0;
       background: none;
-      border: 1px solid #334155;
+      border: none;
+      border-right: 1px solid #334155;
       color: #94a3b8;
       font-size: 0.64rem;
       font-weight: 700;
-      padding: 0.3rem 0.5rem;
-      border-radius: 6px;
+      padding: 0.34rem 0.4rem;
       cursor: pointer;
       font-family: inherit;
       text-transform: uppercase;
       letter-spacing: 0.03em;
-      transition: border-color 0.15s ease, color 0.15s ease;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .dashboard-utility-btn:last-child {
+      border-right: none;
     }
 
     .dashboard-utility-btn:hover {
-      border-color: #64748b;
+      background-color: rgba(148, 163, 184, 0.1);
       color: #e2e8f0;
     }
 
     .dashboard-utility-btn:focus-visible {
       outline: 2px solid #60a5fa;
-      outline-offset: 2px;
+      outline-offset: -2px;
     }
 
     /* Content-styling classes reused by the More Info workspace view (see
@@ -670,8 +745,16 @@
       color: #94a3b8;
     }
 
+    /* Generated per-assessment readout (see .gauge-label above for the
+       same reasoning) — monospace + a cool cyan distinct from the plain
+       UI-text grays used for permanent labels, so "Scanned" / "3 detected"
+       / "Some need review" immediately reads as an instrument reading,
+       not painted-on copy. .evidence-summary-label (the dimension NAME —
+       "Scan", "Understanding", etc.) deliberately keeps its existing
+       plain typography — that IS the permanent label. */
     .evidence-summary-status {
-      color: #e2e8f0;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      color: #7dd3fc;
       font-weight: 600;
       text-align: right;
     }
@@ -898,21 +981,43 @@
 
     /* ═══════════════════════════════════════════════════════════════════
        INSTRUMENT PANEL — BOTTOM ROW: WORKSPACE VIEW SELECTORS
-       All 8 workspace views live in one shallow, flat pushbutton row
-       inside the Instrument Panel itself (see the .dashboard markup) —
-       never a duplicate nav tile grid below it, and never a separate
-       expandable strip for Why/Unknowns/More Info. The old 3-zone grid
-       (Observed | Intent | Assessment, with vertical dividers) is
-       retired in favor of this flat row, per INSTRUMENT_PANEL.md, Bottom
-       Row: Workspace View Selectors — that spec is now the source of
-       truth for this control, not this comment.
+       ONE shared row inside the Instrument Panel (see the .dashboard
+       markup) — never a duplicate nav tile grid below it. Primary
+       workflow (Observation/Understanding/Applications/Devices/
+       Compatibility) sits left-aligned; secondary utilities (Why/
+       Unknowns/More Info) sit right-aligned in the SAME row, smaller and
+       muted, separated by a vertical divider rather than a second
+       stacked row — reinforcing "primary workflow vs. secondary tools"
+       as a left/right split (Instrument Panel Refinement pass), not a
+       top/bottom one like the prior pass used. The old 3-zone grid
+       (Observed | Intent | Assessment) is long retired; INSTRUMENT_PANEL.md
+       Bottom Row: Workspace View Selectors documents the pushbutton
+       language itself, still current.
        ═══════════════════════════════════════════════════════════════════ */
     .evidence-nav {
       margin-top: 0.85rem;
       padding-top: 0.75rem;
       border-top: 1px solid #334155;
       display: flex;
-      justify-content: center;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .evidence-nav-primary {
+      /* flex: 1 1 auto (not the default 0 1 auto) — a nested multi-line
+         flex container's own intrinsic width is estimated by the browser
+         from its children's flex-basis, which undercounts real text width
+         (e.g. "Compatibility" needs more than its 108px basis), causing
+         the group to wrap internally even with plenty of room in the row.
+         Explicitly claiming the remaining space after the secondary group
+         (flex-shrink:0 below) sidesteps that intrinsic-sizing guess
+         entirely — confirmed by direct measurement before/after this
+         property was added, not assumed. */
+      flex: 1 1 auto;
+      display: flex;
+      justify-content: flex-start;
       align-items: stretch;
       gap: 0.45rem;
       flex-wrap: wrap;
@@ -994,14 +1099,20 @@
        information controls" instruction. Deliberately reuses the existing
        muted palette (#64748b / #334155 / the standing #3b82f6 accent at
        low opacity) rather than introducing a new color. */
+    /* Right-aligned within the shared row (see .evidence-nav above) — a
+       vertical divider (not the old horizontal one, now that this lives
+       beside the primary group instead of beneath it) is what visually
+       reads as "a different, subordinate category of control" without
+       consuming an extra row of vertical space. */
     .evidence-nav-secondary {
-      margin-top: 0.55rem;
-      padding-top: 0.55rem;
-      border-top: 1px solid #334155;
       display: flex;
-      justify-content: center;
-      gap: 0.4rem;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.3rem;
       flex-wrap: wrap;
+      flex-shrink: 0;
+      padding-left: 0.75rem;
+      border-left: 1px solid #334155;
     }
 
     .evidence-tab-secondary {
@@ -1760,13 +1871,16 @@
         </div>
         <!-- Persistent assessment-level commands — visually separated (its
              own divider) from both the What Next queue and the Scanner
-             control above it. See ASSESSMENT_ARCHITECTURE.md and
-             wireDashboardUtilityRow() below for what each button does. -->
+             control above it. Sign In deliberately omitted — it's already
+             a persistent global control in the top nav; see
+             ASSESSMENT_ARCHITECTURE.md and wireDashboardUtilityRow() below
+             for what each button does. -->
         <div class="dashboard-utility-row">
-          <button type="button" class="dashboard-utility-btn" id="utility-load-btn">Load</button>
-          <button type="button" class="dashboard-utility-btn" id="utility-save-btn">Save</button>
-          <button type="button" class="dashboard-utility-btn" id="utility-clear-btn">Clear</button>
-          <button type="button" class="dashboard-utility-btn" id="utility-signin-btn">Sign In</button>
+          <div class="dashboard-utility-group">
+            <button type="button" class="dashboard-utility-btn" id="utility-load-btn">Load</button>
+            <button type="button" class="dashboard-utility-btn" id="utility-save-btn">Save</button>
+            <button type="button" class="dashboard-utility-btn" id="utility-clear-btn">Clear</button>
+          </div>
         </div>
       </div>
       <!-- CENTER: Instrument Cluster — the dashboard's visual focus. Confidence
@@ -1804,6 +1918,22 @@
           <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
         </div>
         <div class="gauge-label-sub" id="gauge-rec-sub"></div>
+        <!-- Compact instrument readout — uses the whitespace beneath the
+             LED meter for two more compact facts (primary uncertainty,
+             suggested next step) alongside the Recommendation/qualifier
+             already above. Populated in renderDashboard(); no new scoring
+             logic, purely a second presentation of already-computed
+             values. See ASSESSMENT_ARCHITECTURE.md. -->
+        <div class="suitability-readout" id="suitability-readout">
+          <div class="suitability-readout-row">
+            <span class="suitability-readout-key">Uncertainty</span>
+            <span class="suitability-readout-value" id="suitability-readout-uncertainty">—</span>
+          </div>
+          <div class="suitability-readout-row">
+            <span class="suitability-readout-key">Next</span>
+            <span class="suitability-readout-value" id="suitability-readout-next">—</span>
+          </div>
+        </div>
       </div>
     </div>
     <!-- PRIMARY ROW: the five evidence-dimension selectors — Scan,
@@ -1811,11 +1941,15 @@
          ASSESSMENT_ARCHITECTURE.md. Part of the Instrument Panel, not the
          workspace beneath it. See INSTRUMENT_PANEL.md, Bottom Row:
          Workspace View Selectors, for the illuminated-pushbutton language. -->
-    <nav class="evidence-nav" id="evidence-nav" role="tablist" aria-label="Evidence dimensions"></nav>
-    <!-- SECONDARY ROW: Why / Unknowns / More Info — subordinate
-         information controls, visually smaller and muted, separated from
-         the primary row by its own divider (see .evidence-nav-secondary). -->
-    <nav class="evidence-nav-secondary" id="evidence-nav-secondary" role="tablist" aria-label="Additional information"></nav>
+    <!-- ONE shared row: primary workflow (left-aligned) and secondary
+         utilities — Why / Unknowns / More Info — (right-aligned, smaller,
+         muted) share the same physical strip rather than stacking as two
+         rows, reinforcing "primary workflow vs. secondary tools" as a
+         left/right split instead of a top/bottom one. -->
+    <nav class="evidence-nav" id="evidence-nav" aria-label="Assessment workspaces">
+      <div class="evidence-nav-primary" id="evidence-nav-primary" role="tablist" aria-label="Evidence dimensions"></div>
+      <div class="evidence-nav-secondary" id="evidence-nav-secondary" role="tablist" aria-label="Additional information"></div>
+    </nav>
   </div>
 
   <!-- WORKSPACE beneath the Instrument Panel — begins directly with the
@@ -2083,25 +2217,33 @@
     //
     // Why / Unknowns / More Info are marked `secondary: true` — still
     // ordinary entries in this same array, still selected via switchTab()
-    // and rendered into the same #details-workspace, but rendered into a
-    // visually subordinate SECOND row (see renderSecondaryNav()) rather
-    // than mixed into the five primary buttons, per this pass's explicit
-    // "separate secondary information controls" instruction. This is a
-    // presentation split only — the dispatch mechanism is unchanged.
+    // and rendered into the same #details-workspace. Per this refinement
+    // pass, primary and secondary now share ONE physical row (#evidence-nav)
+    // instead of two stacked rows — see renderEvidenceNav() below, which
+    // renders both groups into their own inner container
+    // (#evidence-nav-primary left-aligned, #evidence-nav-secondary
+    // right-aligned) so the row reads as one instrument-panel strip with a
+    // clear primary/secondary visual split, not two separate navs. This is
+    // a presentation split only — the dispatch mechanism is unchanged.
     //
-    // "Scan" replaces the old separate Detected Apps / Detected Devices
-    // primary destinations (renderScanTab() renders both, combined — see
-    // that function for why calling the two original tab renderers
-    // directly into sub-containers is safe here and would NOT be safe
-    // from two separate top-level tabs). "Understanding" is a rename of
-    // the old "Use Case" tab (id + label only — renderUseCaseTab() and its
-    // content are unchanged). "Compatibility" is new: a safe, honest
-    // placeholder per ASSESSMENT_ARCHITECTURE.md's Compatibility phase —
-    // real curated-item counts, no new interactive curation workflow (that
-    // remains explicitly out of scope for this pass).
+    // "Observation" (renamed from "Scan" this pass — the architecture
+    // distinguishes Observation from Understanding as parallel concepts;
+    // "Scan" only names one way observations are gathered) replaces the
+    // old separate Detected Apps / Detected Devices primary destinations
+    // (renderObservationTab() renders both, combined — see that function
+    // for why calling the two original tab renderers directly into sub-
+    // containers is safe here and would NOT be safe from two separate
+    // top-level tabs). The scanning MECHANISM itself — scanCtaHtml(),
+    // wireScanButton(), the Scanner instrument, "Run Scan"/"Rescan" CTA
+    // text — is deliberately NOT renamed; only the workspace/tab identity
+    // changed. "Understanding" is a rename of the old "Use Case" tab (id +
+    // label only — renderUseCaseTab() and its content are unchanged).
+    // "Compatibility" is a safe, honest placeholder per
+    // ASSESSMENT_ARCHITECTURE.md's Compatibility phase — real curated-item
+    // counts, no new interactive curation workflow (out of scope).
     // ───────────────────────────────────────────────────────────────────
     const EVIDENCE_CATEGORIES = [
-      { id: 'scan', label: 'Scan', render: renderScanTab },
+      { id: 'observation', label: 'Observation', render: renderObservationTab },
       { id: 'understanding', label: 'Understanding', render: renderUseCaseTab },
       { id: 'applications', label: 'Applications', render: renderApplicationsTab },
       { id: 'devices', label: 'Devices', render: renderDevicesTab },
@@ -2128,8 +2270,11 @@
     // The five primary evidence-dimension selectors — illuminated latching
     // pushbuttons, unchanged visual language from the prior pass (see
     // INSTRUMENT_PANEL.md). One-to-one with the five evidence meters.
+    // Rendered into #evidence-nav-primary, the left-aligned group within
+    // the single shared #evidence-nav row (see renderSecondaryNav() for
+    // the right-aligned counterpart).
     function renderEvidenceNav() {
-      const nav = document.getElementById('evidence-nav');
+      const nav = document.getElementById('evidence-nav-primary');
       const primary = EVIDENCE_CATEGORIES.filter((c) => !c.secondary);
       nav.innerHTML = primary.map((cat) =>
         `<button type="button" class="evidence-tab${cat.id === activeTabId ? ' active' : ''}"
@@ -2141,10 +2286,13 @@
     }
 
     // Secondary information controls (Why / Unknowns / More Info) — smaller,
-    // muted buttons in their own subordinate row beneath the five primary
-    // selectors, separated by a divider. Still real EVIDENCE_CATEGORIES
-    // entries dispatched through the same switchTab()/renderDetailsWorkspace()
-    // path — only the visual weight differs from the primary row.
+    // muted, right-aligned within the SAME row as the five primary
+    // selectors (see #evidence-nav-secondary in the markup) rather than a
+    // separate stacked row, so the whole selector strip reads as one
+    // instrument-panel row: primary workflow on the left, utilities on the
+    // right. Still real EVIDENCE_CATEGORIES entries dispatched through the
+    // same switchTab()/renderDetailsWorkspace() path — only the visual
+    // weight and position differ from the primary group.
     function renderSecondaryNav() {
       const nav = document.getElementById('evidence-nav-secondary');
       const secondary = EVIDENCE_CATEGORIES.filter((c) => c.secondary);
@@ -2306,7 +2454,7 @@
     // scan state, and will pick up the current state honestly the moment
     // the user comes back (isScanActive() is read fresh on every render).
     function refreshScanProgressDisplay() {
-      if (activeTabId === 'scan') {
+      if (activeTabId === 'observation') {
         renderDetailsWorkspace();
       }
     }
@@ -2583,8 +2731,9 @@
       });
     }
 
-    // "Scan" — the primary Observed Environment destination per
-    // ASSESSMENT_ARCHITECTURE.md ("Run scanner / Display discovered
+    // "Observation" (renamed from "Scan" this pass — see EVIDENCE_CATEGORIES
+    // comment above for why) — the primary Observed Environment destination
+    // per ASSESSMENT_ARCHITECTURE.md ("Run scanner / Display discovered
     // applications / Display discovered devices / Categorize discovered
     // items / Allow category corrections / Capture observations"). Rather
     // than inventing a new combined workspace, this wraps the two
@@ -2592,6 +2741,10 @@
     // renderDetectedDevicesTab()) unchanged — every capability they already
     // had (tier classification, overrides, scan-progress display) is
     // preserved exactly, just reached from one destination instead of two.
+    // The CTA copy and button text still say "Scan"/"Run a Readiness
+    // Scan"/"Rescan" — scanning is the MECHANISM this workspace observes
+    // through, that name doesn't change even though the workspace's own
+    // identity now does.
     //
     // The empty/pre-scan state is handled HERE, once, rather than by
     // calling the two sub-renderers directly in that state — both of them
@@ -2603,14 +2756,14 @@
     // (they go straight to classification), so calling both into separate
     // sub-containers at that point is safe — confirmed by reading both
     // functions before wiring this up, not assumed.
-    function renderScanTab(container) {
+    function renderObservationTab(container) {
       if (!currentResults && isScanActive()) {
         container.innerHTML = scanProgressHtml('application or device');
         return;
       }
       if (!currentResults) {
         container.innerHTML = `
-          <div class="workspace-heading">Scan</div>
+          <div class="workspace-heading">Observation</div>
           <div class="workspace-subtext">Discover the applications and devices on this computer — scanning is one way to build your assessment, not the only one.</div>
           ${scanCtaHtml('Run a Readiness Scan', 'A small tool reads your installed apps and connected devices in seconds — low effort, high yield.')}
         `;
@@ -2618,7 +2771,7 @@
         return;
       }
       container.innerHTML = `
-        <div class="workspace-heading">Scan</div>
+        <div class="workspace-heading">Observation</div>
         <div class="workspace-subtext">What this computer's scan found — every application and device, classified by how likely it is to matter. Nothing is hidden — correct any read below.</div>
         <div id="scan-apps-section"></div>
         <div id="scan-devices-section" style="margin-top:1.75rem;"></div>
@@ -3413,8 +3566,8 @@
     const WHAT_NEXT_PRIMARY_TARGET = {
       'questions': { tab: 'understanding' },
       'start': { tab: 'understanding' },
-      'scan': { tab: 'scan' },
-      'optional-scan': { tab: 'scan' },
+      'scan': { tab: 'observation' },
+      'optional-scan': { tab: 'observation' },
       'none-needed': { tab: 'understanding' },
       'refine': { tab: 'applications' },
       'report': { link: 'report' },
@@ -3429,10 +3582,10 @@
     // is reachable via the top nav's own Community menu, not this console.
     const WHAT_NEXT_SECONDARY = {
       'questions': { label: 'View Detailed Report', link: 'report', title: 'See the full compatibility breakdown behind your current read.' },
-      'start': { label: 'Run a Scan', tab: 'scan', title: 'A real scan replaces guesswork with your machine’s actual evidence.' },
+      'start': { label: 'Run a Scan', tab: 'observation', title: 'A real scan replaces guesswork with your machine’s actual evidence.' },
       'scan': { label: 'Browse Community Data', href: '/my-submissions.html', title: 'See what other CheckMyARM users have already found.' },
       'optional-scan': { label: 'Browse Community Data', href: '/my-submissions.html', title: 'See what other CheckMyARM users have already found.' },
-      'none-needed': { label: 'Run a Scan (Optional)', tab: 'scan', title: 'Your answers may already be enough — scanning adds hard evidence if you want it.' },
+      'none-needed': { label: 'Run a Scan (Optional)', tab: 'observation', title: 'Your answers may already be enough — scanning adds hard evidence if you want it.' },
       'refine': { label: 'View Detailed Report', link: 'report', title: 'See the full compatibility breakdown behind today’s recommendation.' },
       'report': { label: 'Open Full Workspace', link: 'workspace', title: 'Dig into every app and device, and share what you find.' },
     };
@@ -3489,7 +3642,7 @@
         slots.push(whatNextSlotEl({
           label: 'Start Scan', tone: 'primary',
           title: 'Scan this computer to gather real compatibility evidence.',
-          onClick: (e) => { e.preventDefault(); switchTab('scan'); },
+          onClick: (e) => { e.preventDefault(); switchTab('observation'); },
         }));
         slots.push(whatNextSlotEl({
           label: 'Answer Questions', tone: 'primary',
@@ -3594,6 +3747,12 @@
     function renderDashboard() {
       const { hasSession, ctx, synthesis, state, evidenceSources, eligible } = computeDashboardState();
 
+      // Computed early (moved up from just before renderWhatNextPanel())
+      // so the new Suitability instrument readout — see below — can reuse
+      // this exact value for its "Next" line rather than recomputing it a
+      // second time; nextActionFor() itself is untouched.
+      const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
+
       // Confidence — how much evidence of ANY kind (scan or Intended Use)
       // currently supports today's read. See assessment.js,
       // evidenceSourcesFor() — deliberately NOT the same value as
@@ -3689,6 +3848,21 @@
       }
       lastRecLabel = recLabel;
 
+      // Suitability instrument readout — uses the whitespace beneath the
+      // LED meter for two more compact facts, alongside the Recommendation
+      // (gauge-rec-label) and qualifier (gauge-rec-sub) already above.
+      // Both values are read from data ALREADY computed elsewhere on this
+      // page (evidenceSources' `findings` entry; the `next` action this
+      // same render already derived for the What Next panel) — no new
+      // scoring or recommendation logic, purely a second, compact
+      // presentation of existing facts. See ASSESSMENT_ARCHITECTURE.md.
+      document.getElementById('suitability-readout-uncertainty').textContent =
+        compatibilityStatusText(evidenceSources.find((s) => s.id === 'findings'));
+      const nextStepLabel = WHAT_NEXT_PRIMARY_LABEL[next.kind] || 'Review your assessment';
+      const nextStepEl = document.getElementById('suitability-readout-next');
+      nextStepEl.textContent = nextStepLabel;
+      nextStepEl.title = next.text || '';
+
       // Evidence / Signals — permanently visible in the middle panel, on
       // every render. This is the Composition Correction fix: the exact
       // same evidenceSummaryHtml()/evidenceMeterRow() output that used to
@@ -3701,7 +3875,6 @@
       // What Next? panel — reuses nextActionFor()'s existing {kind, text}
       // output verbatim (see assessment.js); this file only turns it into
       // buttons, it never re-derives the recommendation itself.
-      const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
       renderWhatNextPanel(next);
 
       // Why / Unknowns / More Info are ordinary workspace views now (see
@@ -3812,6 +3985,16 @@
     // five dimensions) — evidenceSourcesFor() itself is unchanged, so
     // nothing about how Community evidence is computed or could be shown
     // elsewhere is affected.
+    // Shared by the Compatibility evidence-meter row AND the Suitability
+    // panel's "Primary uncertainty" readout (see renderDashboard()) — one
+    // interpretation of the `findings` evidence source, not two
+    // independently-maintained copies of the same branching.
+    function compatibilityStatusText(findings) {
+      if (!findings || findings.presence === 'absent') return 'Not applicable yet';
+      const needsAttention = findings.explanation.indexOf('Nothing') !== 0;
+      return needsAttention ? 'Some need review' : 'None outstanding';
+    }
+
     function evidenceSummaryHtml(sources) {
       const byId = {};
       sources.forEach((s) => { byId[s.id] = s; });
@@ -3834,12 +4017,10 @@
       const applicationsStatus = appTotal > 0 ? `${appTotal} detected` : 'Not yet scanned';
       const devicesStatus = deviceTotal > 0 ? `${deviceTotal} detected` : 'Not yet scanned';
 
-      const findingsNeedsAttention = findings.presence === 'present' && findings.explanation.indexOf('Nothing') !== 0;
-      const compatibilityStatus = findings.presence === 'absent' ? 'Not applicable yet'
-        : findingsNeedsAttention ? 'Some need review' : 'None outstanding';
+      const compatibilityStatus = compatibilityStatusText(findings);
 
       const rows = [
-        evidenceMeterRow('scan', 'Scan', scanStatus, evidenceMeterPct(scan)),
+        evidenceMeterRow('observation', 'Observation', scanStatus, evidenceMeterPct(scan)),
         evidenceMeterRow('understanding', 'Understanding', understandingStatus, evidenceMeterPct(workload, relationship)),
         evidenceMeterRow('applications', 'Applications', applicationsStatus, appTotal > 0 ? 100 : 0),
         evidenceMeterRow('devices', 'Devices', devicesStatus, deviceTotal > 0 ? 100 : 0),
@@ -3944,30 +4125,30 @@
     document.getElementById('scanner-instrument-action').addEventListener('click', (e) => {
       e.preventDefault();
       if (!scannerInstrumentActionable(currentScannerState)) return;
-      switchTab('scan');
+      switchTab('observation');
     });
 
-    // Persistent assessment-level commands (Load / Save / Clear / Sign In)
-    // — wired once, since this row is static markup, never rebuilt (same
-    // pattern as the Scanner control above). Every action reuses real,
-    // already-existing behavior rather than inventing new logic:
-    //   Load    -> window.NavShell.triggerImport() — the exact function
-    //              powering "Import Assessment" everywhere else in the app.
-    //   Save    -> window.NavShell.triggerExport() — exports directly when
-    //              a real export function is loaded on the current page,
-    //              otherwise falls back to the Detailed Report (nav.js's
-    //              own existing fallback, unchanged).
-    //   Clear   -> gated behind window.NavShell.confirmReplaceIfNeeded(),
-    //              the SAME confirm() nav.js already uses before Import/
-    //              New Scan would discard unsaved Personal Context. If it
-    //              proceeds, this only navigates to '/' — nothing is
-    //              deleted (matching the confirm dialog's own wording,
-    //              "your current assessment will still exist"). No new
-    //              confirmation UX was invented for this.
-    //   Sign In -> clicks the top nav's own existing sign-in/account
-    //              dropdown trigger rather than re-implementing OAuth
-    //              entry points here.
-    // All four no-op (rather than fabricate a parallel behavior) if
+    // Persistent assessment-level commands (Load / Save / Clear) — wired
+    // once, since this row is static markup, never rebuilt (same pattern
+    // as the Scanner control above). Sign In is deliberately NOT one of
+    // these — it's already a persistent global control in the top nav
+    // (nav.js), so a second copy here would be redundant, not thorough
+    // (Instrument Panel Refinement pass). Every remaining action reuses
+    // real, already-existing behavior rather than inventing new logic:
+    //   Load  -> window.NavShell.triggerImport() — the exact function
+    //            powering "Import Assessment" everywhere else in the app.
+    //   Save  -> window.NavShell.triggerExport() — exports directly when
+    //            a real export function is loaded on the current page,
+    //            otherwise falls back to the Detailed Report (nav.js's
+    //            own existing fallback, unchanged).
+    //   Clear -> gated behind window.NavShell.confirmReplaceIfNeeded(),
+    //            the SAME confirm() nav.js already uses before Import/
+    //            New Scan would discard unsaved Personal Context. If it
+    //            proceeds, this only navigates to '/' — nothing is
+    //            deleted (matching the confirm dialog's own wording,
+    //            "your current assessment will still exist"). No new
+    //            confirmation UX was invented for this.
+    // All three no-op (rather than fabricate a parallel behavior) if
     // window.NavShell hasn't finished its async init yet — a brief window
     // right after page load, not worth a second confirmation/fallback path.
     function wireDashboardUtilityRow() {
@@ -3983,22 +4164,8 @@
           window.location.href = '/';
         }
       });
-      document.getElementById('utility-signin-btn').addEventListener('click', () => {
-        const trigger = document.querySelector('[data-dropdown="signin"], [data-dropdown="account"]');
-        if (trigger) trigger.click();
-      });
     }
     wireDashboardUtilityRow();
-
-    // Reflects real sign-in state once nav.js's async auth check resolves
-    // — reads window.NavShell.auth (already fetched by nav.js, no second
-    // /api/auth-status call) rather than tracking auth state separately.
-    document.addEventListener('navshell:ready', () => {
-      const btn = document.getElementById('utility-signin-btn');
-      if (btn && window.NavShell && window.NavShell.auth) {
-        btn.textContent = window.NavShell.auth.user ? 'Account' : 'Sign In';
-      }
-    });
 
     // ───────────────────────────────────────────────────────────────────
     // Initial tab choice — computed exactly once, from whatever evidence
