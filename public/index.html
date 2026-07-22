@@ -128,15 +128,68 @@
        other two panels' titles, instead of vertically centering within
        whatever extra height .dashboard-panels' stretch alignment gives
        this panel. */
+    /* container-type: inline-size turns this panel into a query container
+       for the @container rule below (Final responsive/coherence pass) —
+       deliberately a CONTAINER query, not a viewport media query. This
+       panel's own rendered width is NOT a fixed fraction of the viewport:
+       it's whatever's left over after .panel-whatnext (flex 0.75) and
+       .panel-suitability (fixed 256px) take their share in a row, a share
+       that itself changes shape again once the outer 640px viewport
+       breakpoint stacks all three top-level panels full-width. A single
+       viewport media query would have to separately account for both of
+       those regimes; a container query just asks "how wide am I, right
+       now, regardless of why," which is the actual question ("where does
+       the composition stop fitting cleanly") this pass was asked to
+       answer.
+       This panel itself no longer carries flex-direction/gap/align-items
+       — a real bug found during verification, not anticipated in the
+       design: a CSS container cannot query ITSELF (the spec resolves
+       "nearest ancestor container" starting from an element's PARENT, so
+       an element named as its own container never matches its own
+       @container rule — confirmed live, the row/column switch silently
+       never fired when both the container-type and the flex-direction
+       lived on the same element). Fixed by moving the actual row/column
+       layout onto a new inner wrapper, .instrument-cluster-inner, which
+       IS a genuine descendant of this container and so correctly matches
+       the query below. */
     .panel-instrument-cluster {
       flex: 2.05 1 0;
       min-width: 0;
+      padding: 0.65rem 0.85rem;
+      border-color: #3b4a63;
+      container-type: inline-size;
+      container-name: instrument-cluster;
+    }
+
+    .instrument-cluster-inner {
       display: flex;
       flex-direction: row;
       align-items: flex-start;
       gap: 0.9rem;
-      padding: 0.65rem 0.85rem;
-      border-color: #3b4a63;
+      width: 100%;
+    }
+
+    /* Reflow point derived from measurement, not a device-class number:
+       .gauge-block is a fixed 240px (never shrinks — the gauge/digit
+       geometry is fixed-pixel) plus this panel's own horizontal padding
+       (~27px) and gap (~14px) leaves Evidence roughly (container width -
+       281px) to work with. Evidence's 32-segment meter rows (.evidence-
+       led, flex:1 1 0, no per-segment minimum) will keep shrinking forever
+       rather than wrapping, so below a real content width they degrade
+       into illegible slivers rather than clipping outright — confirmed by
+       direct measurement in the browser (see CLAUDE.md/commit notes) that
+       Evidence needs roughly 190-200px of its own room to stay legible.
+       480px total container width (Evidence's own ~200-215px, once the
+       fixed 240px gauge + spacing is subtracted) is that measured
+       threshold, not a named breakpoint. */
+    @container instrument-cluster (max-width: 480px) {
+      .instrument-cluster-inner {
+        flex-direction: column;
+        align-items: center;
+      }
+      .panel-evidence {
+        width: 100%;
+      }
     }
 
     .panel-evidence {
@@ -373,12 +426,22 @@
        .details-workspace already uses for its own inset sub-panel)
        housing, top to bottom: an optional tag line (EARLY READ), the
        Recommendation as the dominant line, a brief qualifier/explanation,
-       and a NEXT action line when one applies. flex:1 1 auto so it
-       genuinely uses "most of the available space," not just a fixed
-       strip. */
+       and a NEXT action line when one applies. flex:1 1 auto so the box
+       itself still visually fills the panel (matching the LED column's
+       visual weight), but justify-content changed center -> flex-start
+       (Final responsive/coherence pass): centering the content vertically
+       within this stretched box was exactly what made the LED meter and
+       the recommendation summary read as "two objects pinned to opposite
+       ends" of a tall panel — anchoring content to the top instead means
+       it sits immediately after the LED column with only the small gap/
+       margin below, and any genuine leftover height (from this panel
+       being stretched to match the taller Instrument Cluster panel beside
+       it) becomes quiet background space at the BOTTOM of this same
+       bordered box — still visually "inside the instrument," not a gap
+       pushing the two apart. */
     .suitability-display {
       width: 100%;
-      margin-top: 0.45rem;
+      margin-top: 0.35rem;
       padding: 0.6rem 0.55rem;
       background: #0a1120;
       border: 1px solid #334155;
@@ -387,7 +450,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       text-align: center;
       gap: 0.3rem;
       flex: 1 1 auto;
@@ -403,6 +466,24 @@
       color: #2dd4bf;
       height: 0.75rem;
       line-height: 0.75rem;
+    }
+
+    /* Percentage + Recommendation share one line ("83%   Probably a Good
+       Fit") — Final responsive/coherence pass. flex-wrap lets a long
+       recommendation phrase drop to its own line rather than being forced
+       to fit; baseline alignment keeps the smaller pct text sitting
+       naturally next to the larger recommendation text rather than
+       center-aligned (which would look like it's floating). justify-
+       content:center means an empty (display:none) pct still leaves the
+       recommendation text correctly centered on its own, unchanged from
+       before. */
+    .suitability-display-headline {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      width: 100%;
     }
 
     /* The dominant line — reuses .gauge-label (readout typography, JS-set
@@ -428,36 +509,33 @@
       -webkit-box-orient: vertical;
     }
 
-    /* Suitability percentage — deliberately its OWN line between the
-       Recommendation and the explanation (Final Instrument Panel
-       Refinement pass, target hierarchy: Recommendation -> percentage ->
-       explanation -> What's Next -> action). Reuses synthesis.score
-       verbatim (clamped 0-100 for display only, same clamp precedent as
-       the Illuminated-LED pass's now-removed #gauge-rec-value) — no new
-       scoring model, and per that same pass's own design philosophy
-       ("never pretend to know more than it does"), this line is ONLY
-       ever populated for state===SCAN_BACKED && eligible (see
-       renderDashboard() below); every other state leaves the element
-       empty, so the reserved line collapses to zero height (no fixed
-       height reserved here, unlike gauge-value-area, since an empty
-       Suitability percentage is the common case — ineligible/contextual/
-       no-read states — and reserving dead space for it on every render
-       would push the qualifier/next lines down for no reason).
-       Typography sized down (Instrument Panel Polish pass) from a large
-       standalone-stat treatment (1.3rem/800) to match the same generated-
-       readout scale/weight/color the rest of THIS display already uses
-       (.suitability-display-next-value) — it's a supporting line inside
-       the Suitability display, not a second headline competing with the
-       Recommendation above it. Explicitly plain monospace text, not a
-       second segmented instrument — Confidence remains the only custom
-       digital display. */
+    /* Suitability percentage — now sits on the SAME line as the
+       Recommendation, to its left ("83%   Probably a Good Fit"), inside
+       .suitability-display-headline above (Final responsive/coherence
+       pass — supersedes the prior pass's separate-line placement, which
+       still didn't read as belonging to the panel's generated-readout
+       language). Reuses synthesis.score verbatim (clamped 0-100 for
+       display only, same clamp precedent as the Illuminated-LED pass's
+       now-removed #gauge-rec-value) — no new scoring model, and per that
+       same pass's own design philosophy ("never pretend to know more
+       than it does"), this is ONLY ever populated for
+       state===SCAN_BACKED && eligible (see renderDashboard() below);
+       every other state leaves the element empty, and :empty{display:
+       none} below removes it from the headline row entirely rather than
+       leaving a gap. Sized and colored deliberately smaller/quieter than
+       the Recommendation text (0.76rem vs 0.92rem, same monospace/cyan
+       readout language as .suitability-display-next-value elsewhere in
+       this display) so it reads as supporting generated data, not a
+       second headline competing with the recommendation phrase.
+       Explicitly plain monospace text, not a second segmented instrument
+       — Confidence remains the only custom digital display. */
     .suitability-display-pct {
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-      font-size: 0.82rem;
+      font-size: 0.76rem;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       color: #7dd3fc;
-      line-height: 1.15;
+      line-height: 1.22;
     }
 
     .suitability-display-pct:empty {
@@ -549,14 +627,12 @@
     /* Fixed instrument title — never changes text per state, only ever
        names what the gauge measures (see CLAUDE.md, Dashboard Instruments
        addendum). Sits ABOVE the instrument, like an engraved gauge name. */
-    .gauge-eyebrow {
-      font-size: 0.6rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #64748b;
-      margin-bottom: 0.2rem;
-    }
+    /* .gauge-eyebrow was consolidated into .display-eyebrow (Final
+       responsive/coherence pass) — Confidence's and ARM Suitability's
+       headings now use the exact same class as Actions/Evidence, see
+       .display-eyebrow/.display-dot below, so all four panel labels are
+       guaranteed to share one definition rather than two that could
+       silently drift apart again. */
 
     /* Visible-feedback pulse — a brief highlight ring confirming a value
        actually changed (see pulseElement() / lastConfPct in the script
@@ -580,24 +656,35 @@
     /* ─── PANEL EYEBROW — shared by the Evidence and What Next columns ───
        Same small-dot-plus-label treatment the gauges already use for their
        own titles, so all three columns read as one instrument family. */
+    /* ONE shared painted-label treatment for every top-level panel
+       heading — Actions / Confidence / Evidence / ARM Suitability (Final
+       responsive/coherence pass). Confidence and ARM Suitability
+       previously used a separate, near-identical ".gauge-eyebrow" class
+       (plain gray text, no dot); now consolidated so all four share this
+       one definition and can't silently drift apart again. Cyan
+       (matching the generated-readout cyan already used elsewhere on
+       this page, e.g. .evidence-summary-status) instead of the previous
+       plain gray — "somewhat more noticeable," per the brief — while
+       staying a small, uppercase, non-interactive painted label, not a
+       status indicator or control. */
     .display-eyebrow {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.35rem;
-      font-size: 0.6rem;
+      font-size: 0.64rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: #64748b;
-      margin-bottom: 0.35rem;
+      color: #7dd3fc;
+      margin-bottom: 0.3rem;
     }
 
     .display-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #3b82f6;
+      background: #7dd3fc;
       flex-shrink: 0;
     }
 
@@ -840,10 +927,14 @@
        (INSTRUMENT_PANEL.md, Left Panel: Actions) — no gradient, no glow,
        small muted text, matching the primary nav buttons' rounded-rect
        language at a smaller, quieter scale rather than a different one. */
+    /* Divider moved to .dashboard-save-status (below), so the status line
+       and the Load/Save/Clear row it belongs to sit together as ONE
+       group beneath the divider, separated from Scanner above — see that
+       rule's comment for why (Final responsive/coherence pass: the
+       status line previously read as associated with Scanner/Rescan
+       above it, not Save below it). */
     .dashboard-utility-row {
-      margin-top: 0.6rem;
-      padding-top: 0.6rem;
-      border-top: 1px solid #1e293b;
+      margin-top: 0.2rem;
     }
 
     .dashboard-utility-group {
@@ -907,13 +998,24 @@
        unsaved work"), never an error or a blocking warning. See
        updateSaveIndicator() in the script below for exactly what marks
        the assessment dirty vs. clean. */
+    /* Divider now lives HERE, not on .dashboard-utility-row below it
+       (Final responsive/coherence pass) — this is what visually groups
+       the status line with the Save-related buttons it describes,
+       instead of the Scanner control above it. Before this change the
+       divider sat BETWEEN this line and the buttons (Scanner | status |
+       divider | buttons), so "Unsaved changes" read as trailing commentary
+       on Scanner/Rescan rather than leading into Save. Now: Scanner |
+       divider | status | buttons — one grouped unit for saving. */
     .dashboard-save-status {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.35rem;
       height: 0.9rem;
-      margin-bottom: 0.35rem;
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #1e293b;
+      margin-bottom: 0.2rem;
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
       font-size: 0.62rem;
       font-weight: 700;
@@ -2153,8 +2255,13 @@
       <!-- CENTER: Instrument Cluster — the dashboard's visual focus. Confidence
            gauge on the left, Evidence meters to its right, laid out horizontally. -->
       <div class="panel panel-instrument-cluster">
+        <!-- .instrument-cluster-inner carries the actual row/column flex
+             layout (and is what the @container query below targets) — see
+             the CSS comment on .panel-instrument-cluster for why this
+             couldn't just live on the container element itself. -->
+        <div class="instrument-cluster-inner">
         <div class="gauge-block" id="gauge-confidence">
-          <div class="gauge-eyebrow">Confidence</div>
+          <div class="display-eyebrow"><span class="display-dot"></span>Confidence</div>
           <div class="gauge-svg-wrap" id="gauge-conf-svg-wrap"></div>
           <div class="gauge-label-area">
             <div class="gauge-label" id="gauge-conf-label">No Data Yet</div>
@@ -2186,12 +2293,13 @@
           <div class="display-eyebrow"><span class="display-dot"></span>Evidence</div>
           <div id="evidence-meters"></div>
         </div>
+        </div>
       </div>
       <!-- RIGHT: Suitability — a vertical segmented instrument. Segments illuminate
            bottom-to-top; only the outline exists until evidence earns the right to
            show a reading — see renderSuitabilityLeds() / isSuitabilityEligible(). -->
       <div class="panel panel-suitability" id="gauge-recommendation">
-        <div class="gauge-eyebrow">ARM Suitability</div>
+        <div class="display-eyebrow"><span class="display-dot"></span>ARM Suitability</div>
         <div class="suitability-body">
           <div class="suitability-led-column" id="suitability-led-column"></div>
           <div class="suitability-tier-labels">
@@ -2212,8 +2320,18 @@
              recommendation logic. See ASSESSMENT_ARCHITECTURE.md. -->
         <div class="suitability-display" id="suitability-display">
           <div class="suitability-display-tag" id="suitability-display-tag"></div>
-          <div class="suitability-display-rec gauge-label" id="suitability-display-rec">Too Early to Tell</div>
-          <div class="suitability-display-pct" id="suitability-display-pct"></div>
+          <!-- Percentage + Recommendation share one line (Final responsive/
+               coherence pass — "83%   Probably a Good Fit"): the pct reads
+               as supporting generated data to the LEFT, the recommendation
+               phrase stays the visually dominant element. flex-wrap allows
+               a genuinely long recommendation string (e.g. "Likely a Good
+               Candidate") to wrap onto its own line rather than being
+               forced to fit — still reads as one grouped unit either way,
+               unlike the prior stacked-paragraph layout. -->
+          <div class="suitability-display-headline">
+            <span class="suitability-display-pct" id="suitability-display-pct"></span>
+            <span class="suitability-display-rec gauge-label" id="suitability-display-rec">Too Early to Tell</span>
+          </div>
           <div class="suitability-display-qualifier" id="suitability-display-qualifier"></div>
           <div class="suitability-display-next" id="suitability-display-next-wrap" hidden>
             <span class="suitability-display-next-label">What's Next?</span>
