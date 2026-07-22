@@ -882,16 +882,14 @@
       margin-top: 0.6rem;
       padding-top: 0.6rem;
       border-top: 1px solid #1e293b;
-      /* .panel-whatnext (the parent) sets align-items: center, which
-         shrink-wraps every direct flex child to its own content width —
-         harmless for .whatnext-slot buttons since their own label text is
-         wide, but it left this row's much shorter "COMPLETE  RESCAN"-style
-         content bunched at the panel's left edge instead of spanning it.
-         align-self: stretch overrides that for this one child only, so
-         justify-content: space-between above has the full row width to
-         work with. Scoped to this element — .panel-whatnext itself, and
-         every other child of it, is untouched. */
-      align-self: stretch;
+      /* Width is set inline, in px, by syncScannerRowWidth() (called
+         after every renderWhatNextPanel()) to match #whatnext-queue's own
+         rendered width — so this row shares the same content column as
+         the primary action buttons instead of spanning the full panel
+         (a prior pass's align-self: stretch) or shrink-wrapping to its
+         own much shorter text (the original bug). justify-content:
+         space-between above then spreads the status/action across that
+         shared width, not the panel's. */
     }
 
     /* Final scanner readout correction pass — replaces the old static
@@ -2366,7 +2364,7 @@
              inventing a new one. -->
         <div class="dashboard-support-footer">
           <div class="support-footer-label">Support CheckMyARM</div>
-          <a class="support-footer-link" href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener noreferrer">☕ Buy me a coffee</a>
+          <a class="support-footer-link" href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener noreferrer">Buy me a coffee</a>
         </div>
       </div>
       <!-- CENTER: Instrument Cluster — the dashboard's visual focus. Confidence
@@ -4325,6 +4323,20 @@
       slots.forEach((el) => queue.appendChild(el));
     }
 
+    // Constrains the Scanner status/action row to the exact same content
+    // width #whatnext-queue's own buttons render at (rather than the full
+    // Actions panel width), so all the panel's major controls share one
+    // visual column. Called after every renderWhatNextPanel() since the
+    // queue's own width can change with its label text (e.g. "Run a Scan"
+    // vs. "Browse Community Data").
+    function syncScannerRowWidth() {
+      const queue = document.getElementById('whatnext-queue');
+      const row = document.querySelector('.scanner-instrument');
+      if (!queue || !row) return;
+      const w = queue.getBoundingClientRect().width;
+      if (w > 0) row.style.width = w + 'px';
+    }
+
     // Tracked across renders so a genuine change in Confidence can trigger
     // a brief visible pulse (see below) — the dashboard should visibly
     // reward evidence that moved something, even when Suitability itself
@@ -4599,6 +4611,7 @@
       // output verbatim (see assessment.js); this file only turns it into
       // buttons, it never re-derives the recommendation itself.
       renderWhatNextPanel(next);
+      syncScannerRowWidth();
 
       // Why / Unknowns / More Info are ordinary workspace views now (see
       // EVIDENCE_CATEGORIES above) — re-rendering whichever view is
