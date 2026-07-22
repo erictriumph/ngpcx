@@ -468,6 +468,21 @@
       line-height: 0.75rem;
     }
 
+    /* Final surgical corrections pass — the exact cause of the wasted dark
+       space above the headline in the common (non-EARLY-READ) case: this
+       element's own fixed height:0.75rem was reserved UNCONDITIONALLY,
+       even when textContent is '' (tagText set via JS in renderDashboard()
+       — see suitability-display-tag assignment). Confirmed live via
+       getBoundingClientRect() before making this change: 12px of reserved
+       tag height + its ~5px flex gap to the headline below it, on top of
+       the box's own legitimate 9.6px padding-top. Collapsing it when
+       empty (same precedent as .suitability-display-pct:empty just below
+       this file) recovers that 17px without touching the tag's own
+       styling for the states where it DOES have content ("EARLY READ"). */
+    .suitability-display-tag:empty {
+      display: none;
+    }
+
     /* Percentage + Recommendation share one line ("83%   Probably a Good
        Fit") — Final responsive/coherence pass. flex-wrap lets a long
        recommendation phrase drop to its own line rather than being forced
@@ -497,6 +512,18 @@
       line-height: 1.22;
     }
 
+    /* line-clamp 5 -> 6 (Final surgical corrections pass) — uses the
+       vertical space recovered from collapsing the empty tag line above
+       (see .suitability-display-tag:empty) to show one more line of the
+       explanation, per that pass's explicit "use the newly recovered
+       space to display more of the explanation" instruction. Confirmed
+       live this doesn't grow the outer .suitability-display box — the
+       qualifier's own overflow:hidden + line-clamp is what bounds its
+       height, not the other way around. Genuinely long explanations can
+       still exceed 6 lines (confirmed live with a realistic long string),
+       so a title="" + tabindex="0" fallback is wired in JS
+       (renderDashboard()) exposing the complete, untruncated text on
+       hover/keyboard focus — see that comment for why. */
     .suitability-display-qualifier {
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
       font-size: 0.6rem;
@@ -505,8 +532,19 @@
       max-width: 100%;
       overflow: hidden;
       display: -webkit-box;
-      -webkit-line-clamp: 5;
+      -webkit-line-clamp: 6;
       -webkit-box-orient: vertical;
+    }
+
+    /* Focus-visible outline for the qualifier when it becomes keyboard-
+       focusable (tabindex="0", only applied when the text is actually
+       truncated — see renderDashboard()) — matches the outline style
+       already used elsewhere on this page (.dashboard-utility-btn:focus-
+       visible) rather than inventing a new focus treatment. */
+    .suitability-display-qualifier[tabindex]:focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 2px;
+      border-radius: 3px;
     }
 
     /* Suitability percentage — now sits on the SAME line as the
@@ -724,10 +762,11 @@
        page prose. Explanatory text moved to native title="" tooltips (see
        renderWhatNextPanel()) so the panel itself stays visually calm.
 
-       Three fixed rows, always: up to three ranked recommendations (the
+       Four fixed rows, always (Final surgical corrections pass added the
+       fourth, still unpopulated): up to four ranked recommendations (the
        queue itself never grows/shrinks in height as evidence changes).
        Scanner is a separate, permanent instrument below this queue — see
-       .scanner-instrument — not a fourth queue slot; it's an Action in
+       .scanner-instrument — not a queue slot itself; it's an Action in
        its own right (per the instrument-panel pass), not a ranked
        recommendation competing with the real ones above it. */
     .whatnext-queue {
@@ -988,6 +1027,39 @@
     .dashboard-utility-btn-save:hover {
       background-color: rgba(59, 130, 246, 0.24);
       color: #bfdbfe;
+    }
+
+    /* Support footer (Final surgical corrections pass) — the same divider
+       treatment used above Scanner and above the save-status line (border-
+       top + margin/padding), so this reads as one more clearly separated
+       group, not a continuation of the Load/Save/Clear controls above it.
+       Deliberately understated: a plain static label (not .display-
+       eyebrow — that class is reserved for the four panel headings) above
+       a conventional underlined link — no button chrome, no gradient, no
+       glow, no transition/animation, and no wiring into assessment state
+       of any kind. */
+    .dashboard-support-footer {
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #1e293b;
+      text-align: center;
+    }
+
+    .support-footer-label {
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 0.25rem;
+    }
+
+    .support-footer-link {
+      font-size: 0.72rem;
+      color: #60a5fa;
+      text-decoration: underline;
+    }
+
+    .support-footer-link:hover {
+      color: #93c5fd;
     }
 
     /* Unsaved-state indicator — a reserved, normally-empty line above the
@@ -2250,6 +2322,23 @@
             <button type="button" class="dashboard-utility-btn dashboard-utility-btn-save" id="utility-save-btn">Save</button>
             <button type="button" class="dashboard-utility-btn" id="utility-clear-btn">Clear</button>
           </div>
+        </div>
+        <!-- Support footer (Final surgical corrections pass) — its own
+             divider, same treatment as the ones above (Scanner's, and the
+             one now on .dashboard-save-status), so it reads as one more
+             clearly separated group at the very bottom of the Actions
+             panel, not part of the assessment controls above it. The
+             label is plain static text (not .display-eyebrow — that's
+             reserved for the four panel headings) and the link is a
+             conventional underlined <a>, deliberately NOT a
+             .whatnext-slot/.dashboard-utility-btn — no button chrome, no
+             animation, no connection to assessment state. Reuses the
+             exact same Ko-fi URL already live in this page's own bottom
+             footer below (https://ko-fi.com/checkmyarm) rather than
+             inventing a new one. -->
+        <div class="dashboard-support-footer">
+          <div class="support-footer-label">Support CheckMyARM</div>
+          <a class="support-footer-link" href="https://ko-fi.com/checkmyarm" target="_blank" rel="noopener noreferrer">☕ Buy me a coffee</a>
         </div>
       </div>
       <!-- CENTER: Instrument Cluster — the dashboard's visual focus. Confidence
@@ -4128,6 +4217,10 @@
           title: 'Import a previously saved assessment file to pick up where you left off.',
           onClick: (e) => { e.preventDefault(); window.NavShell.triggerImport(); },
         }) : whatNextSlotEl({}));
+        // Fourth slot (Final surgical corrections pass) — always empty for
+        // now, same placeholder treatment as the third slot. Not populated
+        // with an action yet, per that pass's explicit instruction.
+        slots.push(whatNextSlotEl({}));
         slots.forEach((el) => queue.appendChild(el));
         return;
       }
@@ -4157,6 +4250,10 @@
       // intentional, not a gap to fill with busywork). Rendering it keeps
       // the queue's vertical shape identical across every assessment
       // state, including the two/three-slot start-empty case above.
+      slots.push(whatNextSlotEl({}));
+
+      // Fourth slot (Final surgical corrections pass) — one more blank
+      // placeholder beneath the third, same treatment, not yet populated.
       slots.push(whatNextSlotEl({}));
 
       slots.forEach((el) => queue.appendChild(el));
@@ -4375,6 +4472,27 @@
         });
       } else {
         qualifierEl.textContent = explanation;
+      }
+      // Truncation fallback (Final surgical corrections pass) — the CSS
+      // line-clamp above is a visual truncation only; genuinely long
+      // explanations can still exceed it (confirmed live with a realistic
+      // long string). scrollHeight > clientHeight is the standard way to
+      // detect that a line-clamped block is actually cutting text off
+      // right now, for THIS render's content — checked after the content
+      // above is set, so layout already reflects it. When truncated, a
+      // native title="" tooltip exposes the complete text on hover, and
+      // tabindex="0" makes the element itself keyboard-focusable (title
+      // tooltips are also shown on keyboard focus in every major browser)
+      // — no new tooltip framework, and NOT the whole Suitability box,
+      // just this one element. Cleared when not truncated so a stale
+      // title/tabindex never lingers from a previous, longer render.
+      const isTruncated = qualifierEl.scrollHeight > qualifierEl.clientHeight;
+      if (isTruncated) {
+        qualifierEl.title = explanation;
+        qualifierEl.tabIndex = 0;
+      } else {
+        qualifierEl.removeAttribute('title');
+        qualifierEl.removeAttribute('tabindex');
       }
 
       // Next action — reuses the exact WHAT_NEXT_PRIMARY_LABEL text
