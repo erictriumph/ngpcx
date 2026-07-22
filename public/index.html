@@ -882,6 +882,16 @@
       margin-top: 0.6rem;
       padding-top: 0.6rem;
       border-top: 1px solid #1e293b;
+      /* .panel-whatnext (the parent) sets align-items: center, which
+         shrink-wraps every direct flex child to its own content width —
+         harmless for .whatnext-slot buttons since their own label text is
+         wide, but it left this row's much shorter "COMPLETE  RESCAN"-style
+         content bunched at the panel's left edge instead of spanning it.
+         align-self: stretch overrides that for this one child only, so
+         justify-content: space-between above has the full row width to
+         work with. Scoped to this element — .panel-whatnext itself, and
+         every other child of it, is untouched. */
+      align-self: stretch;
     }
 
     /* Final scanner readout correction pass — replaces the old static
@@ -908,6 +918,7 @@
     .scanner-instrument-action {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.4rem;
       background: none;
       border: 1px solid transparent;
@@ -916,6 +927,14 @@
       font-family: inherit;
       cursor: default;
       transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.15s ease;
+      /* Fixed width sized for the longest supported label ("Not
+         Available", ~84px measured) plus this rule's own padding/border,
+         so SCAN/RESCAN/RETRY and the existing active-state words
+         (Downloading/Waiting/Connected/Receiving/Not Available) never
+         change the button's size or position — only its label swaps. */
+      width: 108px;
+      flex-shrink: 0;
+      box-sizing: border-box;
     }
 
     /* Only idle states (ready/updated/error) get the command-button
