@@ -148,10 +148,17 @@
 
     /* RIGHT — Suitability: a fixed-width column housing the vertical LED
        instrument (see .suitability-* rules further down). Horizontal
-       padding added (0 -> 0.5rem) so the tier labels — which can wrap to
-       two lines — never touch the panel's own edges; justify-content:
-       flex-start for the same title-alignment reason as the other two
-       panels above. */
+       padding added (0 -> 0.5rem, then 0.5rem -> 0.6rem in the
+       Instrument Panel Polish pass alongside the width bump below) so
+       the tier labels — which can wrap to two lines — never touch the
+       panel's own edges; justify-content: flex-start for the same
+       title-alignment reason as the other two panels above.
+       Width 224px -> 256px (Instrument Panel Polish pass): the
+       Suitability display (Recommendation, percentage, explanation,
+       What's Next, action) had grown to need more breathing room than
+       the original width gave it — the extra 32px is deliberately
+       modest, not an attempt at equal thirds with the other two panels,
+       which stay flex-sized and simply absorb the difference. */
     /* Subtly differentiated surface — Suitability is the primary answer
        users are seeking, the "payoff" of the whole instrument panel, so
        it earns a slightly richer treatment than the other two panels
@@ -162,9 +169,9 @@
        cluster already uses, one step further. */
     .panel-suitability {
       flex: 0 0 auto;
-      width: 224px;
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
+      width: 256px;
+      padding-left: 0.6rem;
+      padding-right: 0.6rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -189,13 +196,24 @@
        addendum, for why the value line moved to its own row instead of
        sitting inline with the label. Spacing tightened throughout this
        pass (smaller inter-line margins) to absorb the added value line
-       without growing the block much beyond its prior height. */
+       without growing the block much beyond its prior height.
+       Height trimmed 316px -> 304px (Instrument Panel Polish pass) —
+       measured live via getBoundingClientRect() before touching this:
+       the real content (eyebrow + svg + label + value + sub) bottomed
+       out exactly 12px above the box's own bottom edge, dead trailing
+       space with justify-content:flex-start, not a wrapping buffer for
+       any of the fixed sub-areas above it. Trimming it recovers real
+       vertical space for the WHOLE dashboard row (this panel is the
+       tallest of the three, so align-items:stretch on .dashboard-panels
+       propagates the saved height to What Next and Suitability too) —
+       zero information loss, confirmed by measurement rather than
+       assumption. */
     .gauge-block {
       display: flex;
       flex-direction: column;
       align-items: center;
       width: 240px;
-      height: 316px;
+      height: 304px;
       justify-content: flex-start;
     }
 
@@ -302,7 +320,7 @@
 
     .sevenseg-digit .seg {
       position: absolute;
-      background: var(--seg-color, #7dd3fc);
+      background: var(--seg-color, #eef2f7);
       opacity: 0.14;
       border-radius: 1px;
       transition: opacity 0.35s ease, box-shadow 0.35s ease;
@@ -310,7 +328,7 @@
 
     .sevenseg-digit .seg.lit {
       opacity: 1;
-      box-shadow: 0 0 5px var(--seg-color, #7dd3fc);
+      box-shadow: 0 0 5px var(--seg-color, #eef2f7);
     }
 
     .seg-a { top: 0; left: 2px; width: 12px; height: 3px; }
@@ -424,14 +442,22 @@
        height reserved here, unlike gauge-value-area, since an empty
        Suitability percentage is the common case — ineligible/contextual/
        no-read states — and reserving dead space for it on every render
-       would push the qualifier/next lines down for no reason). */
+       would push the qualifier/next lines down for no reason).
+       Typography sized down (Instrument Panel Polish pass) from a large
+       standalone-stat treatment (1.3rem/800) to match the same generated-
+       readout scale/weight/color the rest of THIS display already uses
+       (.suitability-display-next-value) — it's a supporting line inside
+       the Suitability display, not a second headline competing with the
+       Recommendation above it. Explicitly plain monospace text, not a
+       second segmented instrument — Confidence remains the only custom
+       digital display. */
     .suitability-display-pct {
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-      font-size: 1.3rem;
-      font-weight: 800;
+      font-size: 0.82rem;
+      font-weight: 700;
       font-variant-numeric: tabular-nums;
-      color: #f1f5f9;
-      line-height: 1.1;
+      color: #7dd3fc;
+      line-height: 1.15;
     }
 
     .suitability-display-pct:empty {
@@ -856,6 +882,58 @@
     .dashboard-utility-btn:focus-visible {
       outline: 2px solid #60a5fa;
       outline-offset: -2px;
+    }
+
+    /* Save gets a distinct, always-on tint (not just :hover, like Load/
+       Clear) so it reads as the primary action of the three at rest, not
+       an equal third — "make Save more prominent" (Instrument Panel
+       Polish pass). Still the same compact segmented-button language,
+       not a differently-shaped control. */
+    .dashboard-utility-btn-save {
+      background-color: rgba(59, 130, 246, 0.14);
+      color: #93c5fd;
+    }
+
+    .dashboard-utility-btn-save:hover {
+      background-color: rgba(59, 130, 246, 0.24);
+      color: #bfdbfe;
+    }
+
+    /* Unsaved-state indicator — a reserved, normally-empty line above the
+       Load/Save/Clear row (same "reserve the line, populate only when
+       there's something to say" pattern as .gauge-label-sub elsewhere on
+       this page, so its appearance never shifts surrounding layout).
+       Amber, not red — this is a calm state-of-the-world fact ("you have
+       unsaved work"), never an error or a blocking warning. See
+       updateSaveIndicator() in the script below for exactly what marks
+       the assessment dirty vs. clean. */
+    .dashboard-save-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      height: 0.9rem;
+      margin-bottom: 0.35rem;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #fbbf24;
+    }
+
+    .save-led {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #fbbf24;
+      opacity: 0.16;
+      flex: 0 0 auto;
+      transition: opacity 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .save-led.lit {
+      opacity: 1;
+      box-shadow: 0 0 6px #fbbf24;
     }
 
     /* Content-styling classes reused by the More Info workspace view (see
@@ -2055,11 +2133,19 @@
              control above it. Sign In deliberately omitted — it's already
              a persistent global control in the top nav; see
              ASSESSMENT_ARCHITECTURE.md and wireDashboardUtilityRow() below
-             for what each button does. -->
+             for what each button does.
+             Save-status line (Instrument Panel Polish pass) — a reserved,
+             normally-empty line above the command row (same "reserve the
+             line, only fill it when there's something to say" pattern as
+             gauge-label-sub elsewhere on this page), populated only when
+             the assessment is dirty. See updateSaveIndicator() below. -->
+        <div class="dashboard-save-status" id="dashboard-save-status">
+          <span class="save-led" id="save-led"></span><span id="save-status-text"></span>
+        </div>
         <div class="dashboard-utility-row">
           <div class="dashboard-utility-group">
             <button type="button" class="dashboard-utility-btn" id="utility-load-btn">Load</button>
-            <button type="button" class="dashboard-utility-btn" id="utility-save-btn">Save</button>
+            <button type="button" class="dashboard-utility-btn dashboard-utility-btn-save" id="utility-save-btn">Save</button>
             <button type="button" class="dashboard-utility-btn" id="utility-clear-btn">Clear</button>
           </div>
         </div>
@@ -2287,6 +2373,59 @@
     // applyImportanceOverride() can read+write it without re-loading on
     // every click. Initialized empty so any pre-first-render read is safe.
     let currentPersonalContext = new Map();
+
+    // ─── Unsaved-state tracking (Instrument Panel Polish pass) ───────────
+    // Purely a client-side UI signal — no server write, no new persisted
+    // field, matching this codebase's "no new server-side persistence"
+    // constraint. Tracks whether MEANINGFUL assessment content (Interview
+    // answers, Applications/Devices importance overrides — the only two
+    // real Personal-Context-writing surfaces this page has; see
+    // applyImportanceOverride() and the saveAdaptiveContext() call sites)
+    // has changed since the last successful export or since an import
+    // established a fresh baseline. Deliberately NOT marked dirty by
+    // navigation/UI state (scrolling, tab switches, panel toggles, sort/
+    // filter) — only by markAssessmentDirty() calls wired at the actual
+    // write funnels, never by render/view code.
+    //
+    // Persisted per-session in sessionStorage (not just an in-memory flag)
+    // so a reload within the same tab doesn't silently forget real unsaved
+    // work — the same "sessionStorage as reload resilience" precedent
+    // Personal Context itself already establishes via sessionContextKey().
+    const ASSESSMENT_DIRTY_KEY_PREFIX = 'ngpcx_assessment_dirty_v1_';
+    function assessmentDirtyKey(sid) { return ASSESSMENT_DIRTY_KEY_PREFIX + sid; }
+    let assessmentDirty = false;
+
+    function updateSaveIndicator() {
+      const statusText = document.getElementById('save-status-text');
+      const led = document.getElementById('save-led');
+      if (!statusText || !led) return;
+      led.classList.toggle('lit', assessmentDirty);
+      statusText.textContent = assessmentDirty ? 'Unsaved changes' : '';
+    }
+
+    function setAssessmentDirty(dirty) {
+      assessmentDirty = dirty;
+      if (sessionId) {
+        try {
+          if (dirty) sessionStorage.setItem(assessmentDirtyKey(sessionId), '1');
+          else sessionStorage.removeItem(assessmentDirtyKey(sessionId));
+        } catch (err) { /* sessionStorage unavailable — indicator still works in-memory */ }
+      }
+      updateSaveIndicator();
+    }
+    function markAssessmentDirty() { if (!assessmentDirty) setAssessmentDirty(true); }
+    function markAssessmentClean() { if (assessmentDirty) setAssessmentDirty(false); }
+
+    // Wraps saveAdaptiveContext() (assessment.js, shared across pages) so
+    // every Interview write funnels through one dirty-marking point rather
+    // than requiring each of the three call sites below to remember it
+    // individually. assessment.js itself stays untouched — dirty-tracking
+    // is a page-local UI concept, not something the shared synthesis
+    // module should know about.
+    function saveAdaptiveContextAndMarkDirty(sid, patch) {
+      saveAdaptiveContext(sid, patch);
+      markAssessmentDirty();
+    }
 
     function assessUrlFor(sid, level) {
       const hasCarryForward = !!sessionStorage.getItem(CARRY_FORWARD_KEY);
@@ -2775,7 +2914,7 @@
           const currentSub = (current.sub_workloads && current.sub_workloads[w]) || [];
           const nextForW = currentSub.includes(value) ? currentSub.filter((v) => v !== value) : currentSub.concat([value]);
           const nextSub = Object.assign({}, current.sub_workloads, { [w]: nextForW });
-          saveAdaptiveContext(sessionId, { intended_use: current.intended_use, sub_workloads: nextSub, relationship: current.relationship });
+          saveAdaptiveContextAndMarkDirty(sessionId, { intended_use: current.intended_use, sub_workloads: nextSub, relationship: current.relationship });
           renderAll();
         });
       });
@@ -2806,7 +2945,7 @@
 
       renderRadioGroup('relationship-radios', RELATIONSHIP_OPTIONS, RELATIONSHIP_LABELS, effRel, (value) => {
         const current = currentAdaptiveContext();
-        saveAdaptiveContext(sessionId, { intended_use: effectiveIntendedUse(current), sub_workloads: current.sub_workloads, relationship: value });
+        saveAdaptiveContextAndMarkDirty(sessionId, { intended_use: effectiveIntendedUse(current), sub_workloads: current.sub_workloads, relationship: value });
         renderAll();
       });
 
@@ -2817,7 +2956,7 @@
         const next = nowSelected ? displayed.filter((v) => v !== value) : displayed.concat([value]);
         const nextSub = Object.assign({}, current.sub_workloads);
         if (nowSelected) delete nextSub[value]; // unchecking a workload clears its sub-selections too
-        saveAdaptiveContext(sessionId, { intended_use: next, sub_workloads: nextSub, relationship: effectiveRelationship(current) });
+        saveAdaptiveContextAndMarkDirty(sessionId, { intended_use: next, sub_workloads: nextSub, relationship: effectiveRelationship(current) });
         renderAll();
       });
 
@@ -2911,6 +3050,7 @@
       entry.researched_at = new Date().toISOString();
       currentPersonalContext.set(key, entry);
       writeSessionContext(sessionId, personalContextToEntries(currentPersonalContext));
+      markAssessmentDirty();
       renderDetailsWorkspace();
       renderDashboard(); // a real Personal Context change — Confidence/Suitability can genuinely move
     }
@@ -3966,6 +4106,18 @@
       0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc',
       5: 'afgcd', 6: 'afgecd', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg',
     };
+    // Deliberately NOT confColor (Instrument Panel Polish pass). The
+    // digits previously lit in the same red/orange/yellow/green tier
+    // color as the gauge ring/needle/label — at the common "moderate"
+    // tier that reads amber/yellow, the exact same hue family the
+    // Evidence meters already use for THEIR progress bars, so the
+    // digits visually blurred into "another progress indicator" instead
+    // of a distinct instrument. The gauge (ring + needle + label) still
+    // fully communicates the quality tier via color, unchanged — the
+    // digits' one job is the VALUE, so they get a neutral, tier-
+    // independent instrument color instead (a cool white/silver, the
+    // classic LCD/VFD readout color), the same regardless of confPct.
+    const SEVEN_SEG_NEUTRAL_COLOR = '#eef2f7';
     function setSevenSegDigit(containerId, litSegments) {
       const container = document.getElementById(containerId);
       container.querySelectorAll('.seg').forEach((seg) => {
@@ -4017,11 +4169,12 @@
       document.getElementById('gauge-conf-label').textContent = confLabel;
       document.getElementById('gauge-conf-label').style.color = confPct <= 0 ? '#64748b' : confColor;
       // Numeric readout as the seven-segment digital instrument (Final
-      // Instrument Panel Refinement pass) — see updateSevenSegValue()
-      // above. Reuses confColor, the SAME color already driving the
-      // ring/needle/label, so the digits never disagree with the rest
-      // of the instrument about what tier is showing.
-      updateSevenSegValue(confPct, confColor);
+      // Instrument Panel Refinement pass; recolored in the Instrument
+      // Panel Polish pass — see SEVEN_SEG_NEUTRAL_COLOR above for why).
+      // A fixed neutral color, not confColor — the ring/needle/label
+      // already carry the tier color, so the digits read as their own
+      // synthesized instrument rather than a second progress readout.
+      updateSevenSegValue(confPct, SEVEN_SEG_NEUTRAL_COLOR);
 
       // Visible feedback: a brief pulse on Confidence whenever it actually
       // moves, so an Intended Use answer that doesn't change Suitability
@@ -4494,6 +4647,32 @@
       switchTab('observation');
     });
 
+    // Real, direct export — Instrument Panel Polish pass. Previously this
+    // page had no exportAssessment() of its own, so Save/triggerExport()
+    // fell through to nav.js's redirect-to-Results fallback instead of
+    // actually saving anything — a real functional gap, not a deliberate
+    // design, given Save is meant to be a primary action here. Byte-for-
+    // byte the same shape as report.html's/workspace.html's own
+    // exportAssessment() (buildExportPayload() from assessment.js, a Blob
+    // download) — no new export format, no new logic, just present on
+    // this page too. A plain top-level function declaration, so it
+    // attaches to window automatically (matching how the other two pages
+    // already work) — nav.js's triggerExport() picks it up via the exact
+    // same typeof window.exportAssessment === 'function' check it already
+    // used, now with the page-restriction gate removed (see nav.js).
+    function exportAssessment() {
+      if (!currentResults) return;
+      const payload = buildExportPayload(currentResults, currentPersonalContext);
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `checkmyarm-assessment-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      markAssessmentClean();
+    }
+
     // Persistent assessment-level commands (Load / Save / Clear) — wired
     // once, since this row is static markup, never rebuilt (same pattern
     // as the Scanner control above). Sign In is deliberately NOT one of
@@ -4503,10 +4682,11 @@
     // real, already-existing behavior rather than inventing new logic:
     //   Load  -> window.NavShell.triggerImport() — the exact function
     //            powering "Import Assessment" everywhere else in the app.
-    //   Save  -> window.NavShell.triggerExport() — exports directly when
-    //            a real export function is loaded on the current page,
-    //            otherwise falls back to the Detailed Report (nav.js's
-    //            own existing fallback, unchanged).
+    //   Save  -> window.NavShell.triggerExport() — now genuinely exports
+    //            directly from THIS page too (see exportAssessment()
+    //            above), falling back to the Detailed Report only if
+    //            currentResults isn't loaded yet (nav.js's own existing
+    //            fallback, unchanged).
     //   Clear -> gated behind window.NavShell.confirmReplaceIfNeeded(),
     //            the SAME confirm() nav.js already uses before Import/
     //            New Scan would discard unsaved Personal Context. If it
@@ -4573,6 +4753,49 @@
       // ever plays when results are genuinely new.
       const scanJustHappened = !!sessionStorage.getItem(SCANNER_ACTIVITY_BRIDGE_KEY);
       sessionStorage.removeItem(SCANNER_ACTIVITY_BRIDGE_KEY);
+
+      // Peek (never consume) the generic carry-forward stash's `source`
+      // field to establish the INITIAL unsaved-state baseline. A
+      // non-destructive read — the actual consumption/removal happens
+      // later, inside loadPersonalContext()'s consumeGenericCarryForward()
+      // (assessment.js), called deeper in renderAll() below; reading it
+      // again here first doesn't race that.
+      const carryForwardSource = (() => {
+        if (params.get('carryForward') !== '1') return null;
+        try {
+          const raw = sessionStorage.getItem(CARRY_FORWARD_KEY);
+          if (!raw) return null;
+          const stash = JSON.parse(raw);
+          return (stash && stash.source) || null;
+        } catch (err) { return null; }
+      })();
+      // Initial dirty baseline (Instrument Panel Polish pass) — checked
+      // in this order:
+      //  1. A dirty flag already persisted for THIS session in this tab
+      //     (sessionStorage survives an ordinary reload) always wins —
+      //     real unsaved work from earlier in this tab is never silently
+      //     forgotten by a refresh.
+      //  2. source === 'import' -> clean: importing an assessment IS the
+      //     saved baseline, per this pass's explicit spec.
+      //  3. A scan just completed (fresh OR rescanned) -> dirty: "a newly
+      //     created or newly scanned assessment should be considered
+      //     unsaved until exported," per the same spec.
+      //  4. Otherwise (an ordinary revisit of an existing session URL,
+      //     no fresh signal either way) -> clean by default. There's no
+      //     evidence this specific load is unsaved, and defaulting to
+      //     dirty on every plain reload/return-visit would be exactly the
+      //     false alarm this feature is supposed to avoid.
+      if (sessionId) {
+        let persisted = null;
+        try { persisted = sessionStorage.getItem(assessmentDirtyKey(sessionId)); } catch (err) { /* ignore */ }
+        if (persisted !== null) setAssessmentDirty(persisted === '1');
+        else if (carryForwardSource === 'import') setAssessmentDirty(false);
+        else if (scanJustHappened) setAssessmentDirty(true);
+        else setAssessmentDirty(false);
+      } else {
+        setAssessmentDirty(false);
+      }
+
       // The Scanner instrument is now static, persistent markup (see
       // .scanner-instrument) rather than something rebuilt fresh on every
       // render, so — unlike before — it needs one explicit initial sync

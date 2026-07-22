@@ -399,7 +399,15 @@
     }
 
     function triggerExport(state) {
-        if (typeof window.exportAssessment === 'function' && (isOnReportPage() || isOnWorkspacePage())) {
+        // Instrument Panel Polish pass: dropped the isOnReportPage()/
+        // isOnWorkspacePage() gate — it existed only because those were the
+        // two pages that happened to define window.exportAssessment, not
+        // because export should be page-restricted. index.html now defines
+        // its own real exportAssessment() too (Save is a primary action
+        // there), so the presence of the function alone is the correct
+        // condition; the redirect-to-Results fallback still covers any page
+        // that never defines one.
+        if (typeof window.exportAssessment === 'function') {
             window.exportAssessment();
         } else if (state.session) {
             window.location.href = resultsHref(state.session);
