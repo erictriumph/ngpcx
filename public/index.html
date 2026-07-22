@@ -138,7 +138,7 @@
        instrument (see .suitability-* rules further down). */
     .panel-suitability {
       flex: 0 0 auto;
-      width: 152px;
+      width: 164px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -544,124 +544,29 @@
       white-space: nowrap;
     }
 
-    /* Compact helper row — fixed position, controls always visible. */
-    .dashboard-helpers {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-top: 1rem;
-      padding-top: 0.85rem;
-      border-top: 1px solid #334155;
-    }
-
-    /* Illuminated latching pushbutton (instrument-panel pass) — a View
-       selector, not an ordinary web toggle: idle sits "out" (raised cap,
-       dim indicator dot), active sits "pressed in" (inset shadow +
-       flattened) AND illuminated (a lit dot + a soft glow) at once, and
-       clicking a different one pops this one back out — see
-       .evidence-tab below for the same language applied to the
-       Investigation Console's own View selectors. */
-    .helper-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: linear-gradient(180deg, #263449 0%, #1a2534 100%);
-      border: 1px solid #334155;
-      color: #94a3b8;
-      font-size: 0.76rem;
-      font-weight: 600;
-      padding: 0.35rem 0.75rem 0.35rem 0.6rem;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      transition: transform 0.08s ease, box-shadow 0.1s ease, background 0.15s ease, border-color 0.15s ease;
-    }
-
-    .helper-toggle::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #334155;
-      flex-shrink: 0;
-      transition: background 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .helper-toggle:hover {
-      border-color: #3b82f6;
-      color: #e2e8f0;
-    }
-
-    .helper-toggle.active {
-      border-color: #1d4ed8;
-      color: #dbeafe;
-      background: linear-gradient(180deg, #1d4ed8 0%, #2760e0 100%);
-      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), 0 0 8px rgba(59, 130, 246, 0.4);
-      transform: translateY(1px);
-    }
-
-    .helper-toggle.active::before {
-      background: #93c5fd;
-      box-shadow: 0 0 5px #93c5fd;
-    }
-
-    .helper-panel {
-      margin-top: 0.75rem;
-      padding: 0.85rem 1rem;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      color: #cbd5e1;
-      line-height: 1.55;
-      text-align: left;
-    }
-
-    .helper-panel[hidden] {
-      display: none;
-    }
-
-    .helper-panel ul {
-      list-style: none;
-      margin-top: 0.4rem;
-    }
-
-    .helper-panel .helper-links {
-      margin-top: 0.6rem;
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .helper-panel .helper-links a {
-      color: #3b82f6;
-      text-decoration: none;
-      font-size: 0.82rem;
-    }
-
-    .helper-panel .helper-links a:hover {
-      text-decoration: underline;
-    }
-
-    .helper-stats {
+    /* Content-styling classes reused by the More Info workspace view (see
+       renderMoreInfoTab()) — previously scoped under the now-removed
+       .helper-panel toggle system, kept as plain content classes since
+       Why/Unknowns/More Info are ordinary workspace views now, per
+       INSTRUMENT_PANEL.md. */
+    .info-stats {
       display: flex;
       gap: 1.25rem;
       flex-wrap: wrap;
       margin-bottom: 0.6rem;
     }
 
-    .helper-stat {
+    .info-stat {
       text-align: center;
     }
 
-    .helper-stat-count {
+    .info-stat-count {
       font-size: 1.15rem;
       font-weight: 800;
       color: #f1f5f9;
     }
 
-    .helper-stat-label {
+    .info-stat-label {
       font-size: 0.66rem;
       color: #64748b;
       text-transform: uppercase;
@@ -711,8 +616,13 @@
        maxContribution 0 (Community, Findings today) render a binary
        filled/empty state rather than implying a percentage that doesn't
        exist. */
+    /* Padding nudged back up (0.14rem -> 0.32rem) per INSTRUMENT_PANEL.md
+       ("give each evidence row slightly more vertical separation... each
+       row should read as a distinct instrument") — still a segmented LED
+       meter, not a generic progress bar; only the breathing room between
+       rows changed. */
     .evidence-summary-row {
-      padding: 0.14rem 0;
+      padding: 0.32rem 0;
       border-bottom: 1px solid #1e293b;
     }
 
@@ -875,15 +785,23 @@
       .suitability-segment.flash-on { animation: none; }
     }
 
+    /* Widened + bumped up a touch (84px/0.56rem -> 94px/0.6rem) so
+       multi-word labels — "Probably a Good Fit" in particular — wrap
+       cleanly to two lines instead of clipping/crowding against the
+       column edge. Each label div still shares the exact same 4-way
+       flex split as .suitability-led-column (same fixed 158px height),
+       so wrapping to two lines never breaks alignment with its tier's
+       LED segments — only the text layout inside the row changed. See
+       INSTRUMENT_PANEL.md, Right Panel: ARM Suitability. */
     .suitability-tier-labels {
       display: flex;
       flex-direction: column-reverse;
       height: 158px;
-      width: 84px;
-      font-size: 0.56rem;
+      width: 94px;
+      font-size: 0.6rem;
       font-weight: 600;
       color: #64748b;
-      line-height: 1.15;
+      line-height: 1.2;
     }
 
     .suitability-tier-labels div {
@@ -910,55 +828,53 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════
-       LAYER 2 — EVIDENCE NAVIGATION (mode selectors)
-       A 3-zone grid, not a flat tab row — the layout itself is the
-       information architecture: Observed (left, 2 rows: Detected Apps /
-       Detected Devices) | Intent (center, 1 row spanning both: Use Case)
-       | Assessment (right, 2 rows: Applications / Devices). Thin vertical
-       dividers between the zones (not text labels) are what communicate
-       "these are three different kinds of workspace," per the brief's own
-       "the layout itself should communicate this progression without
-       requiring explanatory text." Column/row placement is data-driven —
-       see EVIDENCE_CATEGORIES' zoneCol/zoneRow fields and
-       renderEvidenceNav() — adding a category is still a one-entry change,
-       it just also says where in the grid it belongs.
+       INSTRUMENT PANEL — BOTTOM ROW: WORKSPACE VIEW SELECTORS
+       All 8 workspace views live in one shallow, flat pushbutton row
+       inside the Instrument Panel itself (see the .dashboard markup) —
+       never a duplicate nav tile grid below it, and never a separate
+       expandable strip for Why/Unknowns/More Info. The old 3-zone grid
+       (Observed | Intent | Assessment, with vertical dividers) is
+       retired in favor of this flat row, per INSTRUMENT_PANEL.md, Bottom
+       Row: Workspace View Selectors — that spec is now the source of
+       truth for this control, not this comment.
        ═══════════════════════════════════════════════════════════════════ */
     .evidence-nav {
-      margin: 0 0 0.85rem 0;
-      display: grid;
-      grid-template-columns: 1fr auto 1fr auto 1fr;
-      grid-template-rows: auto auto;
-      column-gap: 1.5rem;
-      row-gap: 0.5rem;
+      margin-top: 0.85rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #334155;
+      display: flex;
+      justify-content: center;
       align-items: stretch;
+      gap: 0.45rem;
+      flex-wrap: wrap;
     }
 
-    .zone-divider {
-      grid-row: 1 / 3;
-      width: 1px;
-      background: #1e293b;
-    }
-
-    /* Illuminated latching pushbutton — the same View-selector language
-       as .helper-toggle above, adapted to a taller grid cell: the
-       indicator dot sits ABOVE the (possibly two-line) label rather than
-       inline beside it. white-space:normal lets longer labels ("Detected
-       Apps", "Detected Devices") wrap to two lines instead of forcing the
-       column wider — see the instrument-panel pass in CLAUDE.md. */
+    /* Illuminated latching pushbutton — a View selector, not an ordinary
+       web tab or link: idle sits "out" (raised cap, dim indicator dot),
+       active sits "pressed in" (inset shadow + flattened) AND illuminated
+       (a lit dot + a soft glow) at once, and clicking a different one
+       pops this one back out. Compact and dashboard-like on purpose — a
+       flex-basis band (not width:100%) so 8 of these fit one shallow row
+       at practical laptop/desktop widths instead of stretching into wide
+       web buttons. white-space:normal lets two-word labels ("Detected
+       Apps", "More Info") wrap to two lines instead of forcing buttons
+       wider. */
     .evidence-tab {
-      width: 100%;
+      flex: 1 1 108px;
+      min-width: 92px;
+      max-width: 140px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.32rem;
+      gap: 0.28rem;
       background: linear-gradient(180deg, #26344a 0%, #19232f 100%);
       border: 1px solid #334155;
       color: #94a3b8;
-      font-size: 0.8rem;
+      font-size: 0.72rem;
       font-weight: 700;
       line-height: 1.2;
-      padding: 0.6rem 0.9rem;
+      padding: 0.5rem 0.6rem;
       border-radius: 8px;
       cursor: pointer;
       text-align: center;
@@ -982,6 +898,11 @@
       color: #e2e8f0;
     }
 
+    .evidence-tab:focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 2px;
+    }
+
     .evidence-tab.active {
       color: white;
       background: linear-gradient(180deg, #1d4ed8 0%, #2760e0 100%);
@@ -993,33 +914,6 @@
     .evidence-tab.active::before {
       background: #93c5fd;
       box-shadow: 0 0 6px #93c5fd;
-    }
-
-    /* The Intent zone's one tab spans both rows and centers within that
-       taller cell — visually the anchor the two side zones flank, matching
-       "a scan is an accelerator, not a prerequisite" (this workspace works
-       identically with or without one). Layout/centering now come from the
-       base .evidence-tab rule; only the larger type size is anchor-specific. */
-    .evidence-tab.zone-anchor {
-      font-size: 0.85rem;
-    }
-
-    @media (max-width: 640px) {
-      /* Collapse to a single stacked column — the explicit zoneCol/zoneRow
-         placement each tab carries as an inline style only makes sense
-         against the desktop 5-track grid, so it's force-overridden back to
-         natural document order here rather than fighting a narrower grid. */
-      .evidence-nav {
-        grid-template-columns: 1fr;
-        row-gap: 0.4rem;
-      }
-      .evidence-tab {
-        grid-column: auto !important;
-        grid-row: auto !important;
-      }
-      .zone-divider {
-        display: none;
-      }
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -1785,26 +1679,16 @@
         <div class="gauge-label-sub" id="gauge-rec-sub"></div>
       </div>
     </div>
-    <div class="dashboard-helpers">
-      <button type="button" class="helper-toggle" data-helper="why">Why <span>▾</span></button>
-      <button type="button" class="helper-toggle" data-helper="unknowns">Unknowns <span>▾</span></button>
-      <button type="button" class="helper-toggle" data-helper="more-info">More Info <span>▾</span></button>
-    </div>
-    <div class="helper-panel" id="helper-panel-why" hidden></div>
-    <div class="helper-panel" id="helper-panel-unknowns" hidden></div>
-    <div class="helper-panel" id="helper-panel-more-info" hidden></div>
+    <!-- BOTTOM ROW: all 8 workspace view selectors — part of the
+         Instrument Panel, not the workspace beneath it. See
+         INSTRUMENT_PANEL.md, Bottom Row: Workspace View Selectors. -->
+    <nav class="evidence-nav" id="evidence-nav" role="tablist" aria-label="Workspace views"></nav>
   </div>
 
-  <!-- INVESTIGATION CONSOLE — one framed unit, not two stacked page
-       sections. Mode selectors sit inside the frame (LAYER 2) above a
-       single full-width display (LAYER 3), instead of tabs protruding
-       above a separate content box. See CLAUDE.md, Investigation Console
-       addendum. -->
+  <!-- WORKSPACE beneath the Instrument Panel — begins directly with the
+       selected view's content; no duplicate navigation lives here. See
+       INSTRUMENT_PANEL.md, Workspace Beneath the Instrument Panel. -->
   <div class="console">
-    <!-- LAYER 2: EVIDENCE NAVIGATION (mode selectors) -->
-    <nav class="evidence-nav" id="evidence-nav"></nav>
-
-    <!-- LAYER 3: DETAILS WORKSPACE (the one active display) -->
     <div class="details-workspace" id="details-workspace"></div>
   </div>
 
@@ -2052,37 +1936,39 @@
     }
 
     // ───────────────────────────────────────────────────────────────────
-    // EVIDENCE CATEGORIES — the single source of truth for the Investigation
-    // Console's 3-zone grid and the Details Workspace it drives. Each entry
-    // carries WHERE it sits in that grid (zoneCol/zoneRow/zoneRowSpan —
-    // columns 1/3/5, dividers live in the even columns) as well as what it
-    // renders — adding a category is still a one-entry change, it just also
-    // says which zone it belongs to.
+    // EVIDENCE CATEGORIES — the single source of truth for the Instrument
+    // Panel's bottom view-selector row and the Details Workspace it drives.
+    // Per INSTRUMENT_PANEL.md, ALL 8 workspace views now live in one flat
+    // selector row inside the Instrument Panel itself (never a duplicate
+    // nav below it, and never a separate expandable strip for Why/
+    // Unknowns/More Info) — adding a category is still a one-entry change,
+    // it just no longer says which zone/grid-cell it belongs to, since the
+    // 3-zone grid concept (Observed | Intent | Assessment) was retired in
+    // favor of one shallow row, per the frozen spec.
     //
-    // The three zones are a deliberate reframing, not a relabeling of the
-    // old four-tab list:
-    //   Observed (col 1)    — what a scan found (Detected Apps/Devices)
-    //   Intent   (col 3)    — what the user is trying to accomplish (Use Case)
-    //   Assessment (col 5)  — the app's evolving model of what should
-    //                         influence the recommendation (Applications/
-    //                         Devices) — detected + suggested + manual +
-    //                         planned, combined
-    // "Current Computer" (the old scan-trigger tab) is gone as a standalone
-    // destination — scanning is now reached contextually, from wherever a
-    // scan would actually fill a gap (Detected Apps/Devices' empty state),
-    // matching "a scan is an accelerator, not a prerequisite." "Findings"
-    // is gone too — its stat trio and attention list now live inside
-    // Applications, the workspace that already answers the same underlying
-    // question ("what's actually shaping this recommendation"). "Community"
-    // is reachable via the top nav's own Community menu — this console
-    // stays scoped to building the assessment model itself.
+    // "Current Computer" (the old scan-trigger tab) stays gone as a
+    // standalone destination — scanning is reached contextually, from
+    // wherever a scan would actually fill a gap (Detected Apps/Devices'
+    // empty state). "Findings" stays folded into Applications. "Community"
+    // is reachable via the top nav's own Community menu.
+    //
+    // Why / Unknowns / More Info were previously a separate toggle-panel
+    // system (.helper-toggle/.helper-panel) living inside the Instrument
+    // Panel itself — per INSTRUMENT_PANEL.md's Bottom Row / Workspace
+    // rules, they're now ordinary workspace views like any other, selected
+    // the same way and rendering into the same #details-workspace — see
+    // renderWhyTab()/renderUnknownsTab()/renderMoreInfoTab() below, which
+    // replace the old renderHelperPanels() content logic one-for-one.
     // ───────────────────────────────────────────────────────────────────
     const EVIDENCE_CATEGORIES = [
-      { id: 'detected-apps', label: 'Detected Apps', zoneCol: 1, zoneRow: 1, render: renderDetectedAppsTab },
-      { id: 'detected-devices', label: 'Detected Devices', zoneCol: 1, zoneRow: 2, render: renderDetectedDevicesTab },
-      { id: 'use-case', label: 'Use Case', zoneCol: 3, zoneRow: 1, zoneRowSpan: 2, render: renderUseCaseTab },
-      { id: 'applications', label: 'Applications', zoneCol: 5, zoneRow: 1, render: renderApplicationsTab },
-      { id: 'devices', label: 'Devices', zoneCol: 5, zoneRow: 2, render: renderDevicesTab },
+      { id: 'applications', label: 'Applications', render: renderApplicationsTab },
+      { id: 'devices', label: 'Devices', render: renderDevicesTab },
+      { id: 'use-case', label: 'Use Case', render: renderUseCaseTab },
+      { id: 'detected-apps', label: 'Detected Apps', render: renderDetectedAppsTab },
+      { id: 'detected-devices', label: 'Detected Devices', render: renderDetectedDevicesTab },
+      { id: 'why', label: 'Why', render: renderWhyTab },
+      { id: 'unknowns', label: 'Unknowns', render: renderUnknownsTab },
+      { id: 'more-info', label: 'More Info', render: renderMoreInfoTab },
     ];
     // Use Case is the deliberate default/home tab — this workspace works
     // identically whether or not a scan has ever run, per the brief's own
@@ -2097,14 +1983,17 @@
       renderDetailsWorkspace();
     }
 
+    // One shallow flat row of illuminated latching pushbuttons — see
+    // INSTRUMENT_PANEL.md, Bottom Row: Workspace View Selectors. No grid,
+    // no zone dividers; flex-wrap only kicks in if a narrow viewport
+    // genuinely can't fit all 8 on one line, which this pass doesn't
+    // specifically design for (laptop/desktop-first, per the spec).
     function renderEvidenceNav() {
       const nav = document.getElementById('evidence-nav');
-      nav.innerHTML = EVIDENCE_CATEGORIES.map((cat) => {
-        const rowStyle = cat.zoneRowSpan ? `${cat.zoneRow} / span ${cat.zoneRowSpan}` : String(cat.zoneRow);
-        const anchorClass = cat.zoneRowSpan ? ' zone-anchor' : '';
-        return `<button type="button" class="evidence-tab${anchorClass}${cat.id === activeTabId ? ' active' : ''}"
-          data-tab="${cat.id}" style="grid-column:${cat.zoneCol};grid-row:${rowStyle};">${escapeHtml(cat.label)}</button>`;
-      }).join('') + '<div class="zone-divider" style="grid-column:2;"></div><div class="zone-divider" style="grid-column:4;"></div>';
+      nav.innerHTML = EVIDENCE_CATEGORIES.map((cat) =>
+        `<button type="button" class="evidence-tab${cat.id === activeTabId ? ' active' : ''}"
+          data-tab="${cat.id}" role="tab" aria-selected="${cat.id === activeTabId ? 'true' : 'false'}">${escapeHtml(cat.label)}</button>`
+      ).join('');
       nav.querySelectorAll('.evidence-tab').forEach((el) => {
         el.addEventListener('click', () => switchTab(el.dataset.tab));
       });
@@ -2976,31 +2865,49 @@
     // vertical LED instrument, see the SUITABILITY_* block below.
     const GAUGE_TICK_FRACTIONS = [0, 0.25, 0.5, 0.75, 1];
 
-    // ─── CONFIDENCE GAUGE ring — a thick band of discrete colored
-    // segments, the same LED-family language as the evidence meters, not
-    // a smooth stroked arc. Colored by FIXED POSITION across the sweep
-    // (red -> orange -> yellow -> green, quartered) and always rendered
-    // at full brightness — this ring is a fixed instrument backdrop (like
-    // a real gauge's color zones), never a completion indicator; the
-    // needle alone shows the current reading against it. ────────────────
-    const GAUGE_RING_SEGMENTS = 44;
-    function gaugeRingColorForFraction(f) {
-      if (f < 0.25) return '#ef4444';
-      if (f < 0.5) return '#f97316';
-      if (f < 0.75) return '#eab308';
-      return '#10b981';
-    }
-    function gaugeRingSvg() {
-      const inner = GAUGE_R - GAUGE_STROKE / 2;
-      const outer = GAUGE_R + GAUGE_STROKE / 2;
-      let html = '';
-      for (let i = 0; i < GAUGE_RING_SEGMENTS; i++) {
-        const f = i / (GAUGE_RING_SEGMENTS - 1);
+    // ─── CONFIDENCE GAUGE arc — a continuous (visually) colored band, not
+    // separate LED blocks. Per INSTRUMENT_PANEL.md: the arc stays visible
+    // across the full range; only the portion behind the needle reads as
+    // brightly illuminated, the remainder stays dim-but-present. Built
+    // from many small line segments end-to-end (a dense polyline, not
+    // SVG's <path> arc command) — the same technique this file already
+    // uses elsewhere for a >180° sweep, chosen specifically to avoid the
+    // arc command's large-arc/sweep-flag ambiguity; at this many segments
+    // per zone it reads as one smooth band, not discrete blocks (no gaps,
+    // full GAUGE_STROKE width, unlike the old LED ring's short dashed
+    // segments). Color still zones by fixed position (red -> orange ->
+    // yellow -> green, quartered) — that's the "traditional analog
+    // instrument" color-zone look the spec asks for — but brightness
+    // (dim track vs. bright fill) is now what represents "how much of the
+    // arc is behind the needle," not a discrete on/off LED state. ───────
+    const GAUGE_ZONES = [
+      { from: 0, to: 0.25, color: '#ef4444' },
+      { from: 0.25, to: 0.5, color: '#f97316' },
+      { from: 0.5, to: 0.75, color: '#eab308' },
+      { from: 0.75, to: 1, color: '#10b981' },
+    ];
+    function gaugeArcPolylinePoints(fromFrac, toFrac, steps) {
+      const pts = [];
+      for (let i = 0; i <= steps; i++) {
+        const f = fromFrac + (toFrac - fromFrac) * (i / steps);
         const angle = GAUGE_START_ANGLE + GAUGE_SWEEP * f;
-        const p1 = gaugePoint(angle, inner);
-        const p2 = gaugePoint(angle, outer);
-        html += `<line x1="${p1.x.toFixed(2)}" y1="${p1.y.toFixed(2)}" x2="${p2.x.toFixed(2)}" y2="${p2.y.toFixed(2)}" stroke="${gaugeRingColorForFraction(f)}" stroke-width="${(GAUGE_STROKE * 0.62).toFixed(2)}" stroke-linecap="round"/>`;
+        pts.push(gaugePoint(angle, GAUGE_R));
       }
+      return pts.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+    }
+    // Draws the zones (or the portion of each zone) that fall within
+    // [0, maxFrac] at the given opacity — maxFrac=1 for the permanent dim
+    // track (the full range, always visible); maxFrac=confPct/100 for the
+    // bright fill (only as far as the needle has earned).
+    function gaugeZoneArcsSvg(maxFrac, opacity) {
+      let html = '';
+      GAUGE_ZONES.forEach((zone) => {
+        const segEnd = Math.min(zone.to, maxFrac);
+        if (segEnd <= zone.from) return;
+        const steps = Math.max(2, Math.round((segEnd - zone.from) * 120));
+        const points = gaugeArcPolylinePoints(zone.from, segEnd, steps);
+        html += `<polyline points="${points}" fill="none" stroke="${zone.color}" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round" opacity="${opacity}"/>`;
+      });
       return html;
     }
     // Dark separator lines at the 5 major fractions, drawn over the ring —
@@ -3045,7 +2952,8 @@
       const baseL = gaugePoint(GAUGE_START_ANGLE - 4.5, 14);
       const baseR = gaugePoint(GAUGE_START_ANGLE + 4.5, 14);
       return `<svg width="${GAUGE_WIDTH}" height="${GAUGE_HEIGHT}" viewBox="0 0 ${GAUGE_WIDTH} ${GAUGE_HEIGHT}">
-        ${gaugeRingSvg()}
+        <g class="gauge-track">${gaugeZoneArcsSvg(1, 0.3)}</g>
+        <g class="gauge-fill"></g>
         ${gaugeMajorTicksSvg()}
         ${gaugeTickLabelsSvg()}
         <g class="gauge-needle" style="transform-origin:${GAUGE_CX}px ${GAUGE_CY}px; transform:rotate(0deg); transition: transform 0.7s cubic-bezier(0.22,1,0.36,1); filter: drop-shadow(0 0 4px rgba(241,245,249,0.65));">
@@ -3057,6 +2965,18 @@
     }
     function ensureGaugeBuilt(wrapEl) {
       if (!wrapEl.querySelector('svg')) wrapEl.innerHTML = gaugeStaticSvg();
+    }
+    // Redraws only the bright "illuminated" portion of the arc, from the
+    // start up to the current reading — the dim track (built once, in
+    // gaugeStaticSvg()) never changes. Not animated (a variable-length
+    // polyline transition is a materially harder problem than the
+    // needle's fixed-geometry rotation) — same accepted, documented
+    // trade-off this file already made for the needle-only-animates
+    // design in an earlier pass.
+    function updateGaugeFill(wrapEl, percent) {
+      const clamped = Math.max(0, Math.min(100, percent));
+      const fillGroup = wrapEl.querySelector('.gauge-fill');
+      if (fillGroup) fillGroup.innerHTML = gaugeZoneArcsSvg(clamped / 100, 1);
     }
     function updateGaugeNeedle(wrapEl, needlePercent) {
       const clamped = Math.max(0, Math.min(100, needlePercent));
@@ -3378,16 +3298,23 @@
       setTimeout(() => el.classList.remove('pulse'), 700);
     }
 
-    function renderDashboard() {
+    // Shared, canonical computation of "what does the dashboard currently
+    // know" — used by renderDashboard() itself AND by the Why/Unknowns/
+    // More Info workspace views (renderWhyTab()/renderUnknownsTab()/
+    // renderMoreInfoTab(), below), which are now ordinary workspace views
+    // selected via the same view-selector row as everything else (see
+    // INSTRUMENT_PANEL.md) rather than a separate always-visible toggle
+    // strip. Extracted so both call sites can never silently compute two
+    // different answers to the same question.
+    function computeDashboardState() {
       const hasSession = !!(sessionId && currentResults);
       const ctx = currentAdaptiveContext();
       const synthesis = hasSession ? computeCurrentSynthesis() : null;
       const state = determineAssessmentState({ hasSession, adaptiveContext: ctx });
 
-      // Evidence sources computed FIRST this pass (previously computed
-      // after the recommendation gauge) — the Recommendation Eligible gate
-      // below needs them to decide whether Suitability may show a reading
-      // at all, so the dependency has to come before, not after.
+      // Evidence sources computed FIRST — the Recommendation Eligible gate
+      // needs them to decide whether Suitability may show a reading at
+      // all, so the dependency has to come before, not after.
       let findingsAttentionCount = 0;
       if (hasSession && synthesis && !synthesis.empty) {
         const personalContext = loadPersonalContext(sessionId, params);
@@ -3400,6 +3327,12 @@
         scanUnavailable: isLikelyNonWindows(),
         findingsAttentionCount,
       });
+      const eligible = isSuitabilityEligible(state, evidenceSources);
+      return { hasSession, ctx, synthesis, state, evidenceSources, eligible };
+    }
+
+    function renderDashboard() {
+      const { hasSession, ctx, synthesis, state, evidenceSources, eligible } = computeDashboardState();
 
       // Confidence — how much evidence of ANY kind (scan or Intended Use)
       // currently supports today's read. See assessment.js,
@@ -3416,6 +3349,7 @@
       );
       const confWrap = document.getElementById('gauge-conf-svg-wrap');
       ensureGaugeBuilt(confWrap);
+      updateGaugeFill(confWrap, confPct);
       updateGaugeNeedle(confWrap, confPct);
       document.getElementById('gauge-conf-label').textContent = confLabel;
       document.getElementById('gauge-conf-label').style.color = confPct <= 0 ? '#64748b' : confColor;
@@ -3447,7 +3381,6 @@
       // the instrument's illuminated (colored) segment count stays at
       // zero — only the dim "unlocked" range can move before the gate
       // opens.
-      const eligible = isSuitabilityEligible(state, evidenceSources);
       let recColor, recLabel, recSub, recTierIndex;
       recTierIndex = null;
       if (eligible && state === ASSESSMENT_STATE_SCAN_BACKED) {
@@ -3483,7 +3416,7 @@
         recSubEl.innerHTML = '<a href="#" class="gauge-label-sub-why" id="gauge-rec-why">Why?</a>';
         document.getElementById('gauge-rec-why').addEventListener('click', (e) => {
           e.preventDefault();
-          document.querySelector('.helper-toggle[data-helper="why"]').click();
+          switchTab('why');
         });
       } else {
         recSubEl.textContent = recSub;
@@ -3511,7 +3444,15 @@
       const next = nextActionFor({ hasSession, adaptiveContext: ctx, synthesis });
       renderWhatNextPanel(next);
 
-      renderHelperPanels(state, ctx, synthesis, evidenceSources, eligible);
+      // Why / Unknowns / More Info are ordinary workspace views now (see
+      // EVIDENCE_CATEGORIES above) — re-rendering whichever view is
+      // currently active keeps them live whenever the dashboard's own
+      // numbers change, exactly like every other view already relies on
+      // (see the renderDashboard()+renderDetailsWorkspace() pairing used
+      // throughout this file, e.g. applyImportanceOverride()). Idempotent
+      // and cheap for every other view too, so this is safe to call
+      // unconditionally rather than special-casing which 3 tabs need it.
+      renderDetailsWorkspace();
     }
 
     // Calm, non-alarming palette for the Confidence gauge — same mapping
@@ -3524,10 +3465,11 @@
       return '#93c5fd';
     }
 
-    // Why / Unknowns / More Info — controls always visible and enabled;
-    // content adapts to the current state rather than the toggle itself
-    // being hidden or disabled when evidence is thin.
-    let openHelperId = null;
+    // Why / Unknowns / More Info — ordinary workspace views now (selected
+    // via the same view-selector row as everything else, see
+    // EVIDENCE_CATEGORIES); content still adapts to the current state
+    // rather than being hidden or disabled when evidence is thin — see
+    // renderWhyTab()/renderUnknownsTab()/renderMoreInfoTab() below.
     // Evidence Summary — a compact, qualitative answer to "why is
     // Confidence at this level," built directly from the same
     // evidenceSourcesFor() array the gauge itself sums (see
@@ -3626,97 +3568,92 @@
       return `<ul class="evidence-summary-list">${rows.join('')}</ul>`;
     }
 
-    function renderHelperPanels(state, ctx, synthesis, evidenceSources, eligible) {
-      const whyBody = document.getElementById('helper-panel-why');
-      const unknownsBody = document.getElementById('helper-panel-unknowns');
-      const moreInfoBody = document.getElementById('helper-panel-more-info');
+    // Why — ordinary workspace view now (see EVIDENCE_CATEGORIES); this is
+    // renderHelperPanels()'s former Why-panel body logic, unchanged, just
+    // computing its own state via computeDashboardState() instead of
+    // receiving it as parameters, and writing into the shared
+    // #details-workspace container like every other tab.
+    function renderWhyTab(container) {
+      const { state, ctx, synthesis, evidenceSources, eligible } = computeDashboardState();
 
-      // Gated on the SAME eligibility the gauge itself uses — if
-      // Suitability is showing "Need More Evidence" instead of a real
-      // reading, the Why panel must explain THAT (why the gate hasn't
-      // opened yet), never the underlying synthesis/contextual explanation
-      // a real reading would give. Printing the real explanation here
-      // while the gauge hides it would give away exactly what the gate
-      // exists to hold back.
+      // Gated on the SAME eligibility the Suitability gauge itself uses —
+      // if Suitability is showing "Need More Evidence" instead of a real
+      // reading, this view must explain THAT (why the gate hasn't opened
+      // yet), never the underlying synthesis/contextual explanation a real
+      // reading would give. Printing the real explanation here while the
+      // gauge hides it would give away exactly what the gate exists to
+      // hold back.
+      let body;
       if (!eligible) {
-        const howItThinksLink = '<div class="helper-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>';
-        whyBody.innerHTML = `<p>${escapeHtml(eligibilityGateExplanation(state, evidenceSources, synthesis))}</p>${howItThinksLink}`;
+        body = `<p class="workspace-subtext">${escapeHtml(eligibilityGateExplanation(state, evidenceSources, synthesis))}</p>
+          <div class="workspace-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>`;
       } else if (state === ASSESSMENT_STATE_SCAN_BACKED && synthesis && !synthesis.empty) {
-        whyBody.innerHTML = `<p>${escapeHtml(synthesis.explanation)}</p>`;
+        body = `<p class="workspace-subtext">${escapeHtml(synthesis.explanation)}</p>`;
       } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
-        whyBody.innerHTML = `<p>${escapeHtml(contextualReadFor(ctx).explanation)}</p>`;
+        body = `<p class="workspace-subtext">${escapeHtml(contextualReadFor(ctx).explanation)}</p>`;
       } else {
-        whyBody.innerHTML = `<p>There's not enough evidence yet to explain a recommendation. Add evidence from
+        body = `<p class="workspace-subtext">There's not enough evidence yet to explain a recommendation. Add evidence from
           Scanner or Use Case — even one is enough for an early read.</p>`;
       }
+      container.innerHTML = `<div class="workspace-heading">Why This Recommendation</div>${body}`;
+    }
 
+    // Unknowns — the deserves-attention list, unchanged logic from
+    // renderHelperPanels(). The old "See all in Findings →" link is fixed
+    // to point at Applications (Findings was folded into Applications in
+    // an earlier pass — 'findings' is not a valid tab id and the old link
+    // silently no-opped via switchTab()'s fallback).
+    function renderUnknownsTab(container) {
+      const { state } = computeDashboardState();
+      let body;
       if (state === ASSESSMENT_STATE_SCAN_BACKED && currentResults) {
         const personalContext = loadPersonalContext(sessionId, params);
         const classified = classifyPopulation(currentResults, personalContext);
         const deservesAttention = classified.filter(({ app, effectiveBucket, decision }) =>
           classifyAssessmentItem({ decision, bucket: effectiveBucket, app }) === 'deservesAttention');
-        unknownsBody.innerHTML = deservesAttention.length > 0
-          ? `<p>${deservesAttention.length} item${deservesAttention.length === 1 ? '' : 's'} currently have thin evidence:</p>
-             <ul>${deservesAttention.slice(0, 5).map(({ app }) => `<li>• ${escapeHtml(app.name)}</li>`).join('')}</ul>
-             <div class="helper-links"><a href="#" data-switch-tab="findings">See all in Findings →</a></div>`
-          : `<p>Nothing is currently pulling your Confidence down — every material item has enough evidence.</p>`;
+        body = deservesAttention.length > 0
+          ? `<p class="workspace-subtext">${deservesAttention.length} item${deservesAttention.length === 1 ? '' : 's'} currently have thin evidence:</p>
+             <ul style="list-style:none;margin-top:0.4rem;">${deservesAttention.slice(0, 5).map(({ app }) => `<li>• ${escapeHtml(app.name)}</li>`).join('')}</ul>
+             <div class="workspace-links"><a href="#" id="unknowns-see-applications">See all in Applications →</a></div>`
+          : `<p class="workspace-subtext">Nothing is currently pulling your Confidence down — every material item has enough evidence.</p>`;
       } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
-        unknownsBody.innerHTML = `<p>Unknowns require a scan — an early read from context alone doesn't evaluate
+        body = `<p class="workspace-subtext">Unknowns require a scan — an early read from context alone doesn't evaluate
           any specific application or device, so there's nothing yet to list here.</p>`;
       } else {
-        unknownsBody.innerHTML = `<p>Nothing scanned yet — unknowns will appear here once you scan this computer.</p>`;
+        body = `<p class="workspace-subtext">Nothing scanned yet — unknowns will appear here once you scan this computer.</p>`;
       }
+      container.innerHTML = `<div class="workspace-heading">Unknowns</div>${body}`;
+      const link = document.getElementById('unknowns-see-applications');
+      if (link) link.addEventListener('click', (e) => { e.preventDefault(); switchTab('applications'); });
+    }
 
-      // Evidence Summary itself no longer duplicates here — it's a
-      // permanent fixture of the dashboard's middle panel now (see
-      // renderDashboard()), so this panel just adds the extra detail that
-      // doesn't fit there (app/device counts, links) without repeating
-      // the meters immediately above it on the same page.
+    // More Info — app/device counts plus links, unchanged logic. Evidence
+    // Summary itself doesn't repeat here — it's a permanent fixture of the
+    // dashboard's middle panel (see renderDashboard()) — this view just
+    // adds the extra detail that doesn't fit there.
+    function renderMoreInfoTab(container) {
+      const { ctx } = computeDashboardState();
+      let body;
       if (currentResults) {
         const appTotal = ['native', 'emulated', 'unsupported', 'unknown'].reduce((n, b) => n + ((currentResults[b] || []).length), 0);
         const deviceTotal = (currentResults.devices || []).length;
-        moreInfoBody.innerHTML = `
-          <div class="helper-stats">
-            <div class="helper-stat"><div class="helper-stat-count">${appTotal}</div><div class="helper-stat-label">Apps</div></div>
-            <div class="helper-stat"><div class="helper-stat-count">${deviceTotal}</div><div class="helper-stat-label">Devices</div></div>
+        body = `
+          <div class="info-stats">
+            <div class="info-stat"><div class="info-stat-count">${appTotal}</div><div class="info-stat-label">Apps</div></div>
+            <div class="info-stat"><div class="info-stat-count">${deviceTotal}</div><div class="info-stat-label">Devices</div></div>
           </div>
-          <p>This assessment is based on a ${escapeHtml(scanLevelParam)} scan${hasAdaptiveContext(ctx) ? ' plus your Use Case answers' : ''}.</p>
-          <div class="helper-links">
+          <p class="workspace-subtext">This assessment is based on a ${escapeHtml(scanLevelParam)} scan${hasAdaptiveContext(ctx) ? ' plus your Use Case answers' : ''}.</p>
+          <div class="workspace-links">
             <a href="${reportUrlFor(sessionId, scanLevelParam)}">View Detailed Report →</a>
             <a href="/how-it-thinks.html">How CheckMyARM Thinks →</a>
           </div>`;
       } else {
-        moreInfoBody.innerHTML = `<p>No summary yet — this fills in once you scan or add Use Case. The
+        body = `<p class="workspace-subtext">No summary yet — this fills in once you scan or add Use Case. The
           Evidence panel above already reflects what's known so far.</p>
-          <div class="helper-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>`;
+          <div class="workspace-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>`;
       }
-
-      moreInfoBody.querySelectorAll('[data-switch-tab]').forEach((el) => {
-        el.addEventListener('click', (e) => { e.preventDefault(); switchTab(el.dataset.switchTab); });
-      });
-      unknownsBody.querySelectorAll('[data-switch-tab]').forEach((el) => {
-        el.addEventListener('click', (e) => { e.preventDefault(); switchTab(el.dataset.switchTab); });
-      });
+      container.innerHTML = `<div class="workspace-heading">More Info</div>${body}`;
     }
-
-    document.querySelectorAll('.helper-toggle').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const id = 'helper-panel-' + btn.dataset.helper;
-        const panel = document.getElementById(id);
-        const isOpen = !panel.hidden;
-        // Mutually exclusive — one open panel at a time keeps the compact
-        // helper row from growing into a second scrolling report.
-        document.querySelectorAll('.helper-panel').forEach((p) => { p.hidden = true; });
-        document.querySelectorAll('.helper-toggle').forEach((b) => b.classList.remove('active'));
-        if (!isOpen) {
-          panel.hidden = false;
-          btn.classList.add('active');
-          openHelperId = id;
-        } else {
-          openHelperId = null;
-        }
-      });
-    });
 
     // Scanner instrument — wired once, since its DOM (unlike the What Next
     // queue above it) is static markup, never rebuilt. A no-op click
