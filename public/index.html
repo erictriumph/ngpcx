@@ -95,11 +95,11 @@
        "what should I do" -> "what effect did that have" -> "what
        recommendation have we earned" (What Next -> Instrument Cluster ->
        Suitability), so DOM order changed to match, not just visual order. */
-    /* Narrowed a touch (visual-refinement pass) — the recovered share
-       went to .panel-instrument-cluster below, mainly to give the
-       Confidence gauge more room to grow. */
+    /* Narrowed (visual-refinement passes) — the recovered share went to
+       .panel-instrument-cluster below, to give the Confidence gauge real
+       room to become the dashboard's visual anchor. */
     .panel-whatnext {
-      flex: 0.82 1 0;
+      flex: 0.75 1 0;
       min-width: 0;
       display: flex;
       flex-direction: column;
@@ -112,7 +112,7 @@
        visual focus. A slightly brighter border marks it as the focal
        panel without introducing a new color language. */
     .panel-instrument-cluster {
-      flex: 1.9 1 0;
+      flex: 2.05 1 0;
       min-width: 0;
       display: flex;
       flex-direction: row;
@@ -160,22 +160,23 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 128px;
-      height: 158px;
+      width: 240px;
+      height: 316px;
       justify-content: flex-start;
     }
 
     /* A permanently-sized box for the gauge SVG — the SVG itself always
-       renders at the same pixel size (92x72 — see the GAUGE_* constants in
-       the script below) regardless of the value/color passed to it.
-       Enlarged this pass (visual-refinement: "use the recovered space to
-       enlarge the Confidence gauge") — CSS dimensions here are kept in
-       sync by hand with the JS GAUGE_* constants, since there's no shared
-       source between a compile-time CSS value and a runtime JS one. */
+       renders at the same pixel size (228x189 — see the GAUGE_* constants
+       in the script below) regardless of the value/color passed to it.
+       Substantially enlarged this pass (redesign: "the gauge should
+       become the visual anchor of the dashboard") — CSS dimensions here
+       are kept in sync by hand with the JS GAUGE_* constants, since
+       there's no shared source between a compile-time CSS value and a
+       runtime JS one. */
     .gauge-svg-wrap {
       position: relative;
-      width: 92px;
-      height: 72px;
+      width: 228px;
+      height: 189px;
     }
 
     .gauge-svg-wrap svg {
@@ -232,6 +233,27 @@
       height: 0.85rem;
       line-height: 0.85rem;
       margin-top: 0.1rem;
+    }
+
+    /* Confidence-only typography scale-up (descendant selectors scoped to
+       .gauge-block, which only ever wraps the Confidence instrument —
+       Suitability's reuse of these same base classes lives directly under
+       .panel-suitability, with no .gauge-block ancestor, so it's
+       unaffected and stays exactly as it was). Bigger text to match the
+       much larger gauge redesigned this pass. */
+    .gauge-block .gauge-label-area {
+      height: 2.6rem;
+      margin-top: 0.3rem;
+    }
+    .gauge-block .gauge-label {
+      font-size: 1.05rem;
+      max-width: 210px;
+    }
+    .gauge-block .gauge-value-area {
+      height: 2.4rem;
+      line-height: 2.4rem;
+      font-size: 2.1rem;
+      font-weight: 800;
     }
 
     .gauge-label-sub-why {
@@ -623,42 +645,43 @@
       margin-bottom: 0.12rem;
     }
 
-    /* Segmented LED-style meter — replaces the old continuous fill bar
-       (see CLAUDE.md, Dashboard Instrument Cluster prototype).
-       Real-instrument LED behavior, per visual-refinement pass: every
-       segment ALWAYS carries its assigned color (a fixed red -> orange ->
-       yellow -> green gradient by POSITION, identical on every row — see
-       the :nth-child rules below) — the color never changes. What changes
-       is only whether that LED is powered on (full brightness) or powered
-       down (dim, via opacity alone so the hue stays visibly red/orange/
-       yellow/green rather than reading as gray). Completeness is
-       expressed by HOW MANY of the fixed-position LEDs are lit, not by
-       which color is chosen — a cleaner read of "how much do we know"
-       than the row-level single-color version this replaced. See
-       evidenceLedSegments() in the script below. */
+    /* Segmented LED bar-graph meter — a real redesign this pass (not a
+       recolor of the old 8-block version): many NARROW VERTICAL LEDs
+       (tall, thin bars) rather than a handful of wide horizontal blocks —
+       see CLAUDE.md, Instrument Redesign addendum. Every segment ALWAYS
+       carries its assigned color (a fixed red -> orange -> yellow ->
+       green gradient by POSITION, identical on every row, 8 LEDs per
+       color band across 32 total — see the :nth-child rules below) — the
+       color never changes. What changes is only whether that LED is
+       powered on (full brightness + glow) or powered down (dim, via
+       opacity alone so the hue stays visibly red/orange/yellow/green
+       rather than reading as gray). Completeness is expressed by HOW MANY
+       of the fixed-position LEDs are lit, not by which color is chosen.
+       See evidenceLedSegments()/EVIDENCE_LED_SEGMENTS in the script below. */
     .evidence-led-row {
       display: flex;
-      gap: 2px;
-      margin-top: 0.2rem;
+      gap: 1.5px;
+      margin-top: 0.3rem;
+      align-items: flex-end;
     }
 
     .evidence-led {
       flex: 1 1 0;
-      height: 8px;
-      border-radius: 1px;
-      opacity: 0.32;
+      height: 22px;
+      border-radius: 1.5px;
+      opacity: 0.34;
       transition: opacity 0.4s ease, box-shadow 0.4s ease;
     }
 
-    .evidence-led:nth-child(1), .evidence-led:nth-child(2) { --led-color: #ef4444; }
-    .evidence-led:nth-child(3), .evidence-led:nth-child(4) { --led-color: #f97316; }
-    .evidence-led:nth-child(5), .evidence-led:nth-child(6) { --led-color: #eab308; }
-    .evidence-led:nth-child(7), .evidence-led:nth-child(8) { --led-color: #10b981; }
+    .evidence-led:nth-child(n+1):nth-child(-n+8) { --led-color: #ef4444; }
+    .evidence-led:nth-child(n+9):nth-child(-n+16) { --led-color: #f97316; }
+    .evidence-led:nth-child(n+17):nth-child(-n+24) { --led-color: #eab308; }
+    .evidence-led:nth-child(n+25):nth-child(-n+32) { --led-color: #10b981; }
     .evidence-led { background: var(--led-color); }
 
     .evidence-led.lit {
       opacity: 1;
-      box-shadow: 0 0 4px var(--led-color);
+      box-shadow: 0 0 6px var(--led-color), 0 0 2px var(--led-color);
     }
 
     /* "Newly earned evidence segments briefly brighten before settling" —
@@ -2784,31 +2807,27 @@
     // the bottom, low/resting position at the lower-left, filling clockwise
     // through the top to the lower-right. Always renders at the same pixel
     // dimensions regardless of value (r/stroke/pad are constants, never
-    // derived from `percent`) — only the fill's angular extent changes.
-    // Built from explicit point-by-point polylines rather than SVG's
-    // <path> arc command specifically to avoid that command's large-arc/
-    // sweep-flag ambiguity for a >180deg sweep — this is more verbose but
-    // unambiguous and easy to verify by inspection.
-    // R/STROKE/PAD enlarged this pass (visual-refinement: "use the
-    // recovered space to enlarge the Confidence gauge" — see .gauge-block/
-    // .gauge-svg-wrap above, kept in sync by hand since CSS can't read
-    // these JS constants). 34/8/5 -> 40/9/6 yields a 92x72 SVG (was 78x61).
-    const GAUGE_R = 40, GAUGE_STROKE = 9, GAUGE_PAD = 6;
+    // derived from `percent`) — only the needle's angle changes.
+    // Substantially redesigned this pass (instrument redesign, not a
+    // polish pass — see CLAUDE.md): R/STROKE/PAD grew from 40/9/6 to
+    // 78/13/26 (a 208x169 SVG, was 92x72), the arc became a thick ring of
+    // discrete colored segments (matching the LED language used elsewhere
+    // on this dashboard) instead of a thin gray/colored polyline pair, and
+    // the needle became a bold tapered wedge with a glowing hub instead of
+    // a thin line. PAD grew specifically to make room for the new tick
+    // number labels (0/25/50/75/100) drawn just outside the ring.
+    // PAD is generous (36, not the ~26 the ring/needle geometry alone
+    // would need) specifically so the tick number labels — drawn further
+    // out than the ring itself (see gaugeTickLabelsSvg()) — have clear
+    // room at the top of the arc (the "50" label, sitting directly above
+    // center) without clipping against the SVG's own viewBox edge; found
+    // and fixed via a real screenshot showing "50" cut off at PAD=26.
+    const GAUGE_R = 78, GAUGE_STROKE = 13, GAUGE_PAD = 36;
     const GAUGE_START_ANGLE = 150, GAUGE_SWEEP = 240; // degrees; 150->390(=30) sweeps through the top (270)
     const GAUGE_WIDTH = GAUGE_R * 2 + GAUGE_PAD * 2;
     const GAUGE_CY = GAUGE_R + GAUGE_PAD;
     const GAUGE_HEIGHT = GAUGE_CY + GAUGE_R * 0.5 + GAUGE_PAD;
     const GAUGE_CX = GAUGE_WIDTH / 2;
-
-    function gaugeArcPoints(startAngle, sweepDeg, segments, radius) {
-      const pts = [];
-      const r = radius === undefined ? GAUGE_R : radius;
-      for (let i = 0; i <= segments; i++) {
-        const angle = ((startAngle + (sweepDeg * i) / segments) * Math.PI) / 180;
-        pts.push((GAUGE_CX + r * Math.cos(angle)).toFixed(2) + ',' + (GAUGE_CY + r * Math.sin(angle)).toFixed(2));
-      }
-      return pts.join(' ');
-    }
 
     function gaugePoint(angleDeg, radius) {
       const angle = (angleDeg * Math.PI) / 180;
@@ -2816,61 +2835,91 @@
     }
 
     // Tick marks — 5 short radial hairlines at 0/25/50/75/100% of the
-    // sweep, purely decorative (an instrument reads as an instrument
-    // partly because it has hash marks, not because each one denotes a
-    // precise threshold). Confidence-only now — ARM Suitability moved to
-    // its own vertical LED instrument, see the SUITABILITY_* block below.
+    // sweep. Confidence-only now — ARM Suitability moved to its own
+    // vertical LED instrument, see the SUITABILITY_* block below.
     const GAUGE_TICK_FRACTIONS = [0, 0.25, 0.5, 0.75, 1];
-    function gaugeTicksSvg() {
-      const inner = GAUGE_R - GAUGE_STROKE * 0.65;
-      const outer = GAUGE_R + GAUGE_STROKE * 0.55;
+
+    // ─── CONFIDENCE GAUGE ring — a thick band of discrete colored
+    // segments, the same LED-family language as the evidence meters, not
+    // a smooth stroked arc. Colored by FIXED POSITION across the sweep
+    // (red -> orange -> yellow -> green, quartered) and always rendered
+    // at full brightness — this ring is a fixed instrument backdrop (like
+    // a real gauge's color zones), never a completion indicator; the
+    // needle alone shows the current reading against it. ────────────────
+    const GAUGE_RING_SEGMENTS = 44;
+    function gaugeRingColorForFraction(f) {
+      if (f < 0.25) return '#ef4444';
+      if (f < 0.5) return '#f97316';
+      if (f < 0.75) return '#eab308';
+      return '#10b981';
+    }
+    function gaugeRingSvg() {
+      const inner = GAUGE_R - GAUGE_STROKE / 2;
+      const outer = GAUGE_R + GAUGE_STROKE / 2;
+      let html = '';
+      for (let i = 0; i < GAUGE_RING_SEGMENTS; i++) {
+        const f = i / (GAUGE_RING_SEGMENTS - 1);
+        const angle = GAUGE_START_ANGLE + GAUGE_SWEEP * f;
+        const p1 = gaugePoint(angle, inner);
+        const p2 = gaugePoint(angle, outer);
+        html += `<line x1="${p1.x.toFixed(2)}" y1="${p1.y.toFixed(2)}" x2="${p2.x.toFixed(2)}" y2="${p2.y.toFixed(2)}" stroke="${gaugeRingColorForFraction(f)}" stroke-width="${(GAUGE_STROKE * 0.62).toFixed(2)}" stroke-linecap="round"/>`;
+      }
+      return html;
+    }
+    // Dark separator lines at the 5 major fractions, drawn over the ring —
+    // "stronger tick marks" as real zone dividers, not decorative hairlines.
+    function gaugeMajorTicksSvg() {
+      const inner = GAUGE_R - GAUGE_STROKE * 0.85;
+      const outer = GAUGE_R + GAUGE_STROKE * 0.85;
       return GAUGE_TICK_FRACTIONS.map((f) => {
         const angle = GAUGE_START_ANGLE + GAUGE_SWEEP * f;
         const p1 = gaugePoint(angle, inner);
         const p2 = gaugePoint(angle, outer);
-        return `<line x1="${p1.x.toFixed(2)}" y1="${p1.y.toFixed(2)}" x2="${p2.x.toFixed(2)}" y2="${p2.y.toFixed(2)}" stroke="#475569" stroke-width="1.25" stroke-linecap="round"/>`;
+        return `<line x1="${p1.x.toFixed(2)}" y1="${p1.y.toFixed(2)}" x2="${p2.x.toFixed(2)}" y2="${p2.y.toFixed(2)}" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/>`;
+      }).join('');
+    }
+    // Numeric labels (0/25/50/75/100) just outside the ring.
+    function gaugeTickLabelsSvg() {
+      const labelR = GAUGE_R + GAUGE_STROKE * 1.3 + 9;
+      return GAUGE_TICK_FRACTIONS.map((f) => {
+        const angle = GAUGE_START_ANGLE + GAUGE_SWEEP * f;
+        const p = gaugePoint(angle, labelR);
+        return `<text x="${p.x.toFixed(2)}" y="${p.y.toFixed(2)}" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="700" fill="#94a3b8">${Math.round(f * 100)}</text>`;
       }).join('');
     }
 
     // ─── CONFIDENCE GAUGE — persistent SVG, animated needle ────────────────
-    // Suitability no longer uses this round-dial machinery at all (see the
-    // vertical LED instrument below) — this block is now Confidence-only.
-    // To animate the needle smoothly (the brief's explicit ask), the SVG can
-    // no longer be thrown away and rebuilt via innerHTML on every render —
-    // a freshly-inserted element has no prior state for the browser to
-    // transition FROM. Instead the static parts (track, ticks, a needle
-    // <g> with a CSS transition already on it) are built exactly ONCE per
-    // page load; every later render only updates the fill arc (redrawn
-    // instantly — animating a variable-length polyline smoothly is a
-    // separate, harder problem this pass didn't take on, see the summary)
-    // and the needle group's `transform: rotate()`, which the browser DOES
-    // animate since that exact element already existed a moment ago at a
-    // different angle.
+    // To animate the needle smoothly, the SVG can't be thrown away and
+    // rebuilt via innerHTML on every render — a freshly-inserted element
+    // has no prior state for the browser to transition FROM. Instead the
+    // entire face (ring, major ticks, tick labels, and a needle <g> with a
+    // CSS transition already on it) is built exactly ONCE per page load —
+    // the ring itself never changes, so nothing about the face needs to be
+    // redrawn on later renders, only the needle group's `transform:
+    // rotate()`, which the browser DOES animate since that exact element
+    // already existed a moment ago at a different angle.
     function gaugeStaticSvg() {
-      const trackPts = gaugeArcPoints(GAUGE_START_ANGLE, GAUGE_SWEEP, 48);
-      const tip = gaugePoint(GAUGE_START_ANGLE, GAUGE_R - GAUGE_STROKE * 0.55);
+      // Bold tapered needle — a kite-shaped polygon (tip -> base-left ->
+      // hub-center -> base-right) rather than a thin line, plus a larger
+      // glowing hub, drawn at the START_ANGLE baseline; the wrapping <g>'s
+      // `rotate()` transform (updated by updateGaugeNeedle()) supplies the
+      // actual reading position on top of this fixed local geometry.
+      const tip = gaugePoint(GAUGE_START_ANGLE, GAUGE_R - GAUGE_STROKE * 0.2);
+      const baseL = gaugePoint(GAUGE_START_ANGLE - 4.5, 14);
+      const baseR = gaugePoint(GAUGE_START_ANGLE + 4.5, 14);
       return `<svg width="${GAUGE_WIDTH}" height="${GAUGE_HEIGHT}" viewBox="0 0 ${GAUGE_WIDTH} ${GAUGE_HEIGHT}">
-        <polyline points="${trackPts}" fill="none" stroke="#334155" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>
-        <g class="gauge-fill"></g>
-        ${gaugeTicksSvg()}
-        <g class="gauge-needle" style="transform-origin:${GAUGE_CX}px ${GAUGE_CY}px; transform:rotate(0deg); transition: transform 0.7s cubic-bezier(0.22,1,0.36,1);">
-          <line x1="${GAUGE_CX}" y1="${GAUGE_CY}" x2="${tip.x.toFixed(2)}" y2="${tip.y.toFixed(2)}" stroke="#f1f5f9" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="${GAUGE_CX}" cy="${GAUGE_CY}" r="2.5" fill="#f1f5f9"/>
+        ${gaugeRingSvg()}
+        ${gaugeMajorTicksSvg()}
+        ${gaugeTickLabelsSvg()}
+        <g class="gauge-needle" style="transform-origin:${GAUGE_CX}px ${GAUGE_CY}px; transform:rotate(0deg); transition: transform 0.7s cubic-bezier(0.22,1,0.36,1); filter: drop-shadow(0 0 4px rgba(241,245,249,0.65));">
+          <polygon points="${tip.x.toFixed(2)},${tip.y.toFixed(2)} ${baseL.x.toFixed(2)},${baseL.y.toFixed(2)} ${GAUGE_CX},${GAUGE_CY} ${baseR.x.toFixed(2)},${baseR.y.toFixed(2)}" fill="#f1f5f9" stroke="#0f172a" stroke-width="0.75"/>
+          <circle cx="${GAUGE_CX}" cy="${GAUGE_CY}" r="10" fill="#0f172a" stroke="#f1f5f9" stroke-width="2.5"/>
+          <circle cx="${GAUGE_CX}" cy="${GAUGE_CY}" r="4" fill="#f1f5f9"/>
         </g>
       </svg>`;
     }
     function ensureGaugeBuilt(wrapEl) {
       if (!wrapEl.querySelector('svg')) wrapEl.innerHTML = gaugeStaticSvg();
-    }
-    function updateGaugeFill(wrapEl, fillPercent, color) {
-      const clamped = Math.max(0, Math.min(100, fillPercent));
-      const fillSweep = GAUGE_SWEEP * (clamped / 100);
-      const fillSegments = Math.max(1, Math.round(48 * (clamped / 100)));
-      const fillPts = gaugeArcPoints(GAUGE_START_ANGLE, fillSweep, fillSegments);
-      const fillGroup = wrapEl.querySelector('.gauge-fill');
-      fillGroup.innerHTML = clamped > 0
-        ? `<polyline points="${fillPts}" fill="none" stroke="${color}" stroke-width="${GAUGE_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>`
-        : '';
     }
     function updateGaugeNeedle(wrapEl, needlePercent) {
       const clamped = Math.max(0, Math.min(100, needlePercent));
@@ -3263,7 +3312,6 @@
       );
       const confWrap = document.getElementById('gauge-conf-svg-wrap');
       ensureGaugeBuilt(confWrap);
-      updateGaugeFill(confWrap, confPct, confColor);
       updateGaugeNeedle(confWrap, confPct);
       document.getElementById('gauge-conf-label').textContent = confLabel;
       document.getElementById('gauge-conf-label').style.color = confPct <= 0 ? '#64748b' : confColor;
@@ -3397,18 +3445,18 @@
       // implying a percentage that doesn't exist.
       return evidenceEntries.some((e) => e.presence === 'present') ? 100 : 0;
     }
-    // Segmented LED meters — real-instrument LED behavior (visual-
-    // refinement pass, see CLAUDE.md): every segment carries a FIXED color
-    // by position (red -> orange -> yellow -> green across the 8 slots,
-    // identical on every row — see the :nth-child rules on .evidence-led
-    // in the stylesheet). The color assignment never changes; only
-    // brightness does (plain unlit vs. `.lit`, driven by CSS opacity) —
-    // "the LED itself never changes color, it simply turns on or off."
-    // Completeness is expressed by HOW MANY of the fixed-position LEDs are
-    // lit, which is what actually varies per source's own percentage —
-    // replacing an earlier version of this meter that picked one color for
-    // the whole row based on completeness (ledColorForPct(), removed).
-    const EVIDENCE_LED_SEGMENTS = 8;
+    // Segmented LED bar-graph meters — a real redesign this pass, not a
+    // recolor: many narrow vertical LEDs (32, up from an earlier 8-block
+    // version) rather than a handful of wide horizontal blocks. Every
+    // segment carries a FIXED color by position (red -> orange -> yellow
+    // -> green across the 32 slots, 8 per band, identical on every row —
+    // see the :nth-child rules on .evidence-led in the stylesheet). The
+    // color assignment never changes; only brightness does (plain unlit
+    // vs. `.lit`, driven by CSS opacity) — "the LED itself never changes
+    // color, it simply turns on or off." Completeness is expressed by HOW
+    // MANY of the fixed-position LEDs are lit, which is what actually
+    // varies per source's own percentage.
+    const EVIDENCE_LED_SEGMENTS = 32;
     // Tracked per row (by key) across renders so only the segments that
     // just newly lit get the "brighten before settling" flash — see
     // .evidence-led.flash-on. A fresh DOM node needs no prior state for a
