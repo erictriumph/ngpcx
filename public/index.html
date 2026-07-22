@@ -152,6 +152,14 @@
        two lines — never touch the panel's own edges; justify-content:
        flex-start for the same title-alignment reason as the other two
        panels above. */
+    /* Subtly differentiated surface — Suitability is the primary answer
+       users are seeking, the "payoff" of the whole instrument panel, so
+       it earns a slightly richer treatment than the other two panels
+       (restrained on purpose: a touch lighter fill, a touch more blue in
+       the border, a bit more shadow depth — not a different color
+       language or a disconnected floating card). Mirrors the same
+       "border-color marks the focal panel" precedent .panel-instrument-
+       cluster already uses, one step further. */
     .panel-suitability {
       flex: 0 0 auto;
       width: 182px;
@@ -162,6 +170,9 @@
       align-items: center;
       justify-content: flex-start;
       gap: 0.3rem;
+      background: #131c30;
+      border-color: #3f5580;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025), 0 4px 14px rgba(0, 0, 0, 0.28);
     }
 
     .panel-suitability.pulse {
@@ -269,51 +280,102 @@
       margin-top: 0.1rem;
     }
 
-    /* Suitability instrument readout — uses the whitespace beneath the LED
-       meter that used to sit empty. A small recessed "display" box (same
-       inset-shadow/dark-fill language .details-workspace already uses for
-       its own inset sub-panel) housing two compact key/value lines. Values
-       are generated per-assessment, so they get the same monospace
-       readout treatment as .gauge-label/.evidence-summary-status above —
-       consistent instrument-readout language throughout the panel. */
-    .suitability-readout {
+    /* ONE unified Suitability readout — fills most of the space beneath
+       the LED meter (Readout/Suitability Refinement pass), replacing the
+       prior pass's separate rec-label/rec-sub/Uncertainty-Next pieces. A
+       recessed "display" box (same inset-shadow/dark-fill language
+       .details-workspace already uses for its own inset sub-panel)
+       housing, top to bottom: an optional tag line (EARLY READ), the
+       Recommendation as the dominant line, a brief qualifier/explanation,
+       and a NEXT action line when one applies. flex:1 1 auto so it
+       genuinely uses "most of the available space," not just a fixed
+       strip. */
+    .suitability-display {
       width: 100%;
-      margin-top: 0.4rem;
-      padding: 0.4rem 0.5rem;
-      background: #0f172a;
+      margin-top: 0.45rem;
+      padding: 0.6rem 0.55rem;
+      background: #0a1120;
       border: 1px solid #334155;
-      border-radius: 7px;
-      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.35);
+      border-radius: 8px;
+      box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.45);
       display: flex;
       flex-direction: column;
-      gap: 0.22rem;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 0.3rem;
+      flex: 1 1 auto;
+      min-height: 0;
     }
 
-    .suitability-readout-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 0.4rem;
+    .suitability-display-tag {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 0.56rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #2dd4bf;
+      height: 0.75rem;
+      line-height: 0.75rem;
+    }
+
+    /* The dominant line — reuses .gauge-label (readout typography, JS-set
+       semantic color) as a base, then overrides size/width here for extra
+       specificity (see the .gauge-block .gauge-label precedent above) so
+       it reads as the clear focal point of the display, not just another
+       instrument label. */
+    .suitability-display .suitability-display-rec {
+      font-size: 0.92rem;
+      max-width: 100%;
+      line-height: 1.22;
+    }
+
+    .suitability-display-qualifier {
       font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
       font-size: 0.6rem;
-      line-height: 1.25;
-    }
-
-    .suitability-readout-key {
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      flex-shrink: 0;
-    }
-
-    .suitability-readout-value {
-      color: #7dd3fc;
-      font-weight: 600;
-      text-align: right;
+      color: #94a3b8;
+      line-height: 1.35;
+      max-width: 100%;
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      min-width: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
+
+    .suitability-display-qualifier a {
+      color: #93c5fd;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .suitability-display-qualifier a:hover {
+      text-decoration: underline;
+    }
+
+    /* Informational only, deliberately not styled as a clickable button —
+       the real action lives in the What Next queue; this states the same
+       fact as a readout, not a second, competing control. */
+    .suitability-display-next {
+      margin-top: 0.1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.05rem;
+    }
+
+    .suitability-display-next-label {
+      font-size: 0.54rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #64748b;
+    }
+
+    .suitability-display-next-value {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #7dd3fc;
     }
 
     /* Confidence-only typography scale-up (descendant selectors scoped to
@@ -1914,24 +1976,22 @@
             <div>Good Fit</div>
           </div>
         </div>
-        <div class="gauge-label-area">
-          <div class="gauge-label" id="gauge-rec-label">Too Early to Tell</div>
-        </div>
-        <div class="gauge-label-sub" id="gauge-rec-sub"></div>
-        <!-- Compact instrument readout — uses the whitespace beneath the
-             LED meter for two more compact facts (primary uncertainty,
-             suggested next step) alongside the Recommendation/qualifier
-             already above. Populated in renderDashboard(); no new scoring
-             logic, purely a second presentation of already-computed
-             values. See ASSESSMENT_ARCHITECTURE.md. -->
-        <div class="suitability-readout" id="suitability-readout">
-          <div class="suitability-readout-row">
-            <span class="suitability-readout-key">Uncertainty</span>
-            <span class="suitability-readout-value" id="suitability-readout-uncertainty">—</span>
-          </div>
-          <div class="suitability-readout-row">
-            <span class="suitability-readout-key">Next</span>
-            <span class="suitability-readout-value" id="suitability-readout-next">—</span>
+        <!-- ONE unified live-readout display filling the space beneath the
+             LED meter — Recommendation (dominant), a brief qualifier/
+             explanation, and the best next action, when applicable.
+             Replaces the prior pass's separate rec-label/rec-sub/
+             Uncertainty-Next readout with a single instrument display, per
+             this pass's "one larger dynamic Suitability display"
+             instruction. Populated in renderDashboard(); every value comes
+             from data already computed elsewhere on this page — no new
+             recommendation logic. See ASSESSMENT_ARCHITECTURE.md. -->
+        <div class="suitability-display" id="suitability-display">
+          <div class="suitability-display-tag" id="suitability-display-tag"></div>
+          <div class="suitability-display-rec gauge-label" id="suitability-display-rec">Too Early to Tell</div>
+          <div class="suitability-display-qualifier" id="suitability-display-qualifier"></div>
+          <div class="suitability-display-next" id="suitability-display-next-wrap" hidden>
+            <span class="suitability-display-next-label">Next</span>
+            <span class="suitability-display-next-value" id="suitability-display-next-value"></span>
           </div>
         </div>
       </div>
@@ -3786,10 +3846,12 @@
       }
       lastConfPct = confPct;
 
-      // Suitability — a vertical segmented instrument, replacing the old
-      // round recommendation dial (see CLAUDE.md, Dashboard Instrument
-      // Cluster prototype). The instrument's own title ("ARM Suitability")
-      // is fixed in the HTML and never changes per state.
+      // Suitability — a vertical segmented instrument (LED meter) plus ONE
+      // unified live-readout display beneath it: Recommendation (dominant),
+      // a brief qualifier/explanation, and the best next action — see
+      // ASSESSMENT_ARCHITECTURE.md, Readout/Suitability Refinement pass.
+      // The instrument's own title ("ARM Suitability") is fixed in the
+      // HTML and never changes per state.
       //
       // RECOMMENDATION ELIGIBLE GATE: the advisor earns the right to
       // recommend rather than defaulting to one — see
@@ -3800,46 +3862,67 @@
       // the instrument's illuminated (colored) segment count stays at
       // zero — only the dim "unlocked" range can move before the gate
       // opens.
-      let recColor, recLabel, recSub, recTierIndex;
+      let recColor, recLabel, recTag, recTierIndex;
       recTierIndex = null;
       if (eligible && state === ASSESSMENT_STATE_SCAN_BACKED) {
         const rec = recommendationFor(synthesis);
-        recColor = rec.color; recLabel = rec.label; recSub = '';
+        recColor = rec.color; recLabel = rec.label; recTag = '';
         recTierIndex = suitabilityTierIndex(rec.label);
       } else if (eligible && state === ASSESSMENT_STATE_CONTEXTUAL) {
         const read = contextualReadFor(ctx);
-        recColor = '#2dd4bf'; recLabel = read.label; recSub = 'Early Read';
+        recColor = '#2dd4bf'; recLabel = read.label; recTag = 'Early Read';
         recTierIndex = read.verdict === 'positive' ? suitabilityTierIndex('Probably a Good Fit') : suitabilityTierIndex('Proceed with Caution');
       } else if (state === ASSESSMENT_STATE_NO_READ) {
-        recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recSub = '';
+        recColor = RECOMMENDATION_COLORS['Too Early to Tell']; recLabel = 'Too Early to Tell'; recTag = '';
       } else {
         // Evidence exists (a scan or some Intended Use answers) but hasn't
         // cleared the eligibility bar yet.
-        recColor = '#475569'; recLabel = 'Need More Evidence'; recSub = '';
+        recColor = '#475569'; recLabel = 'Need More Evidence'; recTag = '';
       }
       const suitabilityUnlocked = suitabilityUnlockedCount(confPct);
       const suitabilityIlluminated = suitabilityIlluminatedCount(eligible, recTierIndex, suitabilityUnlocked);
       renderSuitabilityLeds(suitabilityUnlocked, suitabilityIlluminated);
-      document.getElementById('gauge-rec-label').textContent = recLabel;
-      document.getElementById('gauge-rec-label').style.color = eligible ? recColor : '#94a3b8';
-      // Numeric score line beneath the recommendation removed this pass
-      // (visual-refinement: "remove the numeric Suitability score beneath
-      // the recommendation") — synthesis.score itself is untouched and
-      // still drives everything else (illuminated segment count, Results/
-      // Workspace); this only stops ALSO printing it as text here.
-      const recSubEl = document.getElementById('gauge-rec-sub');
+
+      document.getElementById('suitability-display-tag').textContent = recTag;
+      const recEl = document.getElementById('suitability-display-rec');
+      recEl.textContent = recLabel;
+      recEl.style.color = eligible ? recColor : '#94a3b8';
+
+      // Qualifier — the SAME explanation the Why tab shows
+      // (suitabilityExplanationText(), extracted specifically so the two
+      // surfaces can never disagree), truncated visually (CSS line-clamp)
+      // rather than textually, to stay compact. Ineligible states also
+      // offer the Why? affordance inline, reusing the exact same
+      // switchTab('why') handler this codebase already established.
+      const qualifierEl = document.getElementById('suitability-display-qualifier');
+      const explanation = suitabilityExplanationText(state, ctx, synthesis, evidenceSources, eligible);
       if (!eligible && state !== ASSESSMENT_STATE_NO_READ) {
-        // "Need More Evidence" — offer the Why? affordance in the same
-        // reserved slot the qualifier tag normally uses (see CLAUDE.md;
-        // these two uses are mutually exclusive, so one line covers both).
-        recSubEl.innerHTML = '<a href="#" class="gauge-label-sub-why" id="gauge-rec-why">Why?</a>';
-        document.getElementById('gauge-rec-why').addEventListener('click', (e) => {
+        qualifierEl.innerHTML = `${escapeHtml(explanation)} <a href="#" class="gauge-label-sub-why" id="suitability-display-why">Why?</a>`;
+        document.getElementById('suitability-display-why').addEventListener('click', (e) => {
           e.preventDefault();
           switchTab('why');
         });
       } else {
-        recSubEl.textContent = recSub;
+        qualifierEl.textContent = explanation;
       }
+
+      // Next action — reuses the exact WHAT_NEXT_PRIMARY_LABEL text
+      // already computed for the What Next queue's own top slot (no
+      // second, independently-worded copy). Hidden entirely for the true
+      // empty state ('start-empty' has no single next step here — the
+      // page's own two entry cards already cover that case, and
+      // WHAT_NEXT_PRIMARY_LABEL has no entry for it by design).
+      const nextStepWrap = document.getElementById('suitability-display-next-wrap');
+      const nextStepLabel = WHAT_NEXT_PRIMARY_LABEL[next.kind];
+      if (nextStepLabel) {
+        nextStepWrap.hidden = false;
+        const nextStepEl = document.getElementById('suitability-display-next-value');
+        nextStepEl.textContent = nextStepLabel;
+        nextStepEl.title = next.text || '';
+      } else {
+        nextStepWrap.hidden = true;
+      }
+
       // "Recommendation changes animate smoothly" — a brief pulse on the
       // whole Suitability panel whenever the shown label actually changes
       // (skipped on first paint, same precedent as Confidence's pulse).
@@ -3847,21 +3930,6 @@
         pulseElement(document.getElementById('gauge-recommendation'));
       }
       lastRecLabel = recLabel;
-
-      // Suitability instrument readout — uses the whitespace beneath the
-      // LED meter for two more compact facts, alongside the Recommendation
-      // (gauge-rec-label) and qualifier (gauge-rec-sub) already above.
-      // Both values are read from data ALREADY computed elsewhere on this
-      // page (evidenceSources' `findings` entry; the `next` action this
-      // same render already derived for the What Next panel) — no new
-      // scoring or recommendation logic, purely a second, compact
-      // presentation of existing facts. See ASSESSMENT_ARCHITECTURE.md.
-      document.getElementById('suitability-readout-uncertainty').textContent =
-        compatibilityStatusText(evidenceSources.find((s) => s.id === 'findings'));
-      const nextStepLabel = WHAT_NEXT_PRIMARY_LABEL[next.kind] || 'Review your assessment';
-      const nextStepEl = document.getElementById('suitability-readout-next');
-      nextStepEl.textContent = nextStepLabel;
-      nextStepEl.title = next.text || '';
 
       // Evidence / Signals — permanently visible in the middle panel, on
       // every render. This is the Composition Correction fix: the exact
@@ -3965,34 +4033,88 @@
       </li>`;
     }
     // Five rows now, one per evidence dimension in ASSESSMENT_ARCHITECTURE.md
-    // (Scan / Understanding / Applications / Devices / Compatibility) — a
-    // one-to-one match with the five primary evidence-nav buttons, per this
-    // pass's explicit "clear one-to-one relationship" instruction. Per
+    // (Observation / Understanding / Applications / Devices / Compatibility)
+    // — a one-to-one match with the five primary evidence-nav buttons. Per
     // CLAUDE.md's own standing note, do not redesign the underlying
-    // confidence mathematics here: Scan and Understanding still read the
-    // exact same evidenceSourcesFor() contribution/maxContribution values
-    // that feed dashboardConfidencePct() (assessment.js, untouched).
-    // Applications and Devices had no dedicated evidence source before this
-    // pass — they're given an honest TEMPORARY completion signal computed
-    // here, display-only (never fed into the confidence sum, matching the
-    // same zero-weight/presence-only pattern Community already used):
-    // whether this computer's scan has detected anything in that dimension
-    // yet. Compatibility reuses the existing zero-weight `findings` source
-    // (deserves-attention count) relabeled — that source already measures
-    // "do curated items currently have enough compatibility evidence,"
-    // which is exactly what this dimension asks. Community's own row is
-    // dropped from this 5-row display (the architecture calls for exactly
-    // five dimensions) — evidenceSourcesFor() itself is unchanged, so
-    // nothing about how Community evidence is computed or could be shown
-    // elsewhere is affected.
-    // Shared by the Compatibility evidence-meter row AND the Suitability
-    // panel's "Primary uncertainty" readout (see renderDashboard()) — one
-    // interpretation of the `findings` evidence source, not two
-    // independently-maintained copies of the same branching.
+    // confidence mathematics here: Observation and Understanding's BARS
+    // still read the exact same evidenceSourcesFor() contribution/
+    // maxContribution values that feed dashboardConfidencePct()
+    // (assessment.js, untouched) — only the readout TEXT changed this pass.
+    //
+    // Readout/Instrument Refinement pass: every status is now
+    // ACTION-ORIENTED (what to do next), not just a completeness
+    // description — see the individual *StatusText() functions below for
+    // the exact state mapping used for each dimension, and CLAUDE.md's
+    // readout-state-mapping table for the full rationale.
+    function curationProgress(items, keyFn) {
+      if (!items.length) return { total: 0, confirmed: 0 };
+      const personalContext = loadPersonalContext(sessionId, params);
+      let confirmed = 0;
+      items.forEach((item) => { if (personalContext.get(keyFn(item))) confirmed++; });
+      return { total: items.length, confirmed };
+    }
+    // How many detected apps/devices still sit in the "possible" tier —
+    // real evidence exists for them, but nobody has confirmed them as
+    // important OR dismissed them as background (see appImportanceTier()/
+    // deviceImportanceTier(), already used by Observation's own tab). A
+    // completed scan with items still in this tier is exactly "discovered
+    // results that still require review," per this pass's brief — a
+    // genuine signal, not detection count.
+    function observationPendingReviewCount() {
+      if (!currentResults) return 0;
+      const personalContext = loadPersonalContext(sessionId, params);
+      const apps = ['native', 'emulated', 'unsupported', 'unknown'].reduce((list, b) => list.concat(currentResults[b] || []), []);
+      const devices = currentResults.devices || [];
+      const appPending = apps.filter((app) => appImportanceTier(app, personalContext.get(decisionKey(app))) === 'possible').length;
+      const devicePending = devices.filter((device) => deviceImportanceTier(device, personalContext.get(deviceDecisionKey(device))) === 'possible').length;
+      return appPending + devicePending;
+    }
+    function observationStatusText(scan, pendingCount) {
+      if (scan.availability === 'unavailable') return 'Not available on this device';
+      if (scan.presence === 'absent') return 'Run Scan';
+      if (scan.presence === 'partial') return 'Review Results';
+      return pendingCount > 0 ? 'Review Results' : 'Complete';
+    }
+    function understandingStatusText(answeredCount) {
+      if (answeredCount === 0) return 'Answer Questions';
+      if (answeredCount === 1) return 'Review Answers';
+      return 'Described';
+    }
+    // Applications/Devices: "confirmed" means the user has clicked
+    // Important/Background/Auto on that item at least once (any
+    // Personal Context entry — applyImportanceOverride() writes one on
+    // every click, including Auto/reset). Detected-but-untouched items
+    // are NOT curated — per this pass's explicit "do not use detected
+    // count as evidence of curation" instruction. Only three states are
+    // distinguished (not a separate "Confirm Priorities" step) — there is
+    // no honest, non-arbitrary way to tell "just started reviewing" apart
+    // from "made one confirmation" without inventing a threshold, so the
+    // real running count is shown as soon as it's nonzero instead.
+    function curationStatusText(progress, reviewLabel) {
+      if (progress.total === 0 || progress.confirmed === 0) return reviewLabel;
+      if (progress.confirmed < progress.total) return `${progress.confirmed} Confirmed`;
+      return 'Complete';
+    }
+    // Compatibility — reused by both the meter row below AND (via
+    // suitabilityExplanationText()/the findings source directly) the
+    // Suitability panel's own qualifier line, so the two surfaces never
+    // disagree about whether items still need review.
     function compatibilityStatusText(findings) {
-      if (!findings || findings.presence === 'absent') return 'Not applicable yet';
+      if (!findings || findings.presence === 'absent') return 'Review Compatibility';
       const needsAttention = findings.explanation.indexOf('Nothing') !== 0;
-      return needsAttention ? 'Some need review' : 'None outstanding';
+      return needsAttention ? 'Research Unknowns' : 'Complete';
+    }
+    // Fixes a real meter-vs-text disagreement found during this pass: the
+    // Compatibility bar previously used evidenceMeterPct(findings)'s
+    // generic presence-only fallback, which read 100% (fully lit) the
+    // instant ANY scan+synthesis existed — even while the text said items
+    // still needed review. Not new scoring math — the same
+    // findingsAttentionCount-derived signal the text already uses, just
+    // mapped honestly onto three bar states instead of a binary one.
+    function compatibilityMeterPct(findings) {
+      if (!findings || findings.presence === 'absent') return 0;
+      const needsAttention = findings.explanation.indexOf('Nothing') !== 0;
+      return needsAttention ? 50 : 100;
     }
 
     function evidenceSummaryHtml(sources) {
@@ -4003,28 +4125,26 @@
       const relationship = byId['intended-use-relationship'];
       const findings = byId['findings'];
 
-      let scanStatus;
-      if (scan.availability === 'unavailable') scanStatus = 'Not available on this device';
-      else if (scan.presence === 'absent') scanStatus = 'Not examined';
-      else if (scan.presence === 'partial') scanStatus = 'Scanned — limited result';
-      else scanStatus = (scan.quality !== null && scan.quality < SCAN_QUALITY_SUFFICIENT_THRESHOLD) ? 'Scanned — limited result' : 'Scanned';
+      const scanStatus = observationStatusText(scan, observationPendingReviewCount());
 
       const answeredCount = (workload.presence === 'present' ? 1 : 0) + (relationship.presence === 'present' ? 1 : 0);
-      const understandingStatus = answeredCount === 0 ? 'Not described' : answeredCount === 1 ? 'Partially described' : 'Described';
+      const understandingStatus = understandingStatusText(answeredCount);
 
-      const appTotal = currentResults ? ['native', 'emulated', 'unsupported', 'unknown'].reduce((n, b) => n + ((currentResults[b] || []).length), 0) : 0;
-      const deviceTotal = currentResults ? (currentResults.devices || []).length : 0;
-      const applicationsStatus = appTotal > 0 ? `${appTotal} detected` : 'Not yet scanned';
-      const devicesStatus = deviceTotal > 0 ? `${deviceTotal} detected` : 'Not yet scanned';
+      const apps = currentResults ? ['native', 'emulated', 'unsupported', 'unknown'].reduce((list, b) => list.concat(currentResults[b] || []), []) : [];
+      const devices = currentResults ? (currentResults.devices || []) : [];
+      const appProgress = curationProgress(apps, decisionKey);
+      const deviceProgress = curationProgress(devices, deviceDecisionKey);
+      const applicationsStatus = curationStatusText(appProgress, 'Review Applications');
+      const devicesStatus = curationStatusText(deviceProgress, 'Review Devices');
 
       const compatibilityStatus = compatibilityStatusText(findings);
 
       const rows = [
         evidenceMeterRow('observation', 'Observation', scanStatus, evidenceMeterPct(scan)),
         evidenceMeterRow('understanding', 'Understanding', understandingStatus, evidenceMeterPct(workload, relationship)),
-        evidenceMeterRow('applications', 'Applications', applicationsStatus, appTotal > 0 ? 100 : 0),
-        evidenceMeterRow('devices', 'Devices', devicesStatus, deviceTotal > 0 ? 100 : 0),
-        evidenceMeterRow('compatibility', 'Compatibility', compatibilityStatus, evidenceMeterPct(findings)),
+        evidenceMeterRow('applications', 'Applications', applicationsStatus, appProgress.total > 0 ? Math.round((appProgress.confirmed / appProgress.total) * 100) : 0),
+        evidenceMeterRow('devices', 'Devices', devicesStatus, deviceProgress.total > 0 ? Math.round((deviceProgress.confirmed / deviceProgress.total) * 100) : 0),
+        evidenceMeterRow('compatibility', 'Compatibility', compatibilityStatus, compatibilityMeterPct(findings)),
       ];
       return `<ul class="evidence-summary-list">${rows.join('')}</ul>`;
     }
@@ -4034,28 +4154,28 @@
     // computing its own state via computeDashboardState() instead of
     // receiving it as parameters, and writing into the shared
     // #details-workspace container like every other tab.
+    // Shared by the Why tab AND the Suitability panel's compact qualifier
+    // line (see renderDashboard()) — ONE selection of "what explains the
+    // current reading," so the two surfaces can never show different
+    // wording for the same state. Gated on the SAME eligibility the
+    // Suitability gauge itself uses — if Suitability is showing "Need
+    // More Evidence" instead of a real reading, this must explain THAT
+    // (why the gate hasn't opened yet), never the underlying synthesis/
+    // contextual explanation a real reading would give. Returning the
+    // real explanation here while the gauge hides it would give away
+    // exactly what the gate exists to hold back.
+    function suitabilityExplanationText(state, ctx, synthesis, evidenceSources, eligible) {
+      if (!eligible) return eligibilityGateExplanation(state, evidenceSources, synthesis);
+      if (state === ASSESSMENT_STATE_SCAN_BACKED && synthesis && !synthesis.empty) return synthesis.explanation;
+      if (state === ASSESSMENT_STATE_CONTEXTUAL) return contextualReadFor(ctx).explanation;
+      return 'There’s not enough evidence yet to explain a recommendation. Add evidence from Scanner or Use Case — even one is enough for an early read.';
+    }
+
     function renderWhyTab(container) {
       const { state, ctx, synthesis, evidenceSources, eligible } = computeDashboardState();
-
-      // Gated on the SAME eligibility the Suitability gauge itself uses —
-      // if Suitability is showing "Need More Evidence" instead of a real
-      // reading, this view must explain THAT (why the gate hasn't opened
-      // yet), never the underlying synthesis/contextual explanation a real
-      // reading would give. Printing the real explanation here while the
-      // gauge hides it would give away exactly what the gate exists to
-      // hold back.
-      let body;
-      if (!eligible) {
-        body = `<p class="workspace-subtext">${escapeHtml(eligibilityGateExplanation(state, evidenceSources, synthesis))}</p>
-          <div class="workspace-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>`;
-      } else if (state === ASSESSMENT_STATE_SCAN_BACKED && synthesis && !synthesis.empty) {
-        body = `<p class="workspace-subtext">${escapeHtml(synthesis.explanation)}</p>`;
-      } else if (state === ASSESSMENT_STATE_CONTEXTUAL) {
-        body = `<p class="workspace-subtext">${escapeHtml(contextualReadFor(ctx).explanation)}</p>`;
-      } else {
-        body = `<p class="workspace-subtext">There's not enough evidence yet to explain a recommendation. Add evidence from
-          Scanner or Use Case — even one is enough for an early read.</p>`;
-      }
+      const explanation = suitabilityExplanationText(state, ctx, synthesis, evidenceSources, eligible);
+      const body = `<p class="workspace-subtext">${escapeHtml(explanation)}</p>` +
+        (!eligible ? '<div class="workspace-links"><a href="/how-it-thinks.html">How CheckMyARM Thinks →</a></div>' : '');
       container.innerHTML = `<div class="workspace-heading">Why This Recommendation</div>${body}`;
     }
 
