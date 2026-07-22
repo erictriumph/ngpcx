@@ -726,18 +726,11 @@
       flex-shrink: 0;
     }
 
-    #scanner-activity-dot.active {
-      animation: scanner-pulse 1.4s ease-in-out infinite;
-    }
-
-    @keyframes scanner-pulse {
-      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-      50% { opacity: 0.55; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      #scanner-activity-dot.active { animation: none; }
-    }
+    /* #scanner-activity-dot / @keyframes scanner-pulse removed (Final
+       scanner readout correction pass) — the dot element itself no
+       longer exists; the status readout is now plain colored text, no
+       animation, per that pass's explicit "do not add animation,
+       pulsing" instruction applied to its full two-element redesign. */
 
     /* ─── EVIDENCE / SIGNALS panel — permanently visible, never hidden
        behind a toggle. This is the actual fix for the composition bug:
@@ -891,12 +884,25 @@
       border-top: 1px solid #1e293b;
     }
 
-    .scanner-instrument-label {
-      font-size: 0.68rem;
-      font-weight: 700;
+    /* Final scanner readout correction pass — replaces the old static
+       "Scanner" painted label + combined dot-and-value button with two
+       plain generated readouts (status left, action right — see the HTML
+       comment above .scanner-instrument). Generated/monospaced display
+       typography, matching the same treatment already used for other
+       Instrument Panel readouts (.evidence-summary-status, .gauge-label)
+       — this is the "apply existing generated typography" correction;
+       .scanner-instrument-value below gets the identical font-family
+       addition for the same reason. Color is set per-render in JS
+       (setScannerActivity()) from SCANNER_STATUS_COLOR, reusing the
+       exact dot colors this file already established per underlying
+       state — not a new color language. */
+    .scanner-status-readout {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 0.7rem;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #64748b;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
     }
 
     .scanner-instrument-action {
@@ -931,15 +937,12 @@
       box-shadow: 0 0 0 #0e1620, inset 0 2px 4px rgba(0, 0, 0, 0.4);
     }
 
-    .scanner-instrument-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      background: #64748b;
-    }
-
+    /* .scanner-instrument-dot removed (Final scanner readout correction
+       pass) — the status color now lives on .scanner-status-readout's
+       text itself, not a separate dot glyph, per that pass's two-element
+       (no icon) spec. */
     .scanner-instrument-value {
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
       font-size: 0.7rem;
       font-weight: 800;
       color: #e2e8f0;
@@ -2295,11 +2298,17 @@
              established for Scan/Observation and NGPCX/CheckMyARM. -->
         <div class="display-eyebrow"><span class="display-dot"></span>Actions</div>
         <div class="whatnext-queue" id="whatnext-queue"></div>
+        <!-- Final scanner readout correction pass: two clearly separated
+             generated elements (no "SCANNER"/"STATUS"/"ACTION" painted
+             labels) — the status readout on the left, the action button
+             on the right, spread across the row via the existing
+             justify-content:space-between on .scanner-instrument (already
+             correct for this, unchanged). See setScannerActivity() for
+             the status/action mapping. -->
         <div class="scanner-instrument">
-          <span class="scanner-instrument-label">Scanner</span>
+          <span class="scanner-status-readout" id="scanner-status-readout">NO DATA</span>
           <button type="button" class="scanner-instrument-action" id="scanner-instrument-action">
-            <span class="scanner-instrument-dot" id="scanner-activity-dot"></span>
-            <span class="scanner-instrument-value" id="scanner-activity-value">Ready</span>
+            <span class="scanner-instrument-value" id="scanner-activity-value">SCAN</span>
           </button>
         </div>
         <!-- Persistent assessment-level commands — visually separated (its
@@ -2693,17 +2702,18 @@
     // back to "Ready."
     // ───────────────────────────────────────────────────────────────────
     const SCANNER_ACTIVITY_BRIDGE_KEY = 'ngpcx_scanner_activity_bridge_v1';
-    // A short status word only, on one line ("SCANNER  ● READY") — see
-    // CLAUDE.md, Dashboard Instruments/Coherence addenda for the prior
-    // two-line prototype this replaces. Color model is a genuine six-state
-    // indicator, not a workflow-step tracker:
-    //   unavailable (neutral) — scanning genuinely can't be used here
-    //   ready       (dim)     — idle, valid, nothing happening
-    //   downloading/waiting (amber) — in progress
-    //   connected/receiving (blue)  — live handshake with the local scanner
-    //   updated     (green)   — a real result just landed
-    //   error       (red)     — a real, confirmed failure (session creation
-    //                           failed), never a generic/speculative state
+    // Final scanner readout correction pass: the visible surface is now
+    // exactly two generated elements — a status readout (left) and an
+    // action button (right) — collapsed down to 4 canonical statuses
+    // (NO DATA / RUNNING... / COMPLETE / FAILED), derived from the
+    // existing, more granular internal state machine below plus whether
+    // currentResults is populated. This mapping is presentation-only:
+    // it does not change when/how currentScannerState itself transitions.
+    // SCANNER_STATE_META's per-state `value` strings are still used
+    // verbatim for the non-idle (actively-transporting) states, where the
+    // existing granular wording ("Downloading"/"Waiting"/"Connected"/
+    // "Receiving") is preserved as the action-side label — see
+    // setScannerActivity() below for the full mapping.
     const SCANNER_STATE_META = {
       unavailable: { value: 'Not Available', dot: '#475569', active: false },
       ready: { value: 'Ready', dot: '#64748b', active: false },
@@ -2734,18 +2744,55 @@
     // (see scannerInstrumentActionable()'s click-handler use) without a
     // round-trip through the DOM.
     let currentScannerState = 'ready';
+    // The 4 canonical, user-facing statuses (section 3 of the correction
+    // brief) — deliberately NOT the same set as SCANNER_STATE_META's keys,
+    // which stay internal/granular. NO DATA and COMPLETE are both derived
+    // from currentResults, not from which idle sub-state (ready vs.
+    // updated) happens to be active — this is the fix for imported/settled
+    // evidence permanently reading as COMPLETE instead of reverting to a
+    // dim, unlabeled "ready" after the old 3-second "Completed" flash.
+    const SCANNER_STATUS_COLOR = {
+      'NO DATA': '#64748b',
+      'RUNNING...': '#f59e0b',
+      'COMPLETE': '#10b981',
+      'FAILED': '#ef4444',
+    };
+    // Action labels for the 3 idle statuses only — RUNNING... has no
+    // generic action label because it never gets one: no real, working
+    // cancellation path exists anywhere in this codebase (verified by
+    // grep — the only clearInterval() calls are internal completion
+    // cleanup, never wired to a click). So the action side keeps showing
+    // the existing granular per-phase word (Downloading/Waiting/
+    // Connected/Receiving) instead of a non-functional "Cancel" — see
+    // the non-actionable branch below.
+    const SCANNER_ACTION_LABEL = {
+      'NO DATA': 'SCAN',
+      'COMPLETE': 'RESCAN',
+      'FAILED': 'RETRY',
+    };
     function setScannerActivity(state) {
       currentScannerState = state;
       const meta = SCANNER_STATE_META[state] || SCANNER_STATE_META.ready;
-      const dot = document.getElementById('scanner-activity-dot');
+      const statusEl = document.getElementById('scanner-status-readout');
       const value = document.getElementById('scanner-activity-value');
       const actionBtn = document.getElementById('scanner-instrument-action');
-      if (!dot || !value || !actionBtn) return;
-      dot.style.background = meta.dot;
-      dot.classList.toggle('active', meta.active);
+      if (!statusEl || !value || !actionBtn) return;
+
       const actionable = scannerInstrumentActionable(state);
+      const hasResults = !!currentResults;
+      let status;
+      if (state === 'error') {
+        status = 'FAILED';
+      } else if (actionable || state === 'unavailable') {
+        status = hasResults ? 'COMPLETE' : 'NO DATA';
+      } else {
+        status = 'RUNNING...';
+      }
+      statusEl.textContent = status;
+      statusEl.style.color = SCANNER_STATUS_COLOR[status];
+
       actionBtn.classList.toggle('actionable', actionable);
-      value.textContent = actionable ? (currentResults ? 'Rescan' : 'Scan Now') : meta.value;
+      value.textContent = actionable ? SCANNER_ACTION_LABEL[status] : meta.value;
     }
 
     // ───────────────────────────────────────────────────────────────────
