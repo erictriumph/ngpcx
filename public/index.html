@@ -2636,6 +2636,42 @@
       statusText.textContent = assessmentDirty ? 'Unsaved changes' : '';
     }
 
+    // ─── Instrument Panel transient status message (Final Instrument
+    // Panel refinement) — reuses this exact reserved line rather than a
+    // new UI element: it's the same #save-status-text/#save-led pair
+    // updateSaveIndicator() already owns, just temporarily overridden
+    // during a Load/Save file operation, then always resolved back to
+    // updateSaveIndicator()'s own idle/"Unsaved changes" default. No
+    // dialog, no toast, no message history — one line, one message at a
+    // time. Colors reuse the exact palette already established for the
+    // Scanner instrument's status readout (SCANNER_STATUS_COLOR above),
+    // not a new color language.
+    const INSTRUMENT_STATUS_COLOR = { info: '#3b82f6', success: '#10b981', error: '#ef4444' };
+    let instrumentStatusRevertTimer = null;
+    function showInstrumentStatus(message, tone) {
+      const statusText = document.getElementById('save-status-text');
+      const led = document.getElementById('save-led');
+      if (!statusText || !led) return;
+      if (instrumentStatusRevertTimer) { clearTimeout(instrumentStatusRevertTimer); instrumentStatusRevertTimer = null; }
+      const color = INSTRUMENT_STATUS_COLOR[tone] || INSTRUMENT_STATUS_COLOR.info;
+      statusText.textContent = message;
+      statusText.style.color = color;
+      led.style.background = color;
+      led.style.boxShadow = '0 0 6px ' + color;
+      led.classList.add('lit');
+    }
+    function restoreInstrumentStatusDefault(delayMs) {
+      if (instrumentStatusRevertTimer) clearTimeout(instrumentStatusRevertTimer);
+      instrumentStatusRevertTimer = setTimeout(() => {
+        instrumentStatusRevertTimer = null;
+        const statusText = document.getElementById('save-status-text');
+        const led = document.getElementById('save-led');
+        if (statusText) statusText.style.color = '';
+        if (led) { led.style.background = ''; led.style.boxShadow = ''; }
+        updateSaveIndicator();
+      }, delayMs);
+    }
+
     function setAssessmentDirty(dirty) {
       assessmentDirty = dirty;
       if (sessionId) {
@@ -4977,6 +5013,7 @@
     // used, now with the page-restriction gate removed (see nav.js).
     function exportAssessment() {
       if (!currentResults) return;
+      showInstrumentStatus('Saving assessment...', 'info');
       const payload = buildExportPayload(currentResults, currentPersonalContext);
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -4986,6 +5023,8 @@
       link.click();
       URL.revokeObjectURL(url);
       markAssessmentClean();
+      showInstrumentStatus('Assessment saved.', 'success');
+      restoreInstrumentStatusDefault(2000);
     }
 
     // Persistent assessment-level commands (Load / Save / Clear) — wired
@@ -5014,7 +5053,22 @@
     // right after page load, not worth a second confirmation/fallback path.
     function wireDashboardUtilityRow() {
       document.getElementById('utility-load-btn').addEventListener('click', () => {
-        if (window.NavShell && typeof window.NavShell.triggerImport === 'function') window.NavShell.triggerImport();
+        if (window.NavShell && typeof window.NavShell.triggerImport === 'function') {
+          // Status callback only ever fires 'loading' once a file is
+          // genuinely selected (nav.js's triggerImport() never fires it
+          // on a cancelled file dialog) and 'failed' on a caught error —
+          // 'loaded' isn't handled here since a successful import
+          // navigates this page away; the new page's own load detects
+          // and announces that instead (see loadSessionIfPresent()'s
+          // carryForwardSource handling below).
+          window.NavShell.triggerImport((phase, detail) => {
+            if (phase === 'loading') showInstrumentStatus('Loading assessment...', 'info');
+            else if (phase === 'failed') {
+              showInstrumentStatus('Import failed.', 'error');
+              restoreInstrumentStatusDefault(3200);
+            }
+          });
+        }
       });
       document.getElementById('utility-save-btn').addEventListener('click', () => {
         if (window.NavShell && typeof window.NavShell.triggerExport === 'function') window.NavShell.triggerExport();
@@ -5084,6 +5138,18 @@
           return (stash && stash.source) || null;
         } catch (err) { return null; }
       })();
+      // Announce a successful load — this page load IS the redirect
+      // target nav.js's triggerImport() sent us to right after a real
+      // import completed (see carryForwardSource above; a plain revisit
+      // or a fresh-scan redirect never has source === 'import'). This is
+      // the only place "Assessment loaded." is ever shown, since the
+      // click-time 'loading' status (wireDashboardUtilityRow() above)
+      // lives on the page being navigated AWAY from and can't itself see
+      // the outcome.
+      if (carryForwardSource === 'import') {
+        showInstrumentStatus('Assessment loaded.', 'success');
+        restoreInstrumentStatusDefault(2200);
+      }
       // Initial dirty baseline (Instrument Panel Polish pass) — checked
       // in this order:
       //  1. A dirty flag already persisted for THIS session in this tab

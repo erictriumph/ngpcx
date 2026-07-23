@@ -345,7 +345,15 @@
     // ─────────────────────────────────────
     //  Import / Run New Scan actions
     // ─────────────────────────────────────
-    function triggerImport(state) {
+    function triggerImport(state, onStatus) {
+        // onStatus is an optional (phase, detail) callback — 'loading' once
+        // a file is genuinely selected (never fires on a cancelled file
+        // dialog, since 'change' itself never fires then) and 'failed' on
+        // a caught error. Existing callers that pass no callback see zero
+        // behavior change — added so index.html's Instrument Panel status
+        // line can reflect a real load in progress, without duplicating
+        // this function's own file-read/validate/redirect sequence.
+        const notify = typeof onStatus === 'function' ? onStatus : () => {};
         const currentSessionId = state.session && state.session.sessionId;
         if (!confirmReplaceIfNeeded(currentSessionId, 'Importing a new assessment')) return;
         const input = document.createElement('input');
@@ -357,6 +365,7 @@
             const file = input.files[0];
             input.remove();
             if (!file) return;
+            notify('loading');
             try {
                 const text = await file.text();
                 const parsed = JSON.parse(text);
@@ -386,6 +395,7 @@
                 }
                 window.location.href = '/?session=' + newSessionId + '&level=' + encodeURIComponent(importData.scanMode || 'imported') + '&carryForward=1';
             } catch (err) {
+                notify('failed', err.message);
                 alert('Import failed: ' + err.message);
             }
         });
@@ -790,7 +800,7 @@
         // own menu actions; only the export changed.
         window.NavShell = {
             auth: auth, session: session, ready: true,
-            triggerImport: () => triggerImport(state),
+            triggerImport: (onStatus) => triggerImport(state, onStatus),
             triggerExport: () => triggerExport(state),
             confirmReplaceIfNeeded: (sessionId, actionLabel) => confirmReplaceIfNeeded(sessionId, actionLabel),
         };
